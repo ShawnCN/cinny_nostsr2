@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './RoomView.scss';
 
-import EventEmitter from 'events';
+import EventEmitter from '../../../client/EventEmitter';
 
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
@@ -22,7 +22,7 @@ function RoomView({ roomTimeline, eventId }) {
 
   useEffect(() => {
     const settingsToggle = (isVisible) => {
-      const roomView = roomViewRef.current;
+      const roomView: any = roomViewRef.current;
       roomView.classList.toggle('room-view--dropped');
 
       const roomViewContent = roomView.children[1];
@@ -44,26 +44,12 @@ function RoomView({ roomTimeline, eventId }) {
       <RoomViewHeader roomId={roomId} />
       <div className="room-view__content-wrapper">
         <div className="room-view__scrollable">
-          <RoomViewContent
-            eventId={eventId}
-            roomTimeline={roomTimeline}
-          />
-          <RoomViewFloating
-            roomId={roomId}
-            roomTimeline={roomTimeline}
-          />
+          <RoomViewContent eventId={eventId} roomTimeline={roomTimeline} />
+          <RoomViewFloating roomId={roomId} roomTimeline={roomTimeline} />
         </div>
         <div className="room-view__sticky">
-          <RoomViewInput
-            roomId={roomId}
-            roomTimeline={roomTimeline}
-            viewEvent={viewEvent}
-          />
-          <RoomViewCmdBar
-            roomId={roomId}
-            roomTimeline={roomTimeline}
-            viewEvent={viewEvent}
-          />
+          <RoomViewInput roomId={roomId} roomTimeline={roomTimeline} viewEvent={viewEvent} />
+          <RoomViewCmdBar roomId={roomId} roomTimeline={roomTimeline} viewEvent={viewEvent} />
         </div>
       </div>
     </div>

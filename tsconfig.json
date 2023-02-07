@@ -7,8 +7,22 @@
     "esModuleInterop": true,
     "moduleResolution": "Node",
     "outDir": "dist",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "lib": ["dom", "dom.iterable", "ES2022"],
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "noImplicitAny": false,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "esnext",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "typeRoots": ["src/@types"],
+    "incremental": true,
+    "plugins": [{ "name": "typescript-plugin-css-modules" }],
+    "strictPropertyInitialization": false
   },
   "exclude": ["node_modules", "dist"],
-  "include": ["src"]
+  "include": ["src", "types", "types/index.d.ts", "src/app/client"]
 }

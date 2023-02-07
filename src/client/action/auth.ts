@@ -1,4 +1,4 @@
-import * as sdk from 'matrix-js-sdk';
+// import * as sdk from 'matrix-js-sdk';
 import cons from '../state/cons';
 
 function updateLocalStore(accessToken, deviceId, userId, baseUrl) {
@@ -9,17 +9,20 @@ function updateLocalStore(accessToken, deviceId, userId, baseUrl) {
 }
 
 function createTemporaryClient(baseUrl) {
-  return sdk.createClient({ baseUrl });
+  return () => console.log('createTemporaryClient');
+  // return sdk.createClient({ baseUrl });
 }
 
 async function startSsoLogin(baseUrl, type, idpId) {
   const client = createTemporaryClient(baseUrl);
+  // @ts-ignore
   localStorage.setItem(cons.secretKey.BASE_URL, client.baseUrl);
+  // @ts-ignore
   window.location.href = client.getSsoLoginUrl(window.location.href, type, idpId);
 }
 
 async function login(baseUrl, username, email, password) {
-  const identifier = {};
+  const identifier = {} as any;
   if (username) {
     identifier.type = 'm.id.user';
     identifier.user = username;
@@ -29,7 +32,7 @@ async function login(baseUrl, username, email, password) {
     identifier.address = email;
   } else throw new Error('Bad Input');
 
-  const client = createTemporaryClient(baseUrl);
+  const client: any = createTemporaryClient(baseUrl);
   const res = await client.login('m.login.password', {
     identifier,
     password,
@@ -57,7 +60,10 @@ async function verifyEmail(baseUrl, email, client_secret, send_attempt, next_lin
   const res = await fetch(`${baseUrl}/_matrix/client/r0/register/email/requestToken`, {
     method: 'POST',
     body: JSON.stringify({
-      email, client_secret, send_attempt, next_link,
+      email,
+      client_secret,
+      send_attempt,
+      next_link,
     }),
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
@@ -68,9 +74,7 @@ async function verifyEmail(baseUrl, email, client_secret, send_attempt, next_lin
   return data;
 }
 
-async function completeRegisterStage(
-  baseUrl, username, password, auth,
-) {
+async function completeRegisterStage(baseUrl, username, password, auth) {
   const tempClient = createTemporaryClient(baseUrl);
 
   try {
@@ -98,7 +102,10 @@ async function completeRegisterStage(
 }
 
 export {
-  createTemporaryClient, login, verifyEmail,
-  loginWithToken, startSsoLogin,
+  createTemporaryClient,
+  login,
+  verifyEmail,
+  loginWithToken,
+  startSsoLogin,
   completeRegisterStage,
 };

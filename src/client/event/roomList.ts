@@ -1,8 +1,9 @@
 import cons from '../state/cons';
 import navigation from '../state/navigation';
 import { selectTab, selectSpace, selectRoom } from '../action/navigation';
+import RoomList from '../state/RoomList';
 
-function initRoomListListener(roomList) {
+function initRoomListListener(roomList: RoomList) {
   const listenRoomLeave = (roomId) => {
     const parents = roomList.roomIdToParents.get(roomId);
 

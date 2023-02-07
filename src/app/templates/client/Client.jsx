@@ -21,6 +21,7 @@ import cons from '../../../client/state/cons';
 import DragDrop from '../../organisms/drag-drop/DragDrop';
 
 import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg';
+import RoomList from '../../../client/state/RoomList';
 
 function Client() {
   const [isLoading, changeLoading] = useState(true);
@@ -44,19 +45,16 @@ function Client() {
     navigation.on(cons.events.navigation.ROOM_SELECTED, onRoomSelected);
     navigation.on(cons.events.navigation.NAVIGATION_OPENED, onNavigationSelected);
 
-    return (() => {
+    return () => {
       navigation.removeListener(cons.events.navigation.ROOM_SELECTED, onRoomSelected);
       navigation.removeListener(cons.events.navigation.NAVIGATION_OPENED, onNavigationSelected);
-    });
+    };
   }, []);
 
   useEffect(() => {
     let counter = 0;
     const iId = setInterval(() => {
-      const msgList = [
-        'Almost there...',
-        'Looks like you have a lot of stuff to heat up!',
-      ];
+      const msgList = ['Almost there...', 'Looks like you have a lot of stuff to heat up!'];
       if (counter === msgList.length - 1) {
         setLoadingMsg(msgList[msgList.length - 1]);
         clearInterval(iId);
@@ -65,7 +63,7 @@ function Client() {
       setLoadingMsg(msgList[counter]);
       counter += 1;
     }, 15000);
-    initMatrix.once('init_loading_finished', () => {
+    initMatrix.on('init_loading_finished', () => {
       clearInterval(iId);
       initHotkeys();
       initRoomListListener(initMatrix.roomList);
@@ -80,22 +78,28 @@ function Client() {
         <div className="loading__menu">
           <ContextMenu
             placement="bottom"
-            content={(
+            content={
               <>
                 <MenuItem onClick={() => initMatrix.clearCacheAndReload()}>
                   Clear cache & reload
                 </MenuItem>
                 <MenuItem onClick={() => initMatrix.logout()}>Logout</MenuItem>
               </>
+            }
+            render={(toggle) => (
+              <IconButton size="extra-small" onClick={toggle} src={VerticalMenuIC} />
             )}
-            render={(toggle) => <IconButton size="extra-small" onClick={toggle} src={VerticalMenuIC} />}
           />
         </div>
         <Spinner />
-        <Text className="loading__message" variant="b2">{loadingMsg}</Text>
+        <Text className="loading__message" variant="b2">
+          {loadingMsg}
+        </Text>
 
         <div className="loading__appname">
-          <Text variant="h2" weight="medium">Cinny</Text>
+          <Text variant="h2" weight="medium">
+            Cinny
+          </Text>
         </div>
       </div>
     );

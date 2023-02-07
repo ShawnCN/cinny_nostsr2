@@ -4,7 +4,8 @@ function getSecret(key) {
   return localStorage.getItem(key);
 }
 
-const isAuthenticated = () => getSecret(cons.secretKey.ACCESS_TOKEN) !== null;
+// const isAuthenticated = () => getSecret(cons.secretKey.ACCESS_TOKEN) !== null;
+const isAuthenticated = () => true;
 
 const secret = {
   accessToken: getSecret(cons.secretKey.ACCESS_TOKEN),
@@ -13,7 +14,4 @@ const secret = {
   baseUrl: getSecret(cons.secretKey.BASE_URL),
 };
 
-export {
-  isAuthenticated,
-  secret,
-};
+export { isAuthenticated, secret };

@@ -1,6 +1,15 @@
-import { RoomHierarchy } from 'matrix-js-sdk/lib/room-hierarchy';
+/* eslint-disable lines-between-class-members */
+// import { RoomHierarchy } from 'matrix-js-sdk/lib/room-hierarchy';
 
 class RoomsHierarchy {
+  matrixClient: any;
+
+  _maxDepth: number;
+
+  _suggestedOnly: boolean;
+  _limit: number;
+  roomIdToHierarchy: Map<any, any>;
+
   constructor(matrixClient, limit = 20, maxDepth = 1, suggestedOnly = false) {
     this.matrixClient = matrixClient;
     this._maxDepth = maxDepth;
@@ -27,15 +36,15 @@ class RoomsHierarchy {
   async load(roomId, limit = this._limit) {
     let roomHierarchy = this.getHierarchy(roomId);
 
-    if (!roomHierarchy) {
-      roomHierarchy = new RoomHierarchy(
-        { roomId, client: this.matrixClient },
-        limit,
-        this._maxDepth,
-        this._suggestedOnly,
-      );
-      this.roomIdToHierarchy.set(roomId, roomHierarchy);
-    }
+    // if (!roomHierarchy) {
+    //   roomHierarchy = new RoomHierarchy(
+    //     { roomId, client: this.matrixClient },
+    //     limit,
+    //     this._maxDepth,
+    //     this._suggestedOnly
+    //   );
+    //   this.roomIdToHierarchy.set(roomId, roomHierarchy);
+    // }
 
     try {
       await roomHierarchy.load(limit);
