@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import './AuthRequest.scss';
 
-import initMatrix from '../../../client/initMatrix';
+import initMatrix from '../../../client/InitMatrix';
 import { openReusableDialog } from '../../../client/action/navigation';
 
 import Text from '../../atoms/text/Text';
@@ -64,7 +64,11 @@ function AuthRequest({ onComplete, makeRequest }) {
         />
         {status.ongoing && <Spinner size="small" />}
         {status.error && <Text variant="b3">{status.error}</Text>}
-        {(status === false || status.error) && <Button variant="primary" type="submit" disabled={!!status.error}>Continue</Button>}
+        {(status === false || status.error) && (
+          <Button variant="primary" type="submit" disabled={!!status.error}>
+            Continue
+          </Button>
+        )}
       </form>
     </div>
   );
@@ -95,7 +99,9 @@ export const authRequest = async (title, makeRequest) => {
     return new Promise((resolve) => {
       let isCompleted = false;
       openReusableDialog(
-        <Text variant="s1" weight="medium">{title}</Text>,
+        <Text variant="s1" weight="medium">
+          {title}
+        </Text>,
         (requestClose) => (
           <AuthRequest
             onComplete={(done) => {
@@ -108,7 +114,7 @@ export const authRequest = async (title, makeRequest) => {
         ),
         () => {
           if (!isCompleted) resolve(false);
-        },
+        }
       );
     });
   }

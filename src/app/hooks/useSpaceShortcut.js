@@ -1,7 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import { useState, useEffect } from 'react';
 
-import initMatrix from '../../client/initMatrix';
+import initMatrix from '../../client/InitMatrix';
 import cons from '../../client/state/cons';
 
 export function useSpaceShortcut() {
@@ -16,7 +16,7 @@ export function useSpaceShortcut() {
     return () => {
       accountData.removeListener(
         cons.events.accountData.SPACE_SHORTCUT_UPDATED,
-        onSpaceShortcutUpdated,
+        onSpaceShortcutUpdated
       );
     };
   }, []);

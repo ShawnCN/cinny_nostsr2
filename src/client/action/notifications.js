@@ -1,4 +1,4 @@
-import initMatrix from '../initMatrix';
+import initMatrix from '../InitMatrix';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function markAsRead(roomId) {

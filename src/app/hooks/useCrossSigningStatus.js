@@ -1,7 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import { useState, useEffect } from 'react';
 
-import initMatrix from '../../client/initMatrix';
+import initMatrix from '../../client/InitMatrix';
 import { hasCrossSigningAccountData } from '../../util/matrixUtil';
 
 export function useCrossSigningStatus() {

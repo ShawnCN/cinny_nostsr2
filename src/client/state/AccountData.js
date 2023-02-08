@@ -1,4 +1,4 @@
-import EventEmitter from 'events';
+import EventEmitter from '../EventEmitter';
 import appDispatcher from '../dispatcher';
 import cons from './cons';
 

@@ -5,7 +5,7 @@ import './SideBar.scss';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 
-import initMatrix from '../../../client/initMatrix';
+import initMatrix from '../../../client/InitMatrix';
 import cons from '../../../client/state/cons';
 import colorMXID from '../../../util/colorMXID';
 import {
@@ -71,7 +71,7 @@ function ProfileAvatarMenu() {
       setNewProfile(myUser.avatarUrl, myUser.displayName);
     };
     mx.getProfileInfo(mx.getUserId()).then((info) => {
-      setNewProfile(info.avatar_url, info.displayname);
+      setNewProfile(info.avatarUrl, info.displayName);
     });
     user.on('User.avatarUrl', onAvatarChange);
     return () => {
@@ -99,7 +99,7 @@ function ProfileAvatarMenu() {
 
 function CrossSigninAlert() {
   const deviceList = useDeviceList();
-  const unverified = deviceList?.filter((device) => isCrossVerified(device.device_id) === false);
+  const unverified = deviceList?.filter((device) => isCrossVerified(device.deviceId) === false);
 
   if (!unverified?.length) return null;
 
@@ -206,10 +206,10 @@ function DraggableSpaceShortcut({ isActive, spaceId, index, moveShortcut, onDrop
         handlerId: monitor.getHandlerId(),
       };
     },
-    drop(item) {
+    drop(item: any) {
       onDrop(item.index, item.spaceId);
     },
-    hover(item, monitor) {
+    hover(item: any, monitor) {
       if (!shortcutRef.current) return;
 
       const dragIndex = item.index;
@@ -329,8 +329,6 @@ function SpaceShortcut() {
 
 function useTotalInvites() {
   const { roomList } = initMatrix;
-  console.log(initMatrix);
-  console.log('6666666666666666', roomList);
   const totalInviteCount = () => 0;
   // roomList.inviteRooms.size + roomList.inviteSpaces.size + roomList.inviteDirects.size;
   const [totalInvites, updateTotalInvites] = useState(totalInviteCount());

@@ -12,19 +12,19 @@ import Notifications from './state/Notifications';
 import { cryptoCallbacks } from './state/secretStorageKeys';
 import navigation from './state/navigation';
 
-import Mt from './Mt';
-const m = new Mt();
+import MatrixClientA from './MatrixClientA';
+const m = new MatrixClientA();
 
 // global.Olm = Olm;
 
 // logger.disableAll();
 
 class InitMatrix extends EventEmitter {
-  matrixClient: Mt;
-  roomList: RoomList | undefined;
-  accountData: AccountData | undefined;
-  roomsInput: RoomsInput | undefined;
-  notifications: Notifications | undefined;
+  matrixClient: MatrixClientA;
+  roomList: RoomList;
+  accountData: AccountData;
+  roomsInput: RoomsInput;
+  notifications: Notifications;
   constructor() {
     super();
     navigation.initMatrix = this;

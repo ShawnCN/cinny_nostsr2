@@ -17,3 +17,11 @@ declare module '*.svg' {
 //   displayName: string;
 //   avatarUrl: string;
 // };
+// export type TRoom ={
+
+// }
+
+// export type TDevice = {
+//   deviceId: string;
+//   device: string[];
+// };

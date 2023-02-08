@@ -15,7 +15,7 @@ import Windows from '../../organisms/pw/Windows';
 import Dialogs from '../../organisms/pw/Dialogs';
 import EmojiBoardOpener from '../../organisms/emoji-board/EmojiBoardOpener';
 
-import initMatrix from '../../../client/initMatrix';
+import initMatrix from '../../../client/InitMatrix';
 import navigation from '../../../client/state/navigation';
 import cons from '../../../client/state/cons';
 import DragDrop from '../../organisms/drag-drop/DragDrop';

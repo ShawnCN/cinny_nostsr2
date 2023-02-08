@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-import initMatrix from '../../../client/initMatrix';
+import initMatrix from '../../../client/InitMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import { getUsername, getUsernameOfRoomMember } from '../../../util/matrixUtil';
@@ -65,9 +65,7 @@ function ReadReceipts() {
       contentOptions={<IconButton src={CrossIC} onClick={() => setIsOpen(false)} tooltip="Close" />}
     >
       <div style={{ marginTop: 'var(--sp-tight)', marginBottom: 'var(--sp-extra-loose)' }}>
-        {
-          readers.map(renderPeople)
-        }
+        {readers.map(renderPeople)}
       </div>
     </Dialog>
   );

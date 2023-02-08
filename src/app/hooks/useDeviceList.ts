@@ -1,19 +1,21 @@
 /* eslint-disable import/prefer-default-export */
 import { useState, useEffect } from 'react';
+import TDevice from '../../../types/TDevice';
 
-import initMatrix from '../../client/initMatrix';
+import initMatrix from '../../client/InitMatrix';
 
 export function useDeviceList() {
   const mx = initMatrix.matrixClient;
-  const [deviceList, setDeviceList] = useState(null);
+  const [deviceList, setDeviceList] = useState<TDevice[]>(null as unknown as TDevice[]);
 
   useEffect(() => {
     let isMounted = true;
 
-    const updateDevices = () => mx.getDevices().then((data) => {
-      if (!isMounted) return;
-      setDeviceList(data.devices || []);
-    });
+    const updateDevices = () =>
+      mx.getDevices().then((data) => {
+        if (!isMounted) return;
+        setDeviceList(data.devices || []);
+      });
     updateDevices();
 
     const handleDevicesUpdate = (users) => {

@@ -2,7 +2,7 @@ const cons = {
   version: '2.2.4',
   secretKey: {
     ACCESS_TOKEN: 'cinny_access_token',
-    DEVICE_ID: 'cinny_device_id',
+    deviceId: 'cinny_deviceId',
     USER_ID: 'cinny_user_id',
     BASE_URL: 'cinny_hs_base_url',
   },
@@ -155,5 +155,86 @@ const cons = {
 };
 
 Object.freeze(cons);
+
+export const stage3relays = [
+  'wss://relay.nostr.ch',
+  'wss://nostr-pub.wellorder.net',
+  // 'wss://nostr.zebedee.cloud',
+  // 'wss://nostr-relay.lnmarkets.com',
+  // 'wss://nostr.rdfriedl.com',
+  // 'wss://no.str.cr',
+  // 'wss://relay.farscapian.com',
+  // 'wss://relay.oldcity-bitcoiners.info',
+  // 'wss://nostr.fly.dev',
+  // 'wss://relay.cryptocculture.com',
+  // 'wss://nostr-verified.wellorder.net',
+  'wss://relay.damus.io',
+  // 'wss://nostr.drss.io',
+  // 'wss://nostr-relay.untethr.me',
+  // 'wss://nostr-relay.freeberty.net',
+  // 'wss://relay.minds.com/nostr/v1/ws',
+];
+
+export const defaultChatroomList = [
+  {
+    user_id: 'globalfeed',
+    type: 'groupRelay',
+    unread: 0,
+    new_message: '',
+    new_message_created_at: 0,
+  },
+  {
+    user_id: 'aa82def2a4110b491eb1874138b7eb97514c53be43627babe25e5c15660aff3d',
+    type: 'groupChannel',
+    unread: 0,
+    new_message: '',
+    new_message_created_at: 0,
+  },
+  {
+    user_id: '25e5c82273a271cb1a840d0060391a0bf4965cafeb029d5ab55350b418953fbb',
+    type: 'groupChannel',
+    unread: 0,
+    new_message: '',
+    new_message_created_at: 0,
+  },
+];
+
+export const TChannelMapList = {
+  // globalfeed: {
+  //   user_id: 'globalfeed',
+  //   type: 'groupRelay',
+  //   name: 'Global',
+  //   about: '',
+  //   profile_img: 'https://picsum.photos/seed/picsum/200',
+  //   query_time:0,
+  //   created_at:0,
+  //   creatorPubkey:'',
+  //   sig:'',
+  // },
+  ['aa82def2a4110b491eb1874138b7eb97514c53be43627babe25e5c15660aff3d']: {
+    user_id: 'aa82def2a4110b491eb1874138b7eb97514c53be43627babe25e5c15660aff3d',
+    type: 'groupChannel',
+    name: 'NostrCN',
+    about:
+      'Nostr是一个无许可的、去中心化的内容协议。拥有私钥即可在任何Nostr客户端上对内容进行访问和编辑。Own your key. Own you content.',
+    profile_img: 'https://i.ibb.co/yh1jTXH/Fl-Eo-JPTWAAA8-Io.jpg',
+    query_time: 0,
+    creatorPubkey: '9d76a2ac373fc751f3467317f2dd4c3a847bedc53fcd9d7c52ff278a127b6f2e',
+    created_at: 1672645767,
+    sig: 'not found',
+  },
+  ['25e5c82273a271cb1a840d0060391a0bf4965cafeb029d5ab55350b418953fbb']: {
+    user_id: '25e5c82273a271cb1a840d0060391a0bf4965cafeb029d5ab55350b418953fbb',
+    type: 'groupChannel',
+    name: 'Nostr',
+    about: '',
+    created_at: 1661333723,
+    profile_img:
+      'https://cloudflare-ipfs.com/ipfs/QmTN4Eas9atUULVbEAbUU8cowhtvK7g3t7jfKztY7wc8eP?.png',
+    creatorPubkey: 'ed1d0e1f743a7d19aa2dfb0162df73bacdbc699f67cc55bb91a98c35f7deac69',
+    query_time: 0,
+    sig: '',
+  },
+};
 
 export default cons;

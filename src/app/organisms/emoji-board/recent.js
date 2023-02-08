@@ -1,4 +1,4 @@
-import initMatrix from '../../../client/initMatrix';
+import initMatrix from '../../../client/InitMatrix';
 import { emojis } from './emoji';
 
 const eventType = 'io.element.recent_emoji';

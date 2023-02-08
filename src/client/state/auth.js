@@ -9,7 +9,7 @@ const isAuthenticated = () => true;
 
 const secret = {
   accessToken: getSecret(cons.secretKey.ACCESS_TOKEN),
-  deviceId: getSecret(cons.secretKey.DEVICE_ID),
+  deviceId: getSecret(cons.secretKey.deviceId),
   userId: getSecret(cons.secretKey.USER_ID),
   baseUrl: getSecret(cons.secretKey.BASE_URL),
 };

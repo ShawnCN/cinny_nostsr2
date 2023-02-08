@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import './SecretStorageAccess.scss';
 // import { deriveKey } from 'matrix-js-sdk/lib/crypto/key_passphrase';
 
-import initMatrix from '../../../client/initMatrix';
+import initMatrix from '../../../client/InitMatrix';
 import { openReusableDialog } from '../../../client/action/navigation';
 import { getDefaultSSKey, getSSKeyInfo } from '../../../util/matrixUtil';
 import {

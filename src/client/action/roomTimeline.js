@@ -1,10 +1,15 @@
-import initMatrix from '../initMatrix';
+import initMatrix from '../InitMatrix';
 
 async function redactEvent(roomId, eventId, reason) {
   const mx = initMatrix.matrixClient;
 
   try {
-    await mx.redactEvent(roomId, eventId, undefined, typeof reason === 'undefined' ? undefined : { reason });
+    await mx.redactEvent(
+      roomId,
+      eventId,
+      undefined,
+      typeof reason === 'undefined' ? undefined : { reason }
+    );
     return true;
   } catch (e) {
     throw new Error(e);
@@ -28,7 +33,4 @@ async function sendReaction(roomId, toEventId, reaction, shortcode) {
   }
 }
 
-export {
-  redactEvent,
-  sendReaction,
-};
+export { redactEvent, sendReaction };

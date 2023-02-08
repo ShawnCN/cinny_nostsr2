@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Drawer.scss';
 
-import initMatrix from '../../../client/initMatrix';
+import initMatrix from '../../../client/InitMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 
@@ -72,16 +72,16 @@ function Drawer() {
         <div className="rooms__wrapper">
           <ScrollView ref={scrollRef} autoHide>
             <div className="rooms-container">
-              {
-                selectedTab !== cons.tabs.DIRECTS
-                  ? <Home spaceId={spaceId} />
-                  : <Directs size={roomList.directs.size} />
-              }
+              {selectedTab !== cons.tabs.DIRECTS ? (
+                <Home spaceId={spaceId} />
+              ) : (
+                <Directs size={roomList.directs.size} />
+              )}
             </div>
           </ScrollView>
         </div>
       </div>
-      { systemState !== null && (
+      {systemState !== null && (
         <div className="drawer__state">
           <Text>{systemState.status}</Text>
         </div>

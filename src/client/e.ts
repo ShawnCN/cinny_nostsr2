@@ -25,6 +25,17 @@ class EventEmitter {
     }
     this.observers[event] = this.observers[event].filter((l: any) => l !== listener);
   }
+  removeListener<TEventName extends keyof LocalEventTypes & string>(
+    event: TEventName,
+    listener: (...eventArg: LocalEventTypes[TEventName]) => void
+  ) {
+    if (!this.observers[event]) return;
+    if (!listener) {
+      delete this.observers[event];
+      return;
+    }
+    this.observers[event] = this.observers[event].filter((l: any) => l !== listener);
+  }
 
   emit<TEventName extends keyof LocalEventTypes & string>(
     event: TEventName,
@@ -56,6 +67,8 @@ type LocalEventTypes = {
   startConnect: [arg1: string];
   startConnectError: [arg1: string];
   'event-2': [arg1: number, arg2: string];
+  'RoomMember.powerLevel': [arg1: number, arg2: string];
+  'RoomMember.membership': [arg1: number, arg2: string];
 };
 
 export enum EV {

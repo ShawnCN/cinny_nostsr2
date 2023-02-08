@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Room.scss';
 
-import initMatrix from '../../../client/initMatrix';
+import initMatrix from '../../../client/InitMatrix';
 import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
 import RoomTimeline from '../../../client/state/RoomTimeline';

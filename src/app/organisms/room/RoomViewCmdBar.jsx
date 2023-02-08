@@ -7,7 +7,7 @@ import twemoji from 'twemoji';
 
 import { twemojify, TWEMOJI_BASE_URL } from '../../../util/twemojify';
 
-import initMatrix from '../../../client/initMatrix';
+import initMatrix from '../../../client/InitMatrix';
 import { getEmojiForCompletion } from '../emoji-board/custom-emoji';
 import AsyncSearch from '../../../util/AsyncSearch';
 

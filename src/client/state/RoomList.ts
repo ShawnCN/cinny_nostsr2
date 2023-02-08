@@ -1,6 +1,7 @@
-import EventEmitter from 'events';
+import EventEmitter from '../EventEmitter';
 import appDispatcher from '../dispatcher';
 import cons from './cons';
+import TRoom from '../../../types/TRoom';
 
 function isMEventSpaceChild(mEvent) {
   return mEvent.getType() === 'm.space.child' && Object.keys(mEvent.getContent()).length > 0;
@@ -82,7 +83,7 @@ class RoomList extends EventEmitter {
     if (space === null) return null;
     const mSpaceChild = space?.currentState.getStateEvents('m.space.child');
 
-    const children = [];
+    const children = [] as string[];
     mSpaceChild.forEach((mEvent) => {
       const childId = mEvent.event.state_key;
       if (isMEventSpaceChild(mEvent)) children.push(childId);
@@ -100,9 +101,9 @@ class RoomList extends EventEmitter {
 
       const child = this.getSpaceChildren(spaceId);
 
-      child.forEach((childId) => {
+      child?.forEach((childId) => {
         // const room = this.matrixClient.getRoom(childId);
-        const room = null;
+        const room = null as unknown as TRoom;
         if (room === null || room.getMyMembership() !== 'join') return;
         if (room.isSpaceRoom()) categorizeSpace(childId);
         else mappedChild.add(childId);
@@ -168,7 +169,7 @@ class RoomList extends EventEmitter {
   roomActions(action) {
     const addRoom = (roomId, isDM) => {
       // const myRoom = this.matrixClient.getRoom(roomId);
-      const myRoom = null;
+      const myRoom = null as unknown as TRoom;
       if (myRoom === null) return false;
 
       if (isDM) this.directs.add(roomId);
@@ -181,6 +182,7 @@ class RoomList extends EventEmitter {
         if (addRoom(action.roomId, action.isDM)) {
           setTimeout(() => {
             this.emit(cons.events.roomList.ROOM_JOINED, action.roomId);
+            // @ts-ignore
             this.emit(cons.events.roomList.ROOMLIST_UPDATED);
           }, 100);
         } else {
@@ -196,6 +198,7 @@ class RoomList extends EventEmitter {
           setTimeout(() => {
             this.emit(cons.events.roomList.ROOM_CREATED, action.roomId);
             this.emit(cons.events.roomList.ROOM_JOINED, action.roomId);
+            // @ts-ignore
             this.emit(cons.events.roomList.ROOMLIST_UPDATED);
           }, 100);
         } else {
@@ -261,8 +264,7 @@ class RoomList extends EventEmitter {
 
   _isDMInvite(room) {
     if (this.mDirects.has(room.roomId)) return true;
-    // const me = room.getMember(this.matrixClient.getUserId());
-    const me = null;
+    const me = room.getMember(this.matrixClient.getUserId());
     const myEventContent = me?.events.member.getContent();
     return myEventContent.membership === 'invite' && myEventContent.is_direct;
   }
@@ -283,6 +285,7 @@ class RoomList extends EventEmitter {
         if (myRoom.getMyMembership() === 'join') {
           this.directs.add(directId);
           this.rooms.delete(directId);
+          // @ts-ignore
           this.emit(cons.events.roomList.ROOMLIST_UPDATED);
         }
       });
@@ -296,6 +299,7 @@ class RoomList extends EventEmitter {
         if (myRoom.getMyMembership() === 'join') {
           this.directs.delete(directId);
           this.rooms.add(directId);
+          // @ts-ignore
           this.emit(cons.events.roomList.ROOMLIST_UPDATED);
         }
       });

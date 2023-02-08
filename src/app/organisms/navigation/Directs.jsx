@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
-import initMatrix from '../../../client/initMatrix';
+import initMatrix from '../../../client/InitMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import Postie from '../../../util/Postie';
@@ -39,8 +39,10 @@ function Directs({ size }) {
     const selectorChanged = (selectedRoomId, prevSelectedRoomId) => {
       if (!drawerPostie.hasTopic('selector-change')) return;
       const addresses = [];
-      if (drawerPostie.hasSubscriber('selector-change', selectedRoomId)) addresses.push(selectedRoomId);
-      if (drawerPostie.hasSubscriber('selector-change', prevSelectedRoomId)) addresses.push(prevSelectedRoomId);
+      if (drawerPostie.hasSubscriber('selector-change', selectedRoomId))
+        addresses.push(selectedRoomId);
+      if (drawerPostie.hasSubscriber('selector-change', prevSelectedRoomId))
+        addresses.push(prevSelectedRoomId);
       if (addresses.length === 0) return;
       drawerPostie.post('selector-change', addresses, selectedRoomId);
     };

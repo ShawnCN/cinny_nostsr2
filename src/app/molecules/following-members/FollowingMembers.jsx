@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './FollowingMembers.scss';
 
-import initMatrix from '../../../client/initMatrix';
+import initMatrix from '../../../client/InitMatrix';
 import cons from '../../../client/state/cons';
 import { openReadReceipts } from '../../../client/action/navigation';
 
@@ -37,18 +37,19 @@ function FollowingMembers({ roomTimeline }) {
 
   const filteredM = followingMembers.filter((userId) => userId !== myUserId);
 
-  return filteredM.length !== 0 && (
-    <button
-      className="following-members"
-      onClick={() => openReadReceipts(roomId, followingMembers)}
-      type="button"
-    >
-      <RawIcon
-        size="extra-small"
-        src={TickMarkIC}
-      />
-      <Text variant="b2">{getUsersActionJsx(roomId, filteredM, 'following the conversation.')}</Text>
-    </button>
+  return (
+    filteredM.length !== 0 && (
+      <button
+        className="following-members"
+        onClick={() => openReadReceipts(roomId, followingMembers)}
+        type="button"
+      >
+        <RawIcon size="extra-small" src={TickMarkIC} />
+        <Text variant="b2">
+          {getUsersActionJsx(roomId, filteredM, 'following the conversation.')}
+        </Text>
+      </button>
+    )
   );
 }
 

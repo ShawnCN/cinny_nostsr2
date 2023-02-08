@@ -23,7 +23,7 @@ class ImagePack {
     const pack = content.pack ?? {};
 
     this.displayName = pack.display_name;
-    this.avatarUrl = pack.avatar_url;
+    this.avatarUrl = pack.avatarUrl;
     this.usage = pack.usage ?? ['emoticon', 'sticker'];
     this.attribution = pack.attribution;
   }
@@ -41,7 +41,11 @@ class ImagePack {
 
       if (!mxc) return;
       const image = {
-        shortcode, mxc, body, usage, info,
+        shortcode,
+        mxc,
+        body,
+        usage,
+        info,
       };
 
       this.images.set(shortcode, image);
@@ -79,7 +83,7 @@ class ImagePack {
   }
 
   setAvatarUrl(avatarUrl) {
-    this._updatePackProperty('avatar_url', avatarUrl);
+    this._updatePackProperty('avatarUrl', avatarUrl);
   }
 
   setDisplayName(displayName) {
@@ -156,15 +160,17 @@ function getGlobalImagePacks(mx) {
     if (!room) return [];
     const stateKeys = Object.keys(rooms[roomId]);
 
-    return stateKeys.map((stateKey) => {
-      const data = room.currentState.getStateEvents('im.ponies.room_emotes', stateKey);
-      const pack = ImagePack.parsePack(data?.getId(), data?.getContent());
-      if (pack) {
-        pack.displayName ??= room.name;
-        pack.avatarUrl ??= room.getMxcAvatarUrl();
-      }
-      return pack;
-    }).filter((pack) => pack !== null);
+    return stateKeys
+      .map((stateKey) => {
+        const data = room.currentState.getStateEvents('im.ponies.room_emotes', stateKey);
+        const pack = ImagePack.parsePack(data?.getId(), data?.getContent());
+        if (pack) {
+          pack.displayName ??= room.name;
+          pack.avatarUrl ??= room.getMxcAvatarUrl();
+        }
+        return pack;
+      })
+      .filter((pack) => pack !== null);
   });
 
   return packs;
@@ -210,7 +216,7 @@ function getRelevantPacks(mx, rooms) {
   return [].concat(
     userPack ?? [],
     globalPacks,
-    roomsPack.filter((pack) => !globalPackIds.has(pack.id)),
+    roomsPack.filter((pack) => !globalPackIds.has(pack.id))
   );
 }
 
@@ -261,7 +267,11 @@ function getEmojiForCompletion(mx, rooms) {
 
 export {
   ImagePack,
-  getUserImagePack, getGlobalImagePacks, getRoomImagePacks,
-  getShortcodeToEmoji, getShortcodeToCustomEmoji,
-  getRelevantPacks, getEmojiForCompletion,
+  getUserImagePack,
+  getGlobalImagePacks,
+  getRoomImagePacks,
+  getShortcodeToEmoji,
+  getShortcodeToCustomEmoji,
+  getRelevantPacks,
+  getEmojiForCompletion,
 };

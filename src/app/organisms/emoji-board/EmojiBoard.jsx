@@ -8,7 +8,7 @@ import parse from 'html-react-parser';
 import twemoji from 'twemoji';
 import { emojiGroups, emojis } from './emoji';
 import { getRelevantPacks } from './custom-emoji';
-import initMatrix from '../../../client/initMatrix';
+import initMatrix from '../../../client/InitMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import AsyncSearch from '../../../util/AsyncSearch';

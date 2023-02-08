@@ -4,7 +4,7 @@ import './RoomSettings.scss';
 
 import { blurOnBubbling } from '../../atoms/button/script';
 
-import initMatrix from '../../../client/initMatrix';
+import initMatrix from '../../../client/InitMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import { openInviteUser, toggleRoomSettings } from '../../../client/action/navigation';
@@ -49,31 +49,38 @@ const tabText = {
   SECURITY: 'Security',
 };
 
-const tabItems = [{
-  iconSrc: SettingsIC,
-  text: tabText.GENERAL,
-  disabled: false,
-}, {
-  iconSrc: SearchIC,
-  text: tabText.SEARCH,
-  disabled: false,
-}, {
-  iconSrc: UserIC,
-  text: tabText.MEMBERS,
-  disabled: false,
-}, {
-  iconSrc: EmojiIC,
-  text: tabText.EMOJIS,
-  disabled: false,
-}, {
-  iconSrc: ShieldUserIC,
-  text: tabText.PERMISSIONS,
-  disabled: false,
-}, {
-  iconSrc: LockIC,
-  text: tabText.SECURITY,
-  disabled: false,
-}];
+const tabItems = [
+  {
+    iconSrc: SettingsIC,
+    text: tabText.GENERAL,
+    disabled: false,
+  },
+  {
+    iconSrc: SearchIC,
+    text: tabText.SEARCH,
+    disabled: false,
+  },
+  {
+    iconSrc: UserIC,
+    text: tabText.MEMBERS,
+    disabled: false,
+  },
+  {
+    iconSrc: EmojiIC,
+    text: tabText.EMOJIS,
+    disabled: false,
+  },
+  {
+    iconSrc: ShieldUserIC,
+    text: tabText.PERMISSIONS,
+    disabled: false,
+  },
+  {
+    iconSrc: LockIC,
+    text: tabText.SECURITY,
+    disabled: false,
+  },
+];
 
 function GeneralSettings({ roomId }) {
   const mx = initMatrix.matrixClient;
@@ -84,11 +91,7 @@ function GeneralSettings({ roomId }) {
     <>
       <div className="room-settings__card">
         <MenuHeader>Options</MenuHeader>
-        <MenuItem
-          disabled={!canInvite}
-          onClick={() => openInviteUser(roomId)}
-          iconSrc={AddUserIC}
-        >
+        <MenuItem disabled={!canInvite} onClick={() => openInviteUser(roomId)} iconSrc={AddUserIC}>
           Invite
         </MenuItem>
         <MenuItem
@@ -98,7 +101,7 @@ function GeneralSettings({ roomId }) {
               'Leave room',
               `Are you sure that you want to leave "${room.name}" room?`,
               'Leave',
-              'danger',
+              'danger'
             );
             if (!isConfirmed) return;
             roomActions.leave(roomId);

@@ -3,7 +3,7 @@ import cons from '../state/cons';
 
 function updateLocalStore(accessToken, deviceId, userId, baseUrl) {
   localStorage.setItem(cons.secretKey.ACCESS_TOKEN, accessToken);
-  localStorage.setItem(cons.secretKey.DEVICE_ID, deviceId);
+  localStorage.setItem(cons.secretKey.deviceId, deviceId);
   localStorage.setItem(cons.secretKey.USER_ID, userId);
   localStorage.setItem(cons.secretKey.BASE_URL, baseUrl);
 }
@@ -40,7 +40,7 @@ async function login(baseUrl, username, email, password) {
   });
 
   const myBaseUrl = res?.well_known?.['m.homeserver']?.base_url || client.baseUrl;
-  updateLocalStore(res.access_token, res.device_id, res.user_id, myBaseUrl);
+  updateLocalStore(res.access_token, res.deviceId, res.user_id, myBaseUrl);
 }
 
 async function loginWithToken(baseUrl, token) {
@@ -52,7 +52,7 @@ async function loginWithToken(baseUrl, token) {
   });
 
   const myBaseUrl = res?.well_known?.['m.homeserver']?.base_url || client.baseUrl;
-  updateLocalStore(res.access_token, res.device_id, res.user_id, myBaseUrl);
+  updateLocalStore(res.access_token, res.deviceId, res.user_id, myBaseUrl);
 }
 
 // eslint-disable-next-line camelcase
@@ -87,7 +87,7 @@ async function completeRegisterStage(baseUrl, username, password, auth) {
     const data = { completed: result.completed || [] };
     if (result.access_token) {
       data.done = true;
-      updateLocalStore(result.access_token, result.device_id, result.user_id, baseUrl);
+      updateLocalStore(result.access_token, result.deviceId, result.user_id, baseUrl);
     }
     return data;
   } catch (e) {
@@ -95,7 +95,7 @@ async function completeRegisterStage(baseUrl, username, password, auth) {
     const data = { completed: result.completed || [] };
     if (result.access_token) {
       data.done = true;
-      updateLocalStore(result.access_token, result.device_id, result.user_id, baseUrl);
+      updateLocalStore(result.access_token, result.deviceId, result.user_id, baseUrl);
     }
     return data;
   }
