@@ -11,6 +11,9 @@ import LogoSVG from '../../../public/res/svg/cinny.svg';
 import LogoUnreadSVG from '../../../public/res/svg/cinny-unread.svg';
 import LogoHighlightSVG from '../../../public/res/svg/cinny-highlight.svg';
 import { html, plain } from '../../util/markdown';
+import TRoom from '../../../types/TRoom';
+import MatrixClientA from '../MatrixClientA';
+import RoomList from './RoomList';
 
 function isNotifEvent(mEvent) {
   const eType = mEvent.getType();
@@ -32,6 +35,15 @@ function findMutedRule(overrideRules, roomId) {
 }
 
 class Notifications extends EventEmitter {
+  initialized: boolean;
+  favicon: string;
+  matrixClient: MatrixClientA;
+  roomList: RoomList;
+  roomIdToNoti: Map<any, any>;
+  roomIdToPopupNotis: Map<any, any>;
+  eventIdToPopupNoti: Map<any, any>;
+  _notiAudio: any;
+  _inviteAudio: any;
   constructor(roomList) {
     super();
 
@@ -71,7 +83,7 @@ class Notifications extends EventEmitter {
     this._updateFavicon();
   }
 
-  doesRoomHaveUnread(room) {
+  doesRoomHaveUnread(room: TRoom) {
     const userId = this.matrixClient.getUserId();
     const readUpToId = room.getEventReadUpTo(userId);
     const liveEvents = room.getLiveTimeline().getEvents();

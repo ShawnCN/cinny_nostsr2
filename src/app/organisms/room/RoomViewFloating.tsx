@@ -15,6 +15,7 @@ import MessageUnreadIC from '../../../../public/res/ic/outlined/message-unread.s
 import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 
 import { getUsersActionJsx } from './common';
+import RoomTimeline from '../../../client/state/RoomTimeline';
 
 function useJumpToEvent(roomTimeline) {
   const [eventId, setEventId] = useState(null);
@@ -82,8 +83,11 @@ function useScrollToBottom(roomTimeline) {
 
   return [isAtBottom, setIsAtBottom];
 }
-
-function RoomViewFloating({ roomId, roomTimeline }) {
+interface IPropsRoomViewFloating {
+  roomId: string;
+  roomTimeline: RoomTimeline;
+}
+function RoomViewFloating({ roomId, roomTimeline }: IPropsRoomViewFloating) {
   const [isJumpToEvent, jumpToEvent, cancelJumpToEvent] = useJumpToEvent(roomTimeline);
   const [typingMembers] = useTypingMembers(roomTimeline);
   const [isAtBottom, setIsAtBottom] = useScrollToBottom(roomTimeline);
@@ -96,12 +100,12 @@ function RoomViewFloating({ roomId, roomTimeline }) {
   return (
     <>
       <div className={`room-view__unread ${isJumpToEvent ? 'room-view__unread--open' : ''}`}>
-        <Button iconSrc={MessageUnreadIC} onClick={jumpToEvent} variant="primary">
+        <Button iconSrc={MessageUnreadIC} onClick={jumpToEvent as () => void} variant="primary">
           <Text variant="b3" weight="medium">
             Jump to unread messages
           </Text>
         </Button>
-        <Button iconSrc={TickMarkIC} onClick={cancelJumpToEvent} variant="primary">
+        <Button iconSrc={TickMarkIC} onClick={cancelJumpToEvent as () => void} variant="primary">
           <Text variant="b3" weight="bold">
             Mark as read
           </Text>
@@ -125,9 +129,9 @@ function RoomViewFloating({ roomId, roomTimeline }) {
     </>
   );
 }
-RoomViewFloating.propTypes = {
-  roomId: PropTypes.string.isRequired,
-  roomTimeline: PropTypes.shape({}).isRequired,
-};
+// RoomViewFloating.propTypes = {
+//   roomId: PropTypes.string.isRequired,
+//   roomTimeline: PropTypes.shape({}).isRequired,
+// };
 
 export default RoomViewFloating;

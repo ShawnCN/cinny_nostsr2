@@ -90,7 +90,7 @@ ModerationTools.propTypes = {
   userId: PropTypes.string.isRequired,
 };
 
-function SessionInfo({ userId }) {
+function SessionInfo({ userId }: { userId: string }) {
   const [devices, setDevices] = useState<TDevice[]>(null as unknown as TDevice[]);
   const [isVisible, setIsVisible] = useState(false);
   const mx = initMatrix.matrixClient;
@@ -149,9 +149,9 @@ function SessionInfo({ userId }) {
   );
 }
 
-SessionInfo.propTypes = {
-  userId: PropTypes.string.isRequired,
-};
+// SessionInfo.propTypes = {
+//   userId: PropTypes.string.isRequired,
+// };
 
 function ProfileFooter({ roomId, userId, onRequestClose }) {
   const [isCreatingDM, setIsCreatingDM] = useState(false);
@@ -426,10 +426,10 @@ function ProfileViewer() {
   return (
     <Dialog
       className="profile-viewer__dialog"
-      isOpen={isOpen}
+      isOpen={isOpen as boolean}
       title={room?.name ?? ''}
-      onAfterClose={handleAfterClose}
-      onRequestClose={closeDialog}
+      onAfterClose={handleAfterClose as () => void}
+      onRequestClose={closeDialog as () => void}
       contentOptions={<IconButton src={CrossIC} onClick={closeDialog} tooltip="Close" />}
     >
       {roomId ? renderProfile() : <div />}

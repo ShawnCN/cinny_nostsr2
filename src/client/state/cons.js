@@ -200,17 +200,17 @@ export const defaultChatroomList = [
 ];
 
 export const TChannelMapList = {
-  // globalfeed: {
-  //   user_id: 'globalfeed',
-  //   type: 'groupRelay',
-  //   name: 'Global',
-  //   about: '',
-  //   profile_img: 'https://picsum.photos/seed/picsum/200',
-  //   query_time:0,
-  //   created_at:0,
-  //   creatorPubkey:'',
-  //   sig:'',
-  // },
+  globalfeed: {
+    user_id: 'globalfeed',
+    type: 'groupRelay',
+    name: 'Global',
+    about: '',
+    profile_img: 'https://picsum.photos/seed/picsum/200',
+    query_time: 0,
+    created_at: 0,
+    creatorPubkey: '',
+    sig: '',
+  },
   ['aa82def2a4110b491eb1874138b7eb97514c53be43627babe25e5c15660aff3d']: {
     user_id: 'aa82def2a4110b491eb1874138b7eb97514c53be43627babe25e5c15660aff3d',
     type: 'groupChannel',

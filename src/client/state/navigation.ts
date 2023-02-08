@@ -1,12 +1,22 @@
 import EventEmitter from '../EventEmitter';
 import appDispatcher from '../dispatcher';
 import cons from './cons';
+import initMatrix from '../InitMatrix';
 
 class Navigation extends EventEmitter {
+  initMatrix: typeof initMatrix;
+  selectedTab: string;
+  selectedSpaceId: null;
+  selectedSpacePath: string[];
+  selectedRoomId: null;
+  isRoomSettings: boolean;
+  recentRooms: string[];
+  spaceToRoom: Map<any, any>;
+  rawModelStack: boolean[];
   constructor() {
     super();
     // this will attached by initMatrix
-    this.initMatrix = {};
+    this.initMatrix = {} as typeof initMatrix;
 
     this.selectedTab = cons.tabs.HOME;
     this.selectedSpaceId = null;
@@ -99,6 +109,7 @@ class Navigation extends EventEmitter {
 
   _selectTabWithRoom(roomId) {
     const { roomList, accountData } = this.initMatrix;
+    console.log('accountData', accountData);
     const { categorizedSpaces } = accountData;
 
     if (roomList.isOrphan(roomId)) {
@@ -200,15 +211,17 @@ class Navigation extends EventEmitter {
   _selectRoomWithSpace(spaceId) {
     if (!spaceId) return;
     const { roomList, accountData, matrixClient } = this.initMatrix;
+    console.log('accountData', accountData);
     const { categorizedSpaces } = accountData;
 
     const data = this.spaceToRoom.get(spaceId);
     if (data && !categorizedSpaces.has(spaceId)) {
+      // @ts-ignore
       this._selectRoom(data.roomId);
       return;
     }
 
-    const children = [];
+    const children: string[] = [];
 
     if (categorizedSpaces.has(spaceId)) {
       const categories = roomList.getCategorizedSpaces([spaceId]);
@@ -216,6 +229,7 @@ class Navigation extends EventEmitter {
       const latestSelectedRoom = this._getLatestSelectedRoomId([...categories.keys()]);
 
       if (latestSelectedRoom) {
+        // @ts-ignore
         this._selectRoom(latestSelectedRoom);
         return;
       }
@@ -226,7 +240,7 @@ class Navigation extends EventEmitter {
         });
       });
     } else {
-      roomList.getSpaceChildren(spaceId).forEach((id) => {
+      roomList.getSpaceChildren(spaceId)?.forEach((id) => {
         if (matrixClient.getRoom(id)?.isSpaceRoom() === false) {
           children.push(id);
         }
@@ -234,10 +248,11 @@ class Navigation extends EventEmitter {
     }
 
     if (!children) {
+      // @ts-ignore
       this._selectRoom(null);
       return;
     }
-
+    // @ts-ignore
     this._selectRoom(this._getLatestActiveRoomId(children));
   }
 
@@ -246,10 +261,12 @@ class Navigation extends EventEmitter {
     if (tabId === cons.tabs.HOME || tabId === cons.tabs.DIRECTS) {
       const data = this.spaceToRoom.get(tabId);
       if (data) {
+        // @ts-ignore
         this._selectRoom(data.roomId);
         return;
       }
       const children = tabId === cons.tabs.HOME ? roomList.getOrphanRooms() : [...roomList.directs];
+      // @ts-ignore
       this._selectRoom(this._getLatestActiveRoomId(children));
       return;
     }

@@ -82,17 +82,18 @@ class RoomList extends EventEmitter {
     const space = this.matrixClient.getRoom(roomId);
     // const space = null;
     if (space === null) return null;
+    console.log(space);
     const mSpaceChild = space?.currentState.getStateEvents('m.space.child');
 
     const children = [] as string[];
-    mSpaceChild.forEach((mEvent) => {
+    mSpaceChild?.forEach((mEvent) => {
       const childId = mEvent.event.state_key;
       if (isMEventSpaceChild(mEvent)) children.push(childId);
     });
     return children;
   }
 
-  getCategorizedSpaces(spaceIds) {
+  getCategorizedSpaces(spaceIds: string[]) {
     const categorized = new Map();
 
     const categorizeSpace = (spaceId) => {
@@ -103,8 +104,7 @@ class RoomList extends EventEmitter {
       const child = this.getSpaceChildren(spaceId);
 
       child?.forEach((childId) => {
-        // const room = this.matrixClient.getRoom(childId);
-        const room = null as unknown as TRoom;
+        const room = this.matrixClient.getRoom(childId);
         if (room === null || room.getMyMembership() !== 'join') return;
         if (room.isSpaceRoom()) categorizeSpace(childId);
         else mappedChild.add(childId);
@@ -239,28 +239,28 @@ class RoomList extends EventEmitter {
     this.inviteDirects.clear();
     this.inviteSpaces.clear();
     this.inviteRooms.clear();
-    // this.matrixClient.getRooms().forEach((room) => {
-    //   const { roomId } = room;
-    //   const tombstone = room.currentState.events.get('m.room.tombstone');
-    //   if (tombstone?.get('') !== undefined) {
-    //     const repRoomId = tombstone.get('').getContent().replacement_room;
-    //     const repRoomMembership = this.matrixClient.getRoom(repRoomId)?.getMyMembership();
-    //     if (repRoomMembership === 'join') return;
-    //   }
+    this.matrixClient.getRooms().forEach((room) => {
+      const { roomId } = room;
+      const tombstone = room.currentState.events.get('m.room.tombstone');
+      if (tombstone?.get('') !== undefined) {
+        const repRoomId = tombstone.get('').getContent().replacement_room;
+        const repRoomMembership = this.matrixClient.getRoom(repRoomId)?.getMyMembership();
+        if (repRoomMembership === 'join') return;
+      }
 
-    //   if (room.getMyMembership() === 'invite') {
-    //     if (this._isDMInvite(room)) this.inviteDirects.add(roomId);
-    //     else if (room.isSpaceRoom()) this.inviteSpaces.add(roomId);
-    //     else this.inviteRooms.add(roomId);
-    //     return;
-    //   }
+      if (room.getMyMembership() === 'invite') {
+        if (this._isDMInvite(room)) this.inviteDirects.add(roomId);
+        else if (room.isSpaceRoom()) this.inviteSpaces.add(roomId);
+        else this.inviteRooms.add(roomId);
+        return;
+      }
 
-    //   if (room.getMyMembership() !== 'join') return;
+      if (room.getMyMembership() !== 'join') return;
 
-    //   if (this.mDirects.has(roomId)) this.directs.add(roomId);
-    //   else if (room.isSpaceRoom()) this.addToSpaces(roomId);
-    //   else this.rooms.add(roomId);
-    // });
+      if (this.mDirects.has(roomId)) this.directs.add(roomId);
+      else if (room.isSpaceRoom()) this.addToSpaces(roomId);
+      else this.rooms.add(roomId);
+    });
   }
 
   _isDMInvite(room) {

@@ -8,7 +8,7 @@ class AccountData extends EventEmitter {
   roomList: RoomList;
   spaces: Set<unknown>;
   spaceShortcut: Set<unknown>;
-  categorizedSpaces: Set<unknown>;
+  categorizedSpaces: Set<string>;
   constructor(roomList: RoomList) {
     super();
 
@@ -16,7 +16,7 @@ class AccountData extends EventEmitter {
     this.roomList = roomList;
     this.spaces = roomList.spaces;
 
-    this.spaceShortcut = new Set(['globalfeed']);
+    this.spaceShortcut = new Set();
     this._populateSpaceShortcut();
 
     this.categorizedSpaces = new Set();

@@ -174,13 +174,13 @@ SpaceManageItem.propTypes = {
 };
 
 function SpaceManageFooter({ parentId, selected }) {
-  const [process, setProcess] = useState(null);
+  const [process, setProcess] = useState<string>(null as unknown as string);
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(parentId);
   const { currentState } = room;
 
   const allSuggested = selected.every((roomId) => {
-    const sEvent = currentState.getStateEvents('m.space.child', roomId);
+    const sEvent = currentState.getStateEvent('m.space.child', roomId);
     return !!sEvent?.getContent()?.suggested;
   });
 
@@ -195,7 +195,7 @@ function SpaceManageFooter({ parentId, selected }) {
     if (isMark) setProcess(`Marking as suggested ${selected.length} items`);
     else setProcess(`Marking as not suggested ${selected.length} items`);
     selected.forEach((roomId) => {
-      const sEvent = room.currentState.getStateEvents('m.space.child', roomId);
+      const sEvent = room.currentState.getStateEvent('m.space.child', roomId);
       if (!sEvent) return;
       const content = { ...sEvent.getContent() };
       if (isMark && content.suggested) return;
@@ -291,6 +291,11 @@ function useChildUpdate(roomId, roomsHierarchy) {
   }, [roomId, roomsHierarchy]);
 }
 
+interface IPropsSpaceManageContent {
+  roomId: string;
+  requestClose: () => void;
+}
+
 function SpaceManageContent({ roomId, requestClose }) {
   const mx = initMatrix.matrixClient;
   useUpdateOnJoin(roomId);
@@ -298,7 +303,7 @@ function SpaceManageContent({ roomId, requestClose }) {
   const [roomsHierarchy] = useState(new RoomsHierarchy(mx, 30));
   const [spacePath, addPathItem] = useSpacePath(roomId);
   const [isLoading, setIsLoading] = useState(true);
-  const [selected, setSelected] = useState([]);
+  const [selected, setSelected] = useState<string[]>([]);
   const mountStore = useStore();
   const currentPath = spacePath[spacePath.length - 1];
   useChildUpdate(currentPath.roomId, roomsHierarchy);
@@ -315,7 +320,7 @@ function SpaceManageContent({ roomId, requestClose }) {
   useEffect(() => setSelected([]), [spacePath]);
 
   const handleSelected = (selectedRoomId) => {
-    const newSelected = [...selected];
+    const newSelected: string[] = [...selected];
     const selectedIndex = newSelected.indexOf(selectedRoomId);
 
     if (selectedIndex > -1) {
@@ -388,10 +393,10 @@ function SpaceManageContent({ roomId, requestClose }) {
     </div>
   );
 }
-SpaceManageContent.propTypes = {
-  roomId: PropTypes.string.isRequired,
-  requestClose: PropTypes.func.isRequired,
-};
+// SpaceManageContent.propTypes = {
+//   roomId: PropTypes.string.isRequired,
+//   requestClose: PropTypes.func.isRequired,
+// };
 
 function useWindowToggle() {
   const [roomId, setRoomId] = useState(null);

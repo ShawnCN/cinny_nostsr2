@@ -1,4 +1,4 @@
-import EventEmitter from 'events';
+import EventEmitter from '../client/EventEmitter';
 
 class AsyncSearch extends EventEmitter {
   constructor() {
@@ -93,8 +93,8 @@ class AsyncSearch extends EventEmitter {
       }
     }
 
-    if (lastFindingCount !== this.findingList.length
-      || lastFindingCount === 0) this._sendFindings();
+    if (lastFindingCount !== this.findingList.length || lastFindingCount === 0)
+      this._sendFindings();
     this._softReset();
   }
 

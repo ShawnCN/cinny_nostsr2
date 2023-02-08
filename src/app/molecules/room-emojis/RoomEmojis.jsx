@@ -41,7 +41,7 @@ function useRoomPacks(room) {
   }, [room, mx]);
 
   const isStateKeyAvailable = (key) =>
-    !room.currentState.getStateEvents('im.ponies.room_emotes', key);
+    !room.currentState.getStateEvent('im.ponies.room_emotes', key);
 
   const createPack = async (name) => {
     const packContent = {

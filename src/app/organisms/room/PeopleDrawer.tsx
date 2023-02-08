@@ -44,8 +44,8 @@ function PeopleDrawer({ roomId }) {
 
   const [itemCount, setItemCount] = useState(PER_PAGE_MEMBER);
   const [membership, setMembership] = useState('join');
-  const [memberList, setMemberList] = useState([]);
-  const [searchedMembers, setSearchedMembers] = useState(null);
+  const [memberList, setMemberList] = useState<any[any]>([]);
+  const [searchedMembers, setSearchedMembers] = useState<any>(null);
   const searchRef = useRef(null);
 
   const getMembersWithMembership = useCallback(

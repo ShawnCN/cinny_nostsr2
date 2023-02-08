@@ -18,6 +18,7 @@ import RoomTile from '../../molecules/room-tile/RoomTile';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import HashSearchIC from '../../../../public/res/ic/outlined/hash-search.svg';
 import { TSearchQuery } from '../../../../types';
+import TRoom from '../../../../types/TRoom';
 
 const SEARCH_LIMIT = 20;
 
@@ -105,19 +106,25 @@ TryJoinWithAlias.propTypes = {
   onRequestClose: PropTypes.func.isRequired,
 };
 
-function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
+interface IPropsPublicRooms {
+  isOpen: boolean;
+  searchTerm: string | undefined;
+  onRequestClose: () => void;
+}
+
+function PublicRooms({ isOpen, searchTerm = undefined, onRequestClose }: IPropsPublicRooms) {
   const [isSearching, updateIsSearching] = useState(false);
   const [isViewMore, updateIsViewMore] = useState(false);
-  const [publicRooms, updatePublicRooms] = useState<string[]>([]);
+  const [publicRooms, updatePublicRooms] = useState<TRoom[]>([]);
   const [nextBatch, updateNextBatch] = useState(undefined);
   const [searchQuery, updateSearchQuery] = useState<TSearchQuery>({});
-  const [joiningRooms, updateJoiningRooms] = useState(new Set());
+  const [joiningRooms, updateJoiningRooms] = useState(new Set<string>());
 
   const roomNameRef = useRef<any>(null);
   const hsRef = useRef<any>(null);
   const userId = initMatrix.matrixClient.getUserId();
 
-  async function searchRooms(viewMore) {
+  async function searchRooms(viewMore = false) {
     let inputRoomName = roomNameRef?.current?.value || searchTerm;
     let isInputAlias = false;
     if (typeof inputRoomName === 'string') {
@@ -190,6 +197,7 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
   }, [isOpen]);
 
   function handleOnRoomAdded(roomId) {
+    console.log('onRoomAdded');
     if (joiningRooms.has(roomId)) {
       joiningRooms.delete(roomId);
       updateJoiningRooms(new Set(Array.from(joiningRooms)));
@@ -209,20 +217,25 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
     onRequestClose();
   }
 
-  function joinRoom(roomIdOrAlias) {
+  function joinRoom(roomIdOrAlias: string) {
+    console.log('Joining room');
     joiningRooms.add(roomIdOrAlias);
+
+    console.log(joiningRooms);
     updateJoiningRooms(new Set(Array.from(joiningRooms)));
+    console.log(joiningRooms);
     roomActions.join(roomIdOrAlias, false);
+    console.log('Joining room2');
   }
 
-  function renderRoomList(rooms) {
+  function renderRoomList(rooms: TRoom[]) {
     return rooms.map((room) => {
-      const alias = typeof room.canonical_alias === 'string' ? room.canonical_alias : room.room_id;
+      const alias = typeof room.canonical_alias === 'string' ? room.canonical_alias : room.roomId;
       const name = typeof room.name === 'string' ? room.name : alias;
-      const isJoined = initMatrix.matrixClient.getRoom(room.room_id)?.getMyMembership() === 'join';
+      const isJoined = initMatrix.matrixClient.getRoom(room.roomId)?.getMyMembership() === 'join';
       return (
         <RoomTile
-          key={room.room_id}
+          key={room.roomId}
           avatarSrc={
             typeof room.avatarUrl === 'string'
               ? initMatrix.matrixClient.mxcUrlToHttp(room.avatarUrl, 42, 42, 'crop')
@@ -234,13 +247,13 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
           desc={typeof room.topic === 'string' ? room.topic : null}
           options={
             <>
-              {isJoined && <Button onClick={() => handleViewRoom(room.room_id)}>Open</Button>}
+              {isJoined && <Button onClick={() => handleViewRoom(room.roomId)}>Open</Button>}
               {!isJoined &&
-                (joiningRooms.has(room.room_id) ? (
+                (joiningRooms.has(room.roomId) ? (
                   <Spinner size="small" />
                 ) : (
                   <Button
-                    onClick={() => joinRoom(room.aliases?.[0] || room.room_id)}
+                    onClick={() => joinRoom(room.aliases?.[0] || room.roomId)}
                     variant="primary"
                   >
                     Join
@@ -327,14 +340,14 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
   );
 }
 
-PublicRooms.defaultProps = {
-  searchTerm: undefined,
-};
+// PublicRooms.defaultProps = {
+//   searchTerm: undefined,
+// };
 
-PublicRooms.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  searchTerm: PropTypes.string,
-  onRequestClose: PropTypes.func.isRequired,
-};
+// PublicRooms.propTypes = {
+//   isOpen: PropTypes.bool.isRequired,
+//   searchTerm: PropTypes.string,
+//   onRequestClose: PropTypes.func.isRequired,
+// };
 
 export default PublicRooms;

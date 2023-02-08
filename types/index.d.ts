@@ -23,5 +23,29 @@ export type TSearchQuery = {
   name?: string;
   homeserver?: string;
   alias?: string;
-  error?: string;;
+  error?: string;
+};
+
+export type TSubscribedChannel = {
+  user_id: string;
+  type: string;
+  unread: number;
+  new_message: string;
+  new_message_created_at: number;
+  relayUrlList?: string[];
+};
+export type TChannelmapObject = {
+  [key: string]: TChannelmap;
+};
+export type TChannelmap = {
+  user_id: string;
+  name?: string;
+  type?: string;
+  about?: string;
+  profile_img?: string;
+  query_time: number;
+  creatorPubkey: string;
+  created_at: number;
+  sig: string;
+  relayUrl?: url;
 };

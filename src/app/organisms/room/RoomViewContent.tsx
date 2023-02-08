@@ -26,6 +26,7 @@ import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { parseTimelineChange } from './common';
 import TimelineScroll from './TimelineScroll';
 import EventLimit from './EventLimit';
+import RoomTimeline from '../../../client/state/RoomTimeline';
 
 const PAG_LIMIT = 30;
 const MAX_MSG_DIFF_MINUTES = 5;
@@ -379,7 +380,12 @@ function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, event
 
 let jumpToItemIndex = -1;
 
-function RoomViewContent({ eventId, roomTimeline }) {
+interface IPropsRoomViewContent {
+  roomTimeline: RoomTimeline;
+  eventId?: string;
+}
+
+function RoomViewContent({ eventId, roomTimeline }: IPropsRoomViewContent) {
   const [throttle] = useState(new Throttle());
 
   const timelineSVRef = useRef(null);
@@ -614,12 +620,12 @@ function RoomViewContent({ eventId, roomTimeline }) {
   );
 }
 
-RoomViewContent.defaultProps = {
-  eventId: null,
-};
-RoomViewContent.propTypes = {
-  eventId: PropTypes.string,
-  roomTimeline: PropTypes.shape({}).isRequired,
-};
+// RoomViewContent.defaultProps = {
+//   eventId: null,
+// };
+// RoomViewContent.propTypes = {
+//   eventId: PropTypes.string,
+//   roomTimeline: PropTypes.shape({}).isRequired,
+// };
 
 export default RoomViewContent;

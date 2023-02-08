@@ -12,9 +12,12 @@ import RawIcon from '../../atoms/system-icons/RawIcon';
 import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 
 import { getUsersActionJsx } from '../../organisms/room/common';
-
-function FollowingMembers({ roomTimeline }) {
-  const [followingMembers, setFollowingMembers] = useState([]);
+import RoomTimeline from '../../../client/state/RoomTimeline';
+interface IPropsFollowingMembers {
+  roomTimeline: RoomTimeline;
+}
+function FollowingMembers({ roomTimeline }: IPropsFollowingMembers) {
+  const [followingMembers, setFollowingMembers] = useState<any[]>([]);
   const { roomId } = roomTimeline;
   const mx = initMatrix.matrixClient;
   const { roomsInput } = initMatrix;
@@ -53,8 +56,8 @@ function FollowingMembers({ roomTimeline }) {
   );
 }
 
-FollowingMembers.propTypes = {
-  roomTimeline: PropTypes.shape({}).isRequired,
-};
+// FollowingMembers.propTypes = {
+//   roomTimeline: PropTypes.shape({}).isRequired,
+// };
 
 export default FollowingMembers;

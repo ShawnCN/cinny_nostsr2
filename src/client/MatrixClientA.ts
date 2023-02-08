@@ -1,16 +1,17 @@
 import { Relay, relayInit } from 'nostr-tools';
-import { TContent } from '../../types';
+import { TChannelmap, TChannelmapObject, TContent, TSubscribedChannel } from '../../types';
 import TDevice from '../../types/TDevice';
 import TRoom from '../../types/TRoom';
 import TUser from '../../types/TUser';
 import EventEmitter from './EventEmitter';
-import { stage3relays } from './state/cons';
+import { defaultChatroomList, stage3relays, TChannelMapList } from './state/cons';
 
 class MatrixClientA extends EventEmitter {
   store: { deleteAllData: () => Promise<any> };
   baseUrl: string;
   user: TUser;
   crypto: string;
+  publicRoomList: Map<string, TRoom>;
   // relayInstance: Map<string, Relay>;
   constructor() {
     super();
@@ -19,10 +20,19 @@ class MatrixClientA extends EventEmitter {
     this.user.displayName = '显示名称';
     this.user.avatarUrl =
       'https://nostr.build/i/karnage/nostr.build_1aae77a4637a40d0fb21cf59ac963fade0fab3744a775bd88fb06b4400696e26.png';
-
+    this.publicRoomList = new Map();
     // this.store = {
     //   deleteAllData:()=>Promise<any>
     // }
+    const channels: TChannelmapObject = TChannelMapList;
+    for (let k in channels) {
+      let room = new TRoom();
+      room.roomId = channels[k].user_id;
+      room.name = channels[k].name!;
+      room.avatarUrl = channels[k].profile_img!;
+      room.canonical_alias = channels[k].about!;
+      this.publicRoomList.set(room.roomId, room);
+    }
   }
 
   async initCrypto() {
@@ -77,11 +87,7 @@ class MatrixClientA extends EventEmitter {
     console.log('setGlobalErrorOnUnknownDevices');
   }
   getRoom(roomId: string): TRoom {
-    // let room = new TRoom();
-    // room.roomId = '123';
-    // room.name = 'room 1';
-    // return room;
-    return null as unknown as TRoom;
+    return this.publicRoomList.get(roomId) as TRoom;
   }
   getAccountData(accountId: string) {
     let a: TContent;
@@ -94,7 +100,7 @@ class MatrixClientA extends EventEmitter {
     };
   }
   getRooms() {
-    return 'rooms';
+    return Array.from(this.publicRoomList.values());
   }
   getUserId() {
     return this.user.userId;
@@ -109,10 +115,6 @@ class MatrixClientA extends EventEmitter {
     return Promise.resolve({ devices: [] });
   }
   getProfileInfo(userId: string) {
-    // const auser: TUser = {
-    //   displayName: 'aaa',
-    //   avatarUrl: '...',
-    // } as TUser;
     return Promise.resolve(this.user);
   }
   downloadKeys(arg0: string[], arg1: boolean) {}
@@ -126,16 +128,31 @@ class MatrixClientA extends EventEmitter {
   getIgnoredUsers() {
     return [] as TUser[];
   }
-  mxcUrlToHttp(arg0: string, arg1: number, arg2: number, arg3: string) {}
+  mxcUrlToHttp(arg0: string, arg1: number, arg2: number, arg3: string) {
+    return '';
+  }
   setAvatarUrl(url: string) {
     this.user.avatarUrl = url;
   }
   setDisplayName(name: string) {
     this.user.displayName = name;
   }
+  async setRoomName(roomId, newName) {}
+  async setRoomTopic(roomId, newTopic) {}
+  async sendStateEvent(roomId, arg1: string, arg2: any, arg3: string) {}
   publicRooms({ server, limit, since, include_all_networks, filter }: TPublicRooms) {
+    // const channel = defaultChatroomList;
+    // const aroom = new TRoom();
+    // aroom.roomId = 'globalfeed';
+    // aroom.name = 'globalfeed';
+    // aroom.avatarUrl = 'https://randomuser.me/api/portraits/men/79.jpg';
+    // aroom.canonical_alias = 'aliasdddddddddddddddddd';
+    // this.publicRoomList.set(aroom.roomId, aroom);
+    console.log(this.publicRoomList);
+
     return {
-      chunk: '',
+      // chunk: ['room1', 'room2', 'room3'],
+      chunk: Array.from(this.publicRoomList.values()),
       next_batch: '',
     };
   }
@@ -152,6 +169,17 @@ class MatrixClientA extends EventEmitter {
   async paginateEventTimeline(timelineToPaginate: any, { backwards, limit }) {}
   getEventTimeline(timelineSet, eventId) {
     return;
+  }
+  async joinRoom(roomIdOrAlias: string, arg1: { viaServers: string[] }) {
+    const a = this.publicRoomList.get(roomIdOrAlias);
+    return Promise.resolve(a);
+
+    // const aroom = new TRoom();
+    // aroom.roomId = 'globalfeed';
+    // aroom.name = 'globalfeed';
+    // aroom.avatarUrl = 'https://randomuser.me/api/portraits/men/79.jpg';
+    // aroom.canonical_alias = 'alias';
+    // return Promise.resolve(aroom);
   }
 }
 

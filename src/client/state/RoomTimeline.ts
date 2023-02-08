@@ -1,4 +1,5 @@
 import TEvent from '../../../types/TEvent';
+import TLiveTimeline from '../../../types/TLiveTimeline';
 import TRoom from '../../../types/TRoom';
 import EventEmitter from '../EventEmitter';
 import initMatrix from '../InitMatrix';
@@ -6,7 +7,7 @@ import cons from './cons';
 
 import settings from './settings';
 
-function isEdited(mEvent) {
+function isEdited(mEvent: TEvent) {
   return mEvent.getRelation()?.rel_type === 'm.replace';
 }
 
@@ -86,7 +87,7 @@ class RoomTimeline extends EventEmitter {
   matrixClient: import('e:/dev/cinny_nostsr2/src/client/MatrixClientA').default;
   roomId: string;
   room: TRoom;
-  liveTimeline: any;
+  liveTimeline: TLiveTimeline;
   activeTimeline: any;
   isOngoingPagination: boolean;
   ongoingDecryptionCount: number;

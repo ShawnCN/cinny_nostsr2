@@ -25,8 +25,11 @@ function RoomProfile({ roomId }) {
   const isMountStore = useStore();
   const [isEditing, setIsEditing] = useState(false);
   const [, forceUpdate] = useForceUpdate();
-  const [status, setStatus] = useState({
-    msg: null,
+  const [status, setStatus] = useState<{
+    msg: string;
+    type: string;
+  }>({
+    msg: null as unknown as string,
     type: cons.status.PRE_FLIGHT,
   });
 
@@ -34,7 +37,7 @@ function RoomProfile({ roomId }) {
   const isDM = initMatrix.roomList.directs.has(roomId);
   let avatarSrc = mx.getRoom(roomId).getAvatarUrl(mx.baseUrl, 36, 36, 'crop');
   avatarSrc = isDM
-    ? mx.getRoom(roomId).getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop')
+    ? mx.getRoom(roomId)?.getAvatarFallbackMember().getAvatarUrl(mx.baseUrl, 36, 36, 'crop')
     : avatarSrc;
   const room = mx.getRoom(roomId);
   const { currentState } = room;
@@ -60,7 +63,7 @@ function RoomProfile({ roomId }) {
       roomList.removeListener(cons.events.roomList.ROOM_PROFILE_UPDATED, handleProfileUpdate);
       isMountStore.setItem(false);
       setStatus({
-        msg: null,
+        msg: null as unknown as string,
         type: cons.status.PRE_FLIGHT,
       });
       setIsEditing(false);
@@ -101,7 +104,7 @@ function RoomProfile({ roomId }) {
         msg: 'Saved successfully',
         type: cons.status.SUCCESS,
       });
-    } catch (err) {
+    } catch (err: any) {
       if (!isMountStore.getItem()) return;
       setStatus({
         msg: err.message || 'Unable to save.',
@@ -112,7 +115,7 @@ function RoomProfile({ roomId }) {
 
   const handleCancelEditing = () => {
     setStatus({
-      msg: null,
+      msg: null as unknown as string,
       type: cons.status.PRE_FLIGHT,
     });
     setIsEditing(false);

@@ -75,7 +75,7 @@ function useRoomImagePack(roomId, stateKey) {
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
 
-  const packEvent = room.currentState.getStateEvents('im.ponies.room_emotes', stateKey);
+  const packEvent = room.currentState.getStateEvent('im.ponies.room_emotes', stateKey);
   const pack = useMemo(
     () => ImagePackBuilder.parsePack(packEvent.getId(), packEvent.getContent()),
     [room, stateKey]

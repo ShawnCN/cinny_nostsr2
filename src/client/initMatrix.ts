@@ -13,6 +13,9 @@ import { cryptoCallbacks } from './state/secretStorageKeys';
 import navigation from './state/navigation';
 
 import MatrixClientA from './MatrixClientA';
+import { TChannelmapObject } from '../../types';
+import { TChannelMapList } from './state/cons';
+import TRoom from '../../types/TRoom';
 const matrixClientA = new MatrixClientA();
 
 // global.Olm = Olm;
@@ -85,6 +88,17 @@ class InitMatrix extends EventEmitter {
           // global.initMatrix = this;
           if (prevState === null) {
             this.roomList = new RoomList(this.matrixClient);
+
+            const channels: TChannelmapObject = TChannelMapList;
+            for (let k in channels) {
+              let room = new TRoom();
+              room.roomId = channels[k].user_id;
+              room.name = channels[k].name!;
+              room.avatarUrl = channels[k].profile_img!;
+              room.canonical_alias = channels[k].about!;
+              this.roomList.rooms.add(room.roomId);
+            }
+
             this.accountData = new AccountData(this.roomList);
             this.roomsInput = new RoomsInput(this.matrixClient, this.roomList);
             this.notifications = new Notifications(this.roomList);

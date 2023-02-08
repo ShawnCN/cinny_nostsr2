@@ -37,6 +37,7 @@ export function HomeSpaceOptions({ spaceId, afterOptionSelect }) {
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(spaceId);
   console.log('spaceId: ' + spaceId);
+  console.log(room);
   const canManage = room
     ? room.currentState.maySendStateEvent('m.space.child', mx.getUserId())
     : true;

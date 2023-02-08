@@ -12,16 +12,22 @@ import RoomViewContent from './RoomViewContent';
 import RoomViewFloating from './RoomViewFloating';
 import RoomViewInput from './RoomViewInput';
 import RoomViewCmdBar from './RoomViewCmdBar';
+import RoomTimeline from '../../../client/state/RoomTimeline';
 
 const viewEvent = new EventEmitter();
 
-function RoomView({ roomTimeline, eventId }) {
+interface IPropsRoomView {
+  roomTimeline: RoomTimeline;
+  eventId?: string;
+}
+
+function RoomView({ roomTimeline, eventId = null as unknown as string }: IPropsRoomView) {
   const roomViewRef = useRef(null);
   // eslint-disable-next-line react/prop-types
   const { roomId } = roomTimeline;
 
   useEffect(() => {
-    const settingsToggle = (isVisible) => {
+    const settingsToggle = (isVisible: boolean) => {
       const roomView: any = roomViewRef.current;
       roomView.classList.toggle('room-view--dropped');
 
@@ -56,12 +62,12 @@ function RoomView({ roomTimeline, eventId }) {
   );
 }
 
-RoomView.defaultProps = {
-  eventId: null,
-};
-RoomView.propTypes = {
-  roomTimeline: PropTypes.shape({}).isRequired,
-  eventId: PropTypes.string,
-};
+// RoomView.defaultProps = {
+//   eventId: null,
+// };
+// RoomView.propTypes = {
+//   roomTimeline: PropTypes.shape({}).isRequired,
+//   eventId: PropTypes.string,
+// };
 
 export default RoomView;
