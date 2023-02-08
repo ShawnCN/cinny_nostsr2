@@ -1,3 +1,4 @@
+import { string } from 'prop-types';
 import React from 'react';
 
 // declare module '*.svg' {
@@ -13,10 +14,17 @@ declare module '*.svg' {
   export default ReactComponent;
 }
 
-export type TContent = {
+export type TEventFormat = {
   content: string;
   shortcut: string[];
   categorized: string[];
+};
+export type TContent = {
+  body: string;
+  external_url: string;
+  format: string;
+  formatted_body: string;
+  msgtype: string;
 };
 
 export type TSearchQuery = {

@@ -69,7 +69,7 @@ function useMemberOfMembership(roomId, membership) {
 }
 
 function useSearchMembers(members) {
-  const [searchMembers, setSearchMembers] = useState(null);
+  const [searchMembers, setSearchMembers] = useState<any>(null);
   const [asyncSearch] = useState(new AsyncSearch());
 
   const reSearch = useCallback(() => {
@@ -104,7 +104,7 @@ function useSearchMembers(members) {
   return [searchMembers, handleSearch];
 }
 
-function RoomMembers({ roomId }) {
+function RoomMembers({ roomId }: { roomId: string }) {
   const [itemCount, setItemCount] = useState(PER_PAGE_MEMBER);
   const [membership, setMembership] = useState('join');
   const [members] = useMemberOfMembership(roomId, membership);
@@ -167,8 +167,8 @@ function RoomMembers({ roomId }) {
   );
 }
 
-RoomMembers.propTypes = {
-  roomId: PropTypes.string.isRequired,
-};
+// RoomMembers.propTypes = {
+//   roomId: PropTypes.string.isRequired,
+// };
 
 export default RoomMembers;

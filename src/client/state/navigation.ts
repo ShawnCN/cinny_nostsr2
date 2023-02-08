@@ -89,6 +89,7 @@ class Navigation extends EventEmitter {
   }
 
   _selectRoom(roomId, eventId) {
+    console.log(roomId, eventId);
     const prevSelectedRoomId = this.selectedRoomId;
     this.selectedRoomId = roomId;
     if (prevSelectedRoomId !== roomId) this._mapRoomToSpace(roomId);

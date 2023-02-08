@@ -46,7 +46,7 @@ function addToMap(myMap, mEvent) {
   return mEvent;
 }
 
-function getFirstLinkedTimeline(timeline) {
+function getFirstLinkedTimeline(timeline): TLiveTimeline {
   let tm = timeline;
   while (tm.prevTimeline) {
     tm = tm.prevTimeline;
@@ -247,7 +247,7 @@ class RoomTimeline extends EventEmitter {
   decryptAllEventsOfTimeline(eventTimeline) {
     const decryptionPromises = eventTimeline
       .getEvents()
-      .filter((event) => event.isEncrypted() && !event.clearEvent)
+      .filter((event: TEvent) => event.isEncrypted() && !event.clearEvent)
       .reverse()
       .map((event) => event.attemptDecryption(this.matrixClient.crypto, { isRetry: true }));
 

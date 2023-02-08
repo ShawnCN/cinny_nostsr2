@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import PropTypes from 'prop-types';
 import './Message.scss';
 
@@ -50,6 +50,8 @@ import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
 import { getBlobSafeMimeType } from '../../../util/mimetypes';
 import { html, plain } from '../../../util/markdown';
+import RoomTimeline from '../../../client/state/RoomTimeline';
+import TEvent from '../../../../types/TEvent';
 
 function PlaceholderMessage() {
   return (
@@ -70,7 +72,14 @@ function PlaceholderMessage() {
   );
 }
 
-const MessageAvatar = React.memo(({ roomId, avatarSrc, userId, username }) => (
+interface IPropsMessageAvatar {
+  roomId: string;
+  avatarSrc: string;
+  userId: string;
+  username: string;
+}
+
+const MessageAvatar = React.memo(({ roomId, avatarSrc, userId, username }: IPropsMessageAvatar) => (
   <div className="message__avatar-container">
     <button type="button" onClick={() => openProfileViewer(userId, roomId)}>
       <Avatar imageSrc={avatarSrc} text={username} bgColor={colorMXID(userId)} size="small" />
@@ -78,34 +87,43 @@ const MessageAvatar = React.memo(({ roomId, avatarSrc, userId, username }) => (
   </div>
 ));
 
-const MessageHeader = React.memo(({ userId, username, timestamp, fullTime }) => (
-  <div className="message__header">
-    <Text
-      style={{ color: colorMXID(userId) }}
-      className="message__profile"
-      variant="b1"
-      weight="medium"
-      span
-    >
-      <span>{twemojify(username)}</span>
-      <span>{twemojify(userId)}</span>
-    </Text>
-    <div className="message__time">
-      <Text variant="b3">
-        <Time timestamp={timestamp} fullTime={fullTime} />
+interface IPropsMessageHeader {
+  userId: string;
+  username: string;
+  timestamp: number;
+  fullTime?: boolean;
+}
+
+const MessageHeader = React.memo(
+  ({ userId, username, timestamp, fullTime = false }: IPropsMessageHeader) => (
+    <div className="message__header">
+      <Text
+        style={{ color: colorMXID(userId) }}
+        className="message__profile"
+        variant="b1"
+        weight="medium"
+        span
+      >
+        <span>{twemojify(username)}</span>
+        <span>{twemojify(userId)}</span>
       </Text>
+      <div className="message__time">
+        <Text variant="b3">
+          <Time timestamp={timestamp} fullTime={fullTime} />
+        </Text>
+      </div>
     </div>
-  </div>
-));
-MessageHeader.defaultProps = {
-  fullTime: false,
-};
-MessageHeader.propTypes = {
-  userId: PropTypes.string.isRequired,
-  username: PropTypes.string.isRequired,
-  timestamp: PropTypes.number.isRequired,
-  fullTime: PropTypes.bool,
-};
+  )
+);
+// MessageHeader.defaultProps = {
+//   fullTime: false,
+// };
+// MessageHeader.propTypes = {
+//   userId: PropTypes.string.isRequired,
+//   username: PropTypes.string.isRequired,
+//   timestamp: PropTypes.number.isRequired,
+//   fullTime: PropTypes.bool,
+// };
 
 function MessageReply({ name, color, body }) {
   return (
@@ -123,8 +141,12 @@ MessageReply.propTypes = {
   color: PropTypes.string.isRequired,
   body: PropTypes.string.isRequired,
 };
+interface IPropsMessageReplyWrapper {
+  roomTimeline: RoomTimeline;
+  eventId?: string;
+}
 
-const MessageReplyWrapper = React.memo(({ roomTimeline, eventId }) => {
+const MessageReplyWrapper = React.memo(({ roomTimeline, eventId }: IPropsMessageReplyWrapper) => {
   const [reply, setReply] = useState(null);
   const isMountedRef = useRef(true);
 
@@ -191,103 +213,119 @@ const MessageReplyWrapper = React.memo(({ roomTimeline, eventId }) => {
       onClick={focusReply}
       onKeyDown={focusReply}
       role="button"
-      tabIndex="0"
+      tabIndex={0}
     >
       {reply !== null && <MessageReply name={reply.to} color={reply.color} body={reply.body} />}
     </div>
   );
 });
-MessageReplyWrapper.propTypes = {
-  roomTimeline: PropTypes.shape({}).isRequired,
-  eventId: PropTypes.string.isRequired,
-};
+// MessageReplyWrapper.propTypes = {
+//   roomTimeline: PropTypes.shape({}).isRequired,
+//   eventId: PropTypes.string.isRequired,
+// };
 
-const MessageBody = React.memo(({ senderName, body, isCustomHTML, isEdited, msgType }) => {
-  // if body is not string it is a React element.
-  if (typeof body !== 'string') return <div className="message__body">{body}</div>;
+interface IPropsMessageBody {
+  senderName: string;
+  body: ReactNode;
+  isCustomHTML?: boolean;
+  isEdited?: boolean;
+  msgType?: string;
+}
 
-  let content = null;
-  if (isCustomHTML) {
-    try {
-      content = twemojify(
-        sanitizeCustomHtml(initMatrix.matrixClient, body),
-        undefined,
-        true,
-        false,
-        true
-      );
-    } catch {
-      console.error('Malformed custom html: ', body);
-      content = twemojify(body, undefined);
+const MessageBody = React.memo(
+  ({
+    senderName,
+    body,
+    isCustomHTML = false,
+    isEdited = false,
+    msgType = null as unknown as string,
+  }: IPropsMessageBody) => {
+    // if body is not string it is a React element.
+    if (typeof body !== 'string') return <div className="message__body">{body}</div>;
+
+    let content = null;
+    if (isCustomHTML) {
+      try {
+        content = twemojify(
+          sanitizeCustomHtml(initMatrix.matrixClient, body),
+          undefined,
+          true,
+          false,
+          true
+        );
+      } catch {
+        console.error('Malformed custom html: ', body);
+        content = twemojify(body, undefined);
+      }
+    } else {
+      content = twemojify(body, undefined, true);
     }
-  } else {
-    content = twemojify(body, undefined, true);
-  }
 
-  // Determine if this message should render with large emojis
-  // Criteria:
-  // - Contains only emoji
-  // - Contains no more than 10 emoji
-  let emojiOnly = false;
-  if (content.type === 'img') {
-    // If this messages contains only a single (inline) image
-    emojiOnly = true;
-  } else if (content.constructor.name === 'Array') {
-    // Otherwise, it might be an array of images / texb
-
-    // Count the number of emojis
-    const nEmojis = content.filter((e) => e.type === 'img').length;
-
-    // Make sure there's no text besides whitespace and variation selector U+FE0F
-    if (
-      nEmojis <= 10 &&
-      content.every(
-        (element) =>
-          (typeof element === 'object' && element.type === 'img') ||
-          (typeof element === 'string' && /^[\s\ufe0f]*$/g.test(element))
-      )
-    ) {
+    // Determine if this message should render with large emojis
+    // Criteria:
+    // - Contains only emoji
+    // - Contains no more than 10 emoji
+    let emojiOnly = false;
+    if (content.type === 'img') {
+      // If this messages contains only a single (inline) image
       emojiOnly = true;
+    } else if (content.constructor.name === 'Array') {
+      // Otherwise, it might be an array of images / texb
+
+      // Count the number of emojis
+      const nEmojis = content.filter((e) => e.type === 'img').length;
+
+      // Make sure there's no text besides whitespace and variation selector U+FE0F
+      if (
+        nEmojis <= 10 &&
+        content.every(
+          (element) =>
+            (typeof element === 'object' && element.type === 'img') ||
+            (typeof element === 'string' && /^[\s\ufe0f]*$/g.test(element))
+        )
+      ) {
+        emojiOnly = true;
+      }
     }
-  }
 
-  if (!isCustomHTML) {
-    // If this is a plaintext message, wrap it in a <p> element (automatically applying
-    // white-space: pre-wrap) in order to preserve newlines
-    content = <p className="message__body-plain">{content}</p>;
-  }
+    if (!isCustomHTML) {
+      // If this is a plaintext message, wrap it in a <p> element (automatically applying
+      // white-space: pre-wrap) in order to preserve newlines
+      content = <p className="message__body-plain">{content}</p>;
+    }
 
-  return (
-    <div className="message__body">
-      <div dir="auto" className={`text ${emojiOnly ? 'text-h1' : 'text-b1'}`}>
-        {msgType === 'm.emote' && (
-          <>
-            {'* '}
-            {twemojify(senderName)}{' '}
-          </>
+    return (
+      <div className="message__body">
+        <div dir="auto" className={`text ${emojiOnly ? 'text-h1' : 'text-b1'}`}>
+          {msgType === 'm.emote' && (
+            <>
+              {'* '}
+              {twemojify(senderName)}{' '}
+            </>
+          )}
+          {content}
+        </div>
+        {isEdited && (
+          <Text className="message__body-edited" variant="b3">
+            (edited)
+          </Text>
         )}
-        {content}
       </div>
-      {isEdited && (
-        <Text className="message__body-edited" variant="b3">
-          (edited)
-        </Text>
-      )}
-    </div>
-  );
-});
-MessageBody.defaultProps = {
-  isCustomHTML: false,
-  isEdited: false,
-  msgType: null,
-};
-MessageBody.propTypes = {
-  senderName: PropTypes.string.isRequired,
-  body: PropTypes.node.isRequired,
-  isCustomHTML: PropTypes.bool,
-  isEdited: PropTypes.bool,
-  msgType: PropTypes.string,
-};
+    );
+  }
+);
+// MessageBody.defaultProps = {
+//   isCustomHTML: false,
+//   isEdited: false,
+//   msgType: null,
+// };
+// MessageBody.propTypes = {
+//   senderName: PropTypes.string.isRequired,
+//   body: PropTypes.node.isRequired,
+//   isCustomHTML: PropTypes.bool,
+//   isEdited: PropTypes.bool,
+//   msgType: PropTypes.string,
+// };
 
 function MessageEdit({ body, onSave, onCancel }) {
   const editInputRef = useRef(null);
@@ -345,7 +383,7 @@ MessageEdit.propTypes = {
 function getMyEmojiEvent(emojiKey, eventId, roomTimeline) {
   const mx = initMatrix.matrixClient;
   const rEvents = roomTimeline.reactionTimeline.get(eventId);
-  let rEvent = null;
+  let rEvent = null as unknown as TEvent;
   rEvents?.find((rE) => {
     if (rE.getRelation() === null) return false;
     if (rE.getRelation().key === emojiKey && rE.getSender() === mx.getUserId()) {
@@ -543,8 +581,14 @@ function handleOpenViewSource(mEvent, roomTimeline) {
   }
   openViewSource(editedMEvent !== undefined ? editedMEvent : mEvent);
 }
+interface IPropsMessageOptions {
+  roomTimeline: RoomTimeline;
+  mEvent: TEvent;
+  edit: (arg0: boolean) => void;
+  reply: () => void;
+}
 
-const MessageOptions = React.memo(({ roomTimeline, mEvent, edit, reply }) => {
+const MessageOptions = React.memo(({ roomTimeline, mEvent, edit, reply }: IPropsMessageOptions) => {
   const { roomId, room } = roomTimeline;
   const mx = initMatrix.matrixClient;
   const senderId = mEvent.getSender();
@@ -615,12 +659,12 @@ const MessageOptions = React.memo(({ roomTimeline, mEvent, edit, reply }) => {
     </div>
   );
 });
-MessageOptions.propTypes = {
-  roomTimeline: PropTypes.shape({}).isRequired,
-  mEvent: PropTypes.shape({}).isRequired,
-  edit: PropTypes.func.isRequired,
-  reply: PropTypes.func.isRequired,
-};
+// MessageOptions.propTypes = {
+//   roomTimeline: PropTypes.shape({}).isRequired,
+//   mEvent: PropTypes.shape({}).isRequired,
+//   edit: PropTypes.func.isRequired,
+//   reply: PropTypes.func.isRequired,
+// };
 
 function genMediaContent(mE) {
   const mx = initMatrix.matrixClient;
@@ -724,16 +768,27 @@ function getEditedBody(editedMEvent) {
   return [parsedContent.body, isCustomHTML, newContent.formatted_body ?? null];
 }
 
+interface IPropsMessage {
+  mEvent: TEvent;
+  isBodyOnly?: boolean;
+  roomTimeline?: RoomTimeline;
+  focus?: boolean;
+  fullTime?: boolean;
+  isEdit?: boolean;
+  setEdit?: (arg0: string) => void;
+  cancelEdit?: () => void;
+}
+
 function Message({
   mEvent,
-  isBodyOnly,
-  roomTimeline,
-  focus,
-  fullTime,
-  isEdit,
-  setEdit,
-  cancelEdit,
-}) {
+  isBodyOnly = false,
+  roomTimeline = null as unknown as RoomTimeline,
+  focus = false,
+  fullTime = false,
+  isEdit = false,
+  setEdit = null as unknown as (arg0: string) => void,
+  cancelEdit = null as unknown as () => void,
+}: IPropsMessage) {
   const roomId = mEvent.getRoomId();
   const { editedTimeline, reactionTimeline } = roomTimeline ?? {};
 
@@ -835,24 +890,24 @@ function Message({
     </div>
   );
 }
-Message.defaultProps = {
-  isBodyOnly: false,
-  focus: false,
-  roomTimeline: null,
-  fullTime: false,
-  isEdit: false,
-  setEdit: null,
-  cancelEdit: null,
-};
-Message.propTypes = {
-  mEvent: PropTypes.shape({}).isRequired,
-  isBodyOnly: PropTypes.bool,
-  roomTimeline: PropTypes.shape({}),
-  focus: PropTypes.bool,
-  fullTime: PropTypes.bool,
-  isEdit: PropTypes.bool,
-  setEdit: PropTypes.func,
-  cancelEdit: PropTypes.func,
-};
+// Message.defaultProps = {
+//   isBodyOnly: false,
+//   focus: false,
+//   roomTimeline: null,
+//   fullTime: false,
+//   isEdit: false,
+//   setEdit: null,
+//   cancelEdit: null,
+// };
+// Message.propTypes = {
+//   mEvent: PropTypes.shape({}).isRequired,
+//   isBodyOnly: PropTypes.bool,
+//   roomTimeline: PropTypes.shape({}),
+//   focus: PropTypes.bool,
+//   fullTime: PropTypes.bool,
+//   isEdit: PropTypes.bool,
+//   setEdit: PropTypes.func,
+//   cancelEdit: PropTypes.func,
+// };
 
 export { Message, MessageReply, PlaceholderMessage };

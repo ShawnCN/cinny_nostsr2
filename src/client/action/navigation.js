@@ -9,6 +9,7 @@ export function selectTab(tabId) {
 }
 
 export function selectSpace(roomId) {
+  console.log('selectSpace', roomId, eventId);
   appDispatcher.dispatch({
     type: cons.actions.navigation.SELECT_SPACE,
     roomId,
@@ -16,6 +17,7 @@ export function selectSpace(roomId) {
 }
 
 export function selectRoom(roomId, eventId) {
+  console.log('selectRoom', roomId, eventId);
   appDispatcher.dispatch({
     type: cons.actions.navigation.SELECT_ROOM,
     roomId,

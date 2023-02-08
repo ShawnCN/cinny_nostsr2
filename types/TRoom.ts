@@ -2,6 +2,7 @@ import RoomTimeline from '../src/client/state/RoomTimeline';
 import TEvent from './TEvent';
 import TEventTimelineSet from './TEventTimelineSet';
 import TLiveTimeline from './TLiveTimeline';
+import TMember from './TMember';
 import TRoomMember from './TRoomMember';
 import TUser from './TUser';
 
@@ -74,7 +75,14 @@ class TRoom {
   getJoinedMemberCount() {
     return 2;
   }
-  getMembersWithMembership(mship) {}
+  getMembersWithMembership(mship) {
+    const m = new TMember();
+    m.name = 'm1';
+    m.userId = 'm1id:noteon.io';
+    m.username = 'm1username';
+
+    return [m];
+  }
 }
 
 class CurrentState {

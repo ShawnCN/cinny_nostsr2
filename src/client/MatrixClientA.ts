@@ -162,6 +162,7 @@ class MatrixClientA extends EventEmitter {
   async getRoomDirectoryVisibility(roomId: string) {
     return Promise.resolve(true);
   }
+  async sendReadReceipt(latestEvent) {}
   setAccountData(arg0: string, arg1: TContent) {}
   isRoomEncrypted(roomId: string) {
     return true;

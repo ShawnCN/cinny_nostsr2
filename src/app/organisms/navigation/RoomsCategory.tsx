@@ -41,7 +41,8 @@ function RoomsCategory({ spaceId, name, hideHeader, roomIds, drawerPostie }) {
   };
 
   const renderSelector = (roomId) => {
-    const isSpace = spaces.has(roomId);
+    // const isSpace = spaces.has(roomId);
+    const isSpace = false;
     const isDM = directs.has(roomId);
 
     return (

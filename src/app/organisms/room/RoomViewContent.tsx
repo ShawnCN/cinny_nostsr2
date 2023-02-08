@@ -35,7 +35,7 @@ const PLACEHOLDERS_HEIGHT = 96 * PLACEHOLDER_COUNT;
 const SCROLL_TRIGGER_POS = PLACEHOLDERS_HEIGHT * 4;
 
 function loadingMsgPlaceholders(key, count = 2) {
-  const pl = [];
+  const pl: any = [];
   const genPlaceholders = () => {
     for (let i = 0; i < count; i += 1) {
       pl.push(<PlaceholderMessage key={`placeholder-${i}${key}`} />);
@@ -391,8 +391,8 @@ function RoomViewContent({ eventId, roomTimeline }: IPropsRoomViewContent) {
   const timelineSVRef = useRef(null);
   const timelineScrollRef = useRef(null);
   const eventLimitRef = useRef(null);
-  const [editEventId, setEditEventId] = useState(null);
-  const cancelEdit = () => setEditEventId(null);
+  const [editEventId, setEditEventId] = useState<string>(null as unknown as string);
+  const cancelEdit = () => setEditEventId(null as unknown as string);
 
   const readUptoEvtStore = useStore(roomTimeline);
   const [onLimitUpdate, forceUpdateLimit] = useForceUpdate();
