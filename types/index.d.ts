@@ -13,15 +13,15 @@ declare module '*.svg' {
   export default ReactComponent;
 }
 
-// export type TUser = {
-//   displayName: string;
-//   avatarUrl: string;
-// };
-// export type TRoom ={
+export type TContent = {
+  content: string;
+  shortcut: string[];
+  categorized: string[];
+};
 
-// }
-
-// export type TDevice = {
-//   deviceId: string;
-//   device: string[];
-// };
+export type TSearchQuery = {
+  name?: string;
+  homeserver?: string;
+  alias?: string;
+  error?: string;;
+};

@@ -120,7 +120,7 @@ function FeaturedTab() {
 
   function getHomeNoti() {
     const orphans = roomList.getOrphans();
-    let noti = null;
+    let noti = null as any;
 
     orphans.forEach((roomId) => {
       if (accountData.spaceShortcut.has(roomId)) return;
@@ -135,7 +135,7 @@ function FeaturedTab() {
   }
   function getDMsNoti() {
     if (roomList.directs.size === 0) return null;
-    let noti = null;
+    let noti = null as any;
 
     [...roomList.directs].forEach((roomId) => {
       if (!notifications.hasNoti(roomId)) return;

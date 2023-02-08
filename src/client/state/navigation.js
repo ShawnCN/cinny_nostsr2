@@ -190,6 +190,7 @@ class Navigation extends EventEmitter {
   }
 
   _selectSpace(roomId, asRoot, selectRoom = true) {
+    console.log('_selectSpace');
     this._addToSpacePath(roomId, asRoot);
     this.selectedSpaceId = roomId;
     if (!asRoot && selectRoom) this._selectRoomWithSpace(this.selectedSpaceId);

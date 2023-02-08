@@ -1,4 +1,6 @@
-import EventEmitter from 'events';
+import TEvent from '../../../types/TEvent';
+import TRoom from '../../../types/TRoom';
+import EventEmitter from '../EventEmitter';
 import initMatrix from '../InitMatrix';
 import cons from './cons';
 
@@ -77,6 +79,29 @@ function isTimelineLinked(tm1, tm2) {
 }
 
 class RoomTimeline extends EventEmitter {
+  timeline: TEvent[];
+  editedTimeline: Map<any, any>;
+  reactionTimeline: Map<any, any>;
+  typingMembers: Set<unknown>;
+  matrixClient: import('e:/dev/cinny_nostsr2/src/client/MatrixClientA').default;
+  roomId: string;
+  room: TRoom;
+  liveTimeline: any;
+  activeTimeline: any;
+  isOngoingPagination: boolean;
+  ongoingDecryptionCount: number;
+  initialized: boolean;
+  _listenRoomTimeline: (
+    event: any,
+    room: any,
+    toStartOfTimeline: any,
+    removed: any,
+    data: any
+  ) => void;
+  _listenDecryptEvent: (event: any) => void;
+  _listenRedaction: (mEvent: any, room: any) => void;
+  _listenTypingEvent: (event: any, member: any) => void;
+  _listenReciptEvent: (event: any, room: any) => void;
   constructor(roomId) {
     super();
     // These are local timelines
@@ -99,6 +124,7 @@ class RoomTimeline extends EventEmitter {
     setTimeout(() => this.room.loadMembersIfNeeded());
 
     // TODO: remove below line
+    // @ts-ignore
     window.selectedRoom = this;
   }
 
@@ -240,7 +266,7 @@ class RoomTimeline extends EventEmitter {
 
   getEventReaders(mEvent) {
     const liveEvents = this.liveTimeline.getEvents();
-    const readers = [];
+    const readers = [] as any;
     if (!mEvent) return [];
 
     for (let i = liveEvents.length - 1; i >= 0; i -= 1) {

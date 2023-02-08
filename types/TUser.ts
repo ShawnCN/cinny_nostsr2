@@ -4,6 +4,7 @@ class TUser extends EventEmitter {
   displayName: string;
   avatarUrl: string;
   powerLevel: number;
+  userId: string;
   constructor() {
     super();
   }

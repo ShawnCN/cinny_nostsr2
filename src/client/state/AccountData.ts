@@ -1,16 +1,22 @@
 import EventEmitter from '../EventEmitter';
 import appDispatcher from '../dispatcher';
 import cons from './cons';
+import RoomList from './RoomList';
 
 class AccountData extends EventEmitter {
-  constructor(roomList) {
+  matrixClient: import('e:/dev/cinny_nostsr2/src/client/MatrixClientA').default;
+  roomList: RoomList;
+  spaces: Set<unknown>;
+  spaceShortcut: Set<unknown>;
+  categorizedSpaces: Set<unknown>;
+  constructor(roomList: RoomList) {
     super();
 
     this.matrixClient = roomList.matrixClient;
     this.roomList = roomList;
     this.spaces = roomList.spaces;
 
-    this.spaceShortcut = new Set();
+    this.spaceShortcut = new Set(['globalfeed']);
     this._populateSpaceShortcut();
 
     this.categorizedSpaces = new Set();

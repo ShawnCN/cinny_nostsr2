@@ -13,7 +13,7 @@ import { cryptoCallbacks } from './state/secretStorageKeys';
 import navigation from './state/navigation';
 
 import MatrixClientA from './MatrixClientA';
-const m = new MatrixClientA();
+const matrixClientA = new MatrixClientA();
 
 // global.Olm = Olm;
 
@@ -43,7 +43,12 @@ class InitMatrix extends EventEmitter {
     //   dbName: 'web-sync-store',
     // });
     // await indexedDBStore.startup();
-    this.matrixClient = m;
+    this.matrixClient = matrixClientA;
+    // this.roomList = {
+    //   spaces: new Set(),
+    //   rooms: new Set(),
+    //   directs: new Set(),
+    // };
     // this.matrixClient = sdk.createClient({
     //   baseUrl: secret.baseUrl,
     //   accessToken: secret.accessToken,
@@ -68,8 +73,10 @@ class InitMatrix extends EventEmitter {
       console.log(state);
       switch (state) {
         case 'NULL':
+          console.log('NULL state');
           break;
         case 'SYNCING':
+          console.log('SYNCING state');
           break;
         case 'PREPARED':
           console.log('PREPARED state');
@@ -90,12 +97,16 @@ class InitMatrix extends EventEmitter {
 
           break;
         case 'RECONNECTING':
+          console.log('RECONNECTING state');
           break;
         case 'CATCHUP':
+          console.log('CATCHUP state');
           break;
         case 'ERROR':
+          console.log('ERROR state');
           break;
         case 'STOPPED':
+          console.log('STOPPED state');
           break;
         default:
           console.log('default state');
@@ -137,7 +148,6 @@ class InitMatrix extends EventEmitter {
       // },
     };
     // this.matrixClient.on('sync', (state, prevState) => sync[state](prevState));
-    // this.matrixClient.on('sync', (state, prevState) => sync({ state, prevState }));
     this.matrixClient.on('sync', ({ state, prevState }) => sync({ state, prevState }));
   }
 

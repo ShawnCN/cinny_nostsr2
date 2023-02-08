@@ -17,6 +17,7 @@ import RoomTile from '../../molecules/room-tile/RoomTile';
 
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import HashSearchIC from '../../../../public/res/ic/outlined/hash-search.svg';
+import { TSearchQuery } from '../../../../types';
 
 const SEARCH_LIMIT = 20;
 
@@ -107,13 +108,13 @@ TryJoinWithAlias.propTypes = {
 function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
   const [isSearching, updateIsSearching] = useState(false);
   const [isViewMore, updateIsViewMore] = useState(false);
-  const [publicRooms, updatePublicRooms] = useState([]);
+  const [publicRooms, updatePublicRooms] = useState<string[]>([]);
   const [nextBatch, updateNextBatch] = useState(undefined);
-  const [searchQuery, updateSearchQuery] = useState({});
+  const [searchQuery, updateSearchQuery] = useState<TSearchQuery>({});
   const [joiningRooms, updateJoiningRooms] = useState(new Set());
 
-  const roomNameRef = useRef(null);
-  const hsRef = useRef(null);
+  const roomNameRef = useRef<any>(null);
+  const hsRef = useRef<any>(null);
   const userId = initMatrix.matrixClient.getUserId();
 
   async function searchRooms(viewMore) {
@@ -168,7 +169,7 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
           alias: isInputAlias ? inputRoomName : null,
         });
       }
-    } catch (e) {
+    } catch (e: any) {
       updatePublicRooms([]);
       let err = 'Something went wrong!';
       if (e?.httpStatus >= 400 && e?.httpStatus < 500) {

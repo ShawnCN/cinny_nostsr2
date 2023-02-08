@@ -36,6 +36,7 @@ import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.s
 export function HomeSpaceOptions({ spaceId, afterOptionSelect }) {
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(spaceId);
+  console.log('spaceId: ' + spaceId);
   const canManage = room
     ? room.currentState.maySendStateEvent('m.space.child', mx.getUserId())
     : true;

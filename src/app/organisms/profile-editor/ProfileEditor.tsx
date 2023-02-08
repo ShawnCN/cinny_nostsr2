@@ -21,7 +21,7 @@ function ProfileEditor({ userId }) {
   const mx = initMatrix.matrixClient;
   const user = mx.getUser(mx.getUserId());
 
-  const displayNameRef = useRef(null);
+  const displayNameRef = useRef<any>(null);
   const [avatarSrc, setAvatarSrc] = useState(
     user.avatarUrl ? mx.mxcUrlToHttp(user.avatarUrl, 80, 80, 'crop') : null
   );
@@ -33,7 +33,7 @@ function ProfileEditor({ userId }) {
     mx.getProfileInfo(mx.getUserId()).then((info) => {
       if (!isMounted) return;
       setAvatarSrc(info.avatarUrl ? mx.mxcUrlToHttp(info.avatarUrl, 80, 80, 'crop') : null);
-      setUsername(info.displayname);
+      setUsername(info.displayName);
     });
     return () => {
       isMounted = false;
@@ -59,7 +59,7 @@ function ProfileEditor({ userId }) {
   };
 
   const saveDisplayName = () => {
-    const newDisplayName = displayNameRef.current.value;
+    const newDisplayName = displayNameRef.current?.value;
     if (newDisplayName !== null && newDisplayName !== username) {
       mx.setDisplayName(newDisplayName);
       setUsername(newDisplayName);

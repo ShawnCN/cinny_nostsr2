@@ -22,7 +22,8 @@ function Selector({ roomId, isDM, drawerPostie, onClick }) {
   const mx = initMatrix.matrixClient;
   const noti = initMatrix.notifications;
   const room = mx.getRoom(roomId);
-
+  console.log('selector room', room);
+  console.log('selector getAvatarFallbackMember', room.getAvatarFallbackMember());
   let imageSrc = room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
   if (imageSrc === null) imageSrc = room.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
 

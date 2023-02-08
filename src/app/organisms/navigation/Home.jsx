@@ -31,6 +31,7 @@ function Home({ spaceId }) {
     directIds = spaceChildIds.filter((roomId) => directs.has(roomId));
   } else {
     spaceIds = roomList.getOrphanSpaces().filter((id) => !accountData.spaceShortcut.has(id));
+    // spaceIds = ['globalfeed', '11'];
     roomIds = roomList.getOrphanRooms();
   }
 
