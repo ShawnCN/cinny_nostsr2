@@ -1,8 +1,18 @@
+import MatrixClientA from '../../../client/MatrixClientA';
 import { emojis } from './emoji';
 
 // https://github.com/Sorunome/matrix-doc/blob/soru/emotes/proposals/2545-emotes.md
 
 class ImagePack {
+  id: string;
+  content: any;
+  displayName: any;
+  avatarUrl: any;
+  usage: any;
+  attribution: any;
+  images: Map<any, any>;
+  emoticons: never[];
+  stickers: never[];
   static parsePack(eventId, packContent) {
     if (!eventId || typeof packContent?.images !== 'object') {
       return null;
@@ -176,7 +186,7 @@ function getGlobalImagePacks(mx) {
   return packs;
 }
 
-function getUserImagePack(mx) {
+function getUserImagePack(mx: MatrixClientA) {
   const accountDataEmoji = mx.getAccountData('im.ponies.user_emotes');
   if (!accountDataEmoji) {
     return null;

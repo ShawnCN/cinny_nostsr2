@@ -82,7 +82,6 @@ function useValidate(hsString) {
 function getAliases(roomId) {
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
-
   const main = room.getCanonicalAlias();
   const published = room.getAltAliases();
   if (main && !published.includes(main)) published.splice(0, 0, main);

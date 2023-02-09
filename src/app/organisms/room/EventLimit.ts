@@ -1,4 +1,7 @@
 class EventLimit {
+  _from: number;
+  SMALLEST_EVT_HEIGHT: number;
+  PAGES_COUNT: number;
   constructor() {
     this._from = 0;
 

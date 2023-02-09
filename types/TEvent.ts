@@ -1,29 +1,34 @@
-import { TContent } from '.';
 import TMember from './TMember';
-import TUser from './TUser';
 
 class TEvent {
-  event: {
-    state_key: string;
-  };
+  event: TEventFormat;
   sender: TMember;
   replyEventId: string;
   clearEvent: boolean;
-  constructor() {}
+  constructor(event: TEventFormat) {
+    this.event = event;
+    this.sender = new TMember(this.event.sender);
+  }
   getTs() {
-    return 1;
+    return this.event.origin_server_ts;
+  }
+  getDate() {
+    return new Date(this.event.origin_server_ts);
   }
   getType() {
-    return 'type';
+    return this.event.type;
   }
   getRelation() {
+    // return null;
     return {
-      rel_type: 'm.replace',
+      rel_type: '111111111111111',
     };
   }
   getSender() {
-    return '11';
+    console.log(this.event);
+    return this.event.sender;
   }
+
   isRedacted() {
     return false;
   }
@@ -31,16 +36,16 @@ class TEvent {
     return false;
   }
   getId() {
-    return 'id';
+    return this.event.event_id;
   }
   getRoomId() {
     return 'globalfeed';
   }
   getContent() {
-    return {
-      // topic: 'topic',
-      // suggested: 'suggested',
-    } as TContent;
+    return this.event.content;
+  }
+  getPrevContent() {
+    return null;
   }
   isEncrypted() {
     return false;
@@ -49,4 +54,31 @@ class TEvent {
     return true;
   }
 }
+
+export type TEventFormat = {
+  content: TContent;
+  type: string;
+  shortcut?: string[];
+  shortcode?: string;
+  state_key?: string;
+  categorized?: string[];
+  origin_server_ts: number;
+  sender: string;
+  event_id: string;
+  room_id: string;
+};
+export type TContent = {
+  body: string;
+  msgtype?: string;
+  external_url?: string;
+  format?: string;
+  formatted_body?: string;
+  membership?: string;
+};
+
+type TMsgType = 'm.text';
+export type TMembership = 'join' | 'leave' | 'invite' | 'ban';
+
+export type TEventType = 'm.room.message' | 'm.room.message' | 'm.room.member';
+
 export default TEvent;

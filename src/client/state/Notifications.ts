@@ -87,7 +87,7 @@ class Notifications extends EventEmitter {
     const userId = this.matrixClient.getUserId();
     const readUpToId = room.getEventReadUpTo(userId);
     const liveEvents = room.getLiveTimeline().getEvents();
-
+    console.log('liveEvents', liveEvents);
     if (liveEvents[liveEvents.length - 1]?.getSender() === userId) {
       return false;
     }

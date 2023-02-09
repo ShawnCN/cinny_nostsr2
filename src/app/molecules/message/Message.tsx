@@ -125,7 +125,13 @@ const MessageHeader = React.memo(
 //   fullTime: PropTypes.bool,
 // };
 
-function MessageReply({ name, color, body }) {
+interface IPropsMessageReply {
+  name: string;
+  color: string;
+  body: string;
+}
+
+function MessageReply({ name, color, body }: IPropsMessageReply) {
   return (
     <div className="message__reply">
       <Text variant="b2">
@@ -136,11 +142,11 @@ function MessageReply({ name, color, body }) {
   );
 }
 
-MessageReply.propTypes = {
-  name: PropTypes.string.isRequired,
-  color: PropTypes.string.isRequired,
-  body: PropTypes.string.isRequired,
-};
+// MessageReply.propTypes = {
+//   name: PropTypes.string.isRequired,
+//   color: PropTypes.string.isRequired,
+//   body: PropTypes.string.isRequired,
+// };
 interface IPropsMessageReplyWrapper {
   roomTimeline: RoomTimeline;
   eventId?: string;
@@ -327,7 +333,13 @@ const MessageBody = React.memo(
 //   msgType: PropTypes.string,
 // };
 
-function MessageEdit({ body, onSave, onCancel }) {
+interface IPropsMessageEdit {
+  body: string;
+  onSave: () => void;
+  onCancel: () => void;
+}
+
+function MessageEdit({ body, onSave, onCancel }: IPropsMessageEdit) {
   const editInputRef = useRef(null);
 
   useEffect(() => {
@@ -374,11 +386,11 @@ function MessageEdit({ body, onSave, onCancel }) {
     </form>
   );
 }
-MessageEdit.propTypes = {
-  body: PropTypes.string.isRequired,
-  onSave: PropTypes.func.isRequired,
-  onCancel: PropTypes.func.isRequired,
-};
+// MessageEdit.propTypes = {
+//   body: PropTypes.string.isRequired,
+//   onSave: PropTypes.func.isRequired,
+//   onCancel: PropTypes.func.isRequired,
+// };
 
 function getMyEmojiEvent(emojiKey, eventId, roomTimeline) {
   const mx = initMatrix.matrixClient;

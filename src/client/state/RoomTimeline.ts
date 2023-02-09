@@ -3,7 +3,7 @@ import TLiveTimeline from '../../../types/TLiveTimeline';
 import TRoom from '../../../types/TRoom';
 import EventEmitter from '../EventEmitter';
 import initMatrix from '../InitMatrix';
-import cons from './cons';
+import cons, { aevent2 } from './cons';
 
 import settings from './settings';
 
@@ -11,11 +11,11 @@ function isEdited(mEvent: TEvent) {
   return mEvent.getRelation()?.rel_type === 'm.replace';
 }
 
-function isReaction(mEvent) {
+function isReaction(mEvent: TEvent) {
   return mEvent.getType() === 'm.reaction';
 }
 
-function hideMemberEvents(mEvent) {
+function hideMemberEvents(mEvent: TEvent) {
   const content = mEvent.getContent();
   const prevContent = mEvent.getPrevContent();
   const { membership } = content;
@@ -34,7 +34,7 @@ function getRelateToId(mEvent) {
   return relation && relation.event_id;
 }
 
-function addToMap(myMap, mEvent) {
+function addToMap(myMap, mEvent: TEvent) {
   const relateToId = getRelateToId(mEvent);
   if (relateToId === null) return null;
   const mEventId = mEvent.getId();
@@ -81,32 +81,34 @@ function isTimelineLinked(tm1, tm2) {
 
 class RoomTimeline extends EventEmitter {
   timeline: TEvent[];
+  liveTimeline: TLiveTimeline;
+  activeTimeline: TLiveTimeline;
   editedTimeline: Map<any, any>;
   reactionTimeline: Map<any, any>;
   typingMembers: Set<unknown>;
   matrixClient: import('e:/dev/cinny_nostsr2/src/client/MatrixClientA').default;
   roomId: string;
   room: TRoom;
-  liveTimeline: TLiveTimeline;
-  activeTimeline: any;
   isOngoingPagination: boolean;
   ongoingDecryptionCount: number;
   initialized: boolean;
   _listenRoomTimeline: (
-    event: any,
-    room: any,
+    event: TEvent,
+    room: TRoom,
     toStartOfTimeline: any,
     removed: any,
     data: any
   ) => void;
-  _listenDecryptEvent: (event: any) => void;
-  _listenRedaction: (mEvent: any, room: any) => void;
-  _listenTypingEvent: (event: any, member: any) => void;
-  _listenReciptEvent: (event: any, room: any) => void;
+  _listenDecryptEvent: (event: TEvent) => void;
+  _listenRedaction: (mEvent: TEvent, room: TRoom) => void;
+  _listenTypingEvent: (event: TEvent, member: any) => void;
+  _listenReciptEvent: (event: TEvent, room: TRoom) => void;
   constructor(roomId) {
     super();
     // These are local timelines
-    this.timeline = [];
+    // this.timeline = [aevent as unknown as TEvent];
+    const ae = new TEvent(aevent2);
+    this.timeline = [ae];
     this.editedTimeline = new Map();
     this.reactionTimeline = new Map();
     this.typingMembers = new Set();
@@ -151,26 +153,33 @@ class RoomTimeline extends EventEmitter {
     this.timeline = [];
   }
 
-  addToTimeline(mEvent) {
+  addToTimeline(mEvent: TEvent) {
+    console.log(mEvent);
     if (mEvent.getType() === 'm.room.member' && hideMemberEvents(mEvent)) {
       return;
     }
+    console.log('161');
     if (mEvent.isRedacted()) return;
     if (isReaction(mEvent)) {
       addToMap(this.reactionTimeline, mEvent);
       return;
     }
+    console.log('165', mEvent.getType());
     if (!cons.supportEventTypes.includes(mEvent.getType())) return;
+    console.log('169', mEvent);
     if (isEdited(mEvent)) {
       addToMap(this.editedTimeline, mEvent);
       return;
     }
+    console.log('171');
     this.timeline.push(mEvent);
+    console.log(this.timeline);
   }
 
   _populateAllLinkedEvents(timeline) {
+    console.log('_populateAllLinkedEvents');
     const firstTimeline = getFirstLinkedTimeline(timeline);
-    iterateLinkedTimelines(firstTimeline, false, (tm) => {
+    iterateLinkedTimelines(firstTimeline, false, (tm: TLiveTimeline) => {
       tm.getEvents().forEach((mEvent) => this.addToTimeline(mEvent));
     });
   }
@@ -185,6 +194,7 @@ class RoomTimeline extends EventEmitter {
     this._populateTimelines();
     if (!this.initialized) {
       this.initialized = true;
+      console.log('_reset is already initialized');
       this._listenEvents();
     }
   }
@@ -192,6 +202,7 @@ class RoomTimeline extends EventEmitter {
   async loadLiveTimeline() {
     this.activeTimeline = this.liveTimeline;
     await this._reset();
+    console.log('9999999999');
     this.emit(cons.events.roomTimeline.READY, null);
     return true;
   }

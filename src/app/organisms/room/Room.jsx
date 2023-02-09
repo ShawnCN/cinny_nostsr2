@@ -26,6 +26,7 @@ function Room() {
     const handleRoomSelected = (rId, pRoomId, eId) => {
       roomInfo.roomTimeline?.removeInternalListeners();
       if (mx.getRoom(rId)) {
+        console.log('Room selected111111111111111', rId);
         setRoomInfo({
           roomTimeline: new RoomTimeline(rId),
           eventId: eId ?? null,

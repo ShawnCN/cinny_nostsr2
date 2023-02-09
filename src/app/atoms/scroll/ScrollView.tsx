@@ -7,7 +7,7 @@ interface IPropsScrollView {
   vertical?: boolean;
   autoHide?: boolean;
   invisible?: boolean;
-  onScroll?: () => void;
+  onScroll?: (arg0: any) => void;
   children: ReactNode;
 }
 

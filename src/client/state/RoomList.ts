@@ -31,7 +31,7 @@ class RoomList extends EventEmitter {
   inviteDirects: Set<unknown>;
   inviteSpaces: Set<unknown>;
   inviteRooms: Set<unknown>;
-  directs: Set<string>;
+  directs: Set<string>; // roomId set
   spaces: Set<string>;
   rooms: Set<string>;
   processingRooms: Map<any, any>;

@@ -10,7 +10,10 @@ import { roomIdByActivity } from '../../../util/sort';
 import RoomsCategory from './RoomsCategory';
 
 const drawerPostie = new Postie();
-function Directs({ size }) {
+interface IPropsDirects {
+  size: number;
+}
+function Directs({ size }: IPropsDirects) {
   const mx = initMatrix.matrixClient;
   const { roomList, notifications } = initMatrix;
   const [directIds, setDirectIds] = useState([]);
@@ -66,8 +69,8 @@ function Directs({ size }) {
 
   return <RoomsCategory name="People" hideHeader roomIds={directIds} drawerPostie={drawerPostie} />;
 }
-Directs.propTypes = {
-  size: PropTypes.number.isRequired,
-};
+// Directs.propTypes = {
+//   size: PropTypes.number.isRequired,
+// };
 
 export default Directs;

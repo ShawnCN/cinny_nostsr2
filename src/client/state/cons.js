@@ -237,4 +237,100 @@ export const TChannelMapList = {
   },
 };
 
+export const aevent1 = {
+  content: {
+    body: 'Enjoy profitable forex/cryptocurrency income and earn up to $30,000.00 within 5 days, not only interested people should ask me how\nhttps://t.me/+BQlhudqWXGk1MWY0',
+    msgtype: 'm.text',
+  },
+  origin_server_ts: 1675900869516,
+  sender: '@antonio_michelle:matrix.org',
+  type: 'm.room.message',
+  unsigned: {
+    age: 7308744,
+    'm.relations': {
+      'm.annotation': {
+        chunk: [
+          {
+            type: 'm.reaction',
+            key: '🚨 scam! 🚨',
+            count: 1,
+          },
+        ],
+      },
+    },
+  },
+  event_id: '$jzDWSfx4SkJTLJsqf2yyV8KKuWxFggzmdpJzhg9uiF0',
+  room_id: 'globalfeed',
+};
+
+export const aevent2 = {
+  content: {
+    body: "That is likely a scam and what we call 'too good to be true'. For more information go to https://www.sec.gov/oiea/investor-alerts-and-bulletins/digital-asset-and-crypto-investment-scams-investor-alert and https://www.youtube.com/watch?v=gFWaA7mt9oM\n[!mods !modhelp]",
+    msgtype: 'm.text',
+    membership: 'join',
+  },
+  origin_server_ts: 1675900877044,
+  sender: '@anti-scam:matrix.org',
+  type: 'm.room.message',
+  unsigned: {
+    age: 7301216,
+  },
+  event_id: '$OX7fHIuYRHZeY29MEAl4PriMt03tV1uZobOa8XLsEso',
+  room_id: 'globalfeed',
+};
+
+export const aevent3 = {
+  content: {
+    body: '> <Calvin> Tapi agak geli liatnya, cowok keliatan udel 😭\n\nKnp? kan sexyy 😘',
+    external_url: 'https://t.me/GenshinImpact_ID/7589109',
+    format: 'org.matrix.custom.html',
+    formatted_body:
+      "<mx-reply><blockquote><a href='https://matrix.to/#/!AGeUOyHpLMMrLYAkXW:matrix.org/$Bu1vZBKx37Bv7BdedZ0787jhbaIsIT7Y1FNXc-InMVo'>In reply to</a> <a href='https://matrix.to/#/@telegram_1021191853:t2bot.io'>Calvin</a><br/>Tapi agak geli liatnya, cowok keliatan udel 😭</blockquote></mx-reply>Knp? kan sexyy 😘",
+    'm.relates_to': {
+      'm.in_reply_to': {
+        event_id: '$Bu1vZBKx37Bv7BdedZ0787jhbaIsIT7Y1FNXc-InMVo',
+      },
+    },
+    msgtype: 'm.text',
+  },
+  origin_server_ts: 1675924832000,
+  sender: '@telegram_5185363675:t2bot.io',
+  type: 'm.room.message',
+  unsigned: {},
+  event_id: '$x8t7Tl_iV-XUbOiWtQ5ylsM0ih6MYiaWlXszvwq1dDI',
+  room_id: 'globalfeed',
+};
+
+export const aevent4 = {
+  content: {
+    body: '😶 (face without mouth)',
+    external_url: 'https://t.me/GenshinImpact_ID/7589111',
+    info: {
+      h: 245,
+      mimetype: 'image/png',
+      size: 29527,
+      thumbnail_info: {
+        h: 245,
+        mimetype: 'image/png',
+        size: 29527,
+        w: 256,
+      },
+      thumbnail_url: 'mxc://t2bot.io/4ca145ee94608c5fbb5bb9e1e1e8d645159c2eaf',
+      w: 256,
+    },
+    'm.relates_to': {
+      'm.in_reply_to': {
+        event_id: '$JMbYXteW5anWnMa6MgsAm2ddPYMcMLS2WNm7-Ipcnss',
+      },
+    },
+    url: 'mxc://t2bot.io/4ca145ee94608c5fbb5bb9e1e1e8d645159c2eaf',
+  },
+  origin_server_ts: 1675924863000,
+  sender: '@telegram_5091542766:t2bot.io',
+  type: 'm.sticker',
+  unsigned: {},
+  event_id: '$vgT4WXssfha4H4uKNvU1zAt3C4rsbuHRBr42AS0pQR0',
+  room_id: '!AGeUOyHpLMMrLYAkXW:matrix.org',
+};
+
 export default cons;

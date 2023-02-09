@@ -7,6 +7,9 @@ import { sanitizeText } from '../../util/sanitize';
 import cons from './cons';
 import settings from './settings';
 import { markdown, plain } from '../../util/markdown';
+import MatrixClientA from '../MatrixClientA';
+import RoomList from './RoomList';
+import TEvent from '../../../types/TEvent';
 
 const blurhashField = 'xyz.amorgan.blurhash';
 
@@ -99,7 +102,10 @@ function getVideoThumbnail(video, width, height, mimeType) {
 }
 
 class RoomsInput extends EventEmitter {
-  constructor(mx, roomList) {
+  matrixClient: MatrixClientA;
+  roomList: RoomList;
+  roomIdToInput: Map<any, any>;
+  constructor(mx: MatrixClientA, roomList: RoomList) {
     super();
 
     this.matrixClient = mx;
@@ -188,7 +194,7 @@ class RoomsInput extends EventEmitter {
     return this.roomIdToInput.get(roomId)?.isSending || false;
   }
 
-  getContent(roomId, options, message, reply, edit) {
+  getContent(roomId, options, message, reply, edit?: TEvent) {
     const msgType = options?.msgType || 'm.text';
     const autoMarkdown = options?.autoMarkdown ?? true;
 
@@ -284,7 +290,7 @@ class RoomsInput extends EventEmitter {
 
   async sendSticker(roomId, data) {
     const { mxc: url, body, httpUrl } = data;
-    const info = {};
+    const info: any = {};
 
     const img = new Image();
     img.src = httpUrl;

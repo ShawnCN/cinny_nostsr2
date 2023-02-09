@@ -14,19 +14,6 @@ declare module '*.svg' {
   export default ReactComponent;
 }
 
-export type TEventFormat = {
-  content: string;
-  shortcut: string[];
-  categorized: string[];
-};
-export type TContent = {
-  body: string;
-  external_url: string;
-  format: string;
-  formatted_body: string;
-  msgtype: string;
-};
-
 export type TSearchQuery = {
   name?: string;
   homeserver?: string;

@@ -198,6 +198,5 @@ class InitMatrix extends EventEmitter {
 }
 
 const initMatrix = new InitMatrix();
-console.log('22222222', initMatrix);
 
 export default initMatrix;

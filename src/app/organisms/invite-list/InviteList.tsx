@@ -94,7 +94,7 @@ function InviteList({ isOpen, onRequestClose }) {
       onRequestClose={onRequestClose}
     >
       <div className="invites-content">
-        {initMatrix.roomList.inviteDirects.size !== 0 && (
+        {initMatrix.roomList?.inviteDirects.size !== 0 && (
           <div className="invites-content__subheading">
             <Text variant="b3" weight="bold">
               Direct Messages

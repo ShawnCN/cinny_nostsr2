@@ -65,6 +65,9 @@ class TRoom {
   getCanonicalAlias() {
     return this.canonical_alias;
   }
+  getAltAliases() {
+    return ['getAltAliases'];
+  }
   async loadMembersIfNeeded() {
     return Promise.resolve();
   }

@@ -1,4 +1,9 @@
 class TMember {
+  constructor(id: string) {
+    this.userId = id;
+    this.name = 'name' + id;
+    this.userId = 'username' + id;
+  }
   userId: string;
   name: string;
   username: string;

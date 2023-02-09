@@ -34,16 +34,23 @@ import FileIC from '../../../../public/res/ic/outlined/file.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 import commands from './commands';
+import RoomTimeline from '../../../client/state/RoomTimeline';
+import EventEmitter from '../../../client/EventEmitter';
 
 const CMD_REGEX = /(^\/|:|@)(\S*)$/;
 let isTyping = false;
 let isCmdActivated = false;
 let cmdCursorPos = null;
-function RoomViewInput({ roomId, roomTimeline, viewEvent }) {
+interface IPropsRoomViewInput {
+  roomId: string;
+  roomTimeline: RoomTimeline;
+  viewEvent: EventEmitter;
+}
+function RoomViewInput({ roomId, roomTimeline, viewEvent }: IPropsRoomViewInput) {
   const [attachment, setAttachment] = useState(null);
   const [replyTo, setReplyTo] = useState(null);
 
-  const textAreaRef = useRef(null);
+  const textAreaRef = useRef<any>(null);
   const inputBaseRef = useRef(null);
   const uploadInputRef = useRef(null);
   const uploadProgressRef = useRef(null);
@@ -55,7 +62,7 @@ function RoomViewInput({ roomId, roomTimeline, viewEvent }) {
 
   function requestFocusInput() {
     if (textAreaRef === null) return;
-    textAreaRef.current.focus();
+    textAreaRef.current?.focus();
   }
 
   useEffect(() => {
@@ -67,7 +74,7 @@ function RoomViewInput({ roomId, roomTimeline, viewEvent }) {
     };
   }, []);
 
-  const sendIsTyping = (isT) => {
+  const sendIsTyping = (isT: boolean) => {
     mx.sendTyping(roomId, isT, isT ? TYPING_TIMEOUT : undefined);
     isTyping = isT;
 
@@ -186,13 +193,13 @@ function RoomViewInput({ roomId, roomTimeline, viewEvent }) {
     };
   }, [roomId]);
 
-  const sendBody = async (body, options) => {
-    const opt = options ?? {};
+  const sendBody = async (body, options?: { msgType: 'm.text'; autoMarkdown: true }) => {
+    const opt = options ?? ({} as { msgType: string; autoMarkdown: boolean });
     if (!opt.msgType) opt.msgType = 'm.text';
     if (typeof opt.autoMarkdown !== 'boolean') opt.autoMarkdown = true;
     if (roomsInput.isSending(roomId)) return;
     sendIsTyping(false);
-
+    console.log('setMessage', body);
     roomsInput.setMessage(roomId, body);
     if (attachment !== null) {
       roomsInput.setAttachment(roomId, attachment);
@@ -502,10 +509,10 @@ function RoomViewInput({ roomId, roomTimeline, viewEvent }) {
     </>
   );
 }
-RoomViewInput.propTypes = {
-  roomId: PropTypes.string.isRequired,
-  roomTimeline: PropTypes.shape({}).isRequired,
-  viewEvent: PropTypes.shape({}).isRequired,
-};
+// RoomViewInput.propTypes = {
+//   roomId: PropTypes.string.isRequired,
+//   roomTimeline: PropTypes.shape({}).isRequired,
+//   viewEvent: PropTypes.shape({}).isRequired,
+// };
 
 export default RoomViewInput;

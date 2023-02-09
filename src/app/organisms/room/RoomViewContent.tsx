@@ -1,7 +1,14 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable react/prop-types */
-import React, { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+  useRef,
+  ReactElement,
+} from 'react';
 import PropTypes from 'prop-types';
 import './RoomViewContent.scss';
 
@@ -148,8 +155,8 @@ function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus, isEdit, setEdit,
   );
 }
 
-function useTimeline(roomTimeline, eventId, readUptoEvtStore, eventLimitRef) {
-  const [timelineInfo, setTimelineInfo] = useState(null);
+function useTimeline(roomTimeline: RoomTimeline, eventId, readUptoEvtStore, eventLimitRef) {
+  const [timelineInfo, setTimelineInfo] = useState<{ focusEventId: string } | null>(null);
 
   const setEventTimeline = async (eId) => {
     if (typeof eId === 'string') {
@@ -164,6 +171,7 @@ function useTimeline(roomTimeline, eventId, readUptoEvtStore, eventLimitRef) {
   useEffect(() => {
     const limit = eventLimitRef.current;
     const initTimeline = (eId) => {
+      console.log('starttttttttttttttt', eId);
       // NOTICE: eId can be id of readUpto, reply or specific event.
       // readUpTo: when user click jump to unread message button.
       // reply: when user click reply from timeline.
@@ -171,7 +179,7 @@ function useTimeline(roomTimeline, eventId, readUptoEvtStore, eventLimitRef) {
       const readUpToId = roomTimeline.getReadUpToEventId();
       let focusEventIndex = -1;
       const isSpecificEvent = eId && eId !== readUpToId;
-
+      console.log('2starttttttttttttttt', eId);
       if (isSpecificEvent) {
         focusEventIndex = roomTimeline.getEventIndex(eId);
       }
@@ -182,13 +190,15 @@ function useTimeline(roomTimeline, eventId, readUptoEvtStore, eventLimitRef) {
       if (readUptoEvtStore.getItem() && !isSpecificEvent) {
         focusEventIndex = roomTimeline.getUnreadEventIndex(readUptoEvtStore.getItem().getId());
       }
-
+      console.log('3starttttttttttttttt', eId);
       if (focusEventIndex > -1) {
         limit.setFrom(focusEventIndex - Math.round(limit.maxEvents / 2));
       } else {
         limit.setFrom(roomTimeline.timeline.length - limit.maxEvents);
       }
+      console.log('4starttttttttttttttt', eId);
       setTimelineInfo({ focusEventId: isSpecificEvent ? eId : null });
+      console.log('enddddddddddddd');
     };
 
     roomTimeline.on(cons.events.roomTimeline.READY, initTimeline);
@@ -389,8 +399,8 @@ function RoomViewContent({ eventId, roomTimeline }: IPropsRoomViewContent) {
   const [throttle] = useState(new Throttle());
 
   const timelineSVRef = useRef(null);
-  const timelineScrollRef = useRef(null);
-  const eventLimitRef = useRef(null);
+  const timelineScrollRef = useRef<TimelineScroll>(null as unknown as TimelineScroll);
+  const eventLimitRef = useRef<EventLimit>(null as unknown as EventLimit);
   const [editEventId, setEditEventId] = useState<string>(null as unknown as string);
   const cancelEdit = () => setEditEventId(null as unknown as string);
 
@@ -426,6 +436,7 @@ function RoomViewContent({ eventId, roomTimeline }: IPropsRoomViewContent) {
 
   // when active timeline changes
   useEffect(() => {
+    console.log('active timeline');
     if (!roomTimeline.initialized) return undefined;
     const timelineScroll = timelineScrollRef.current;
 
@@ -493,7 +504,7 @@ function RoomViewContent({ eventId, roomTimeline }: IPropsRoomViewContent) {
       const { timeline: tl, activeTimeline, liveTimeline, matrixClient: mx } = roomTimeline;
       const limit = eventLimitRef.current;
       if (activeTimeline !== liveTimeline) return;
-      if (tl.length > limit.length) return;
+      if (tl.length > limit!.length) return;
 
       const mTypes = ['m.text'];
       for (let i = tl.length - 1; i >= 0; i -= 1) {
@@ -501,7 +512,7 @@ function RoomViewContent({ eventId, roomTimeline }: IPropsRoomViewContent) {
         if (
           mE.getSender() === mx.getUserId() &&
           mE.getType() === 'm.room.message' &&
-          mTypes.includes(mE.getContent()?.msgtype)
+          mTypes.includes(mE.getContent()?.msgtype!)
         ) {
           setEditEventId(mE.getId());
           return;
@@ -530,7 +541,7 @@ function RoomViewContent({ eventId, roomTimeline }: IPropsRoomViewContent) {
   };
 
   const renderTimeline = () => {
-    const tl = [];
+    const tl: ReactElement<any, any>[] = [];
     const limit = eventLimitRef.current;
 
     let itemCountIndex = 0;
@@ -602,6 +613,7 @@ function RoomViewContent({ eventId, roomTimeline }: IPropsRoomViewContent) {
       );
       itemCountIndex += 1;
     }
+    console.log(limit.length, timeline.length, timeline, roomTimeline);
     if (roomTimeline.canPaginateForward() || limit.length < timeline.length) {
       tl.push(loadingMsgPlaceholders(2, PLACEHOLDER_COUNT));
     }

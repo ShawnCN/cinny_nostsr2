@@ -1,10 +1,11 @@
 import { Relay, relayInit } from 'nostr-tools';
-import { TChannelmap, TChannelmapObject, TContent, TSubscribedChannel } from '../../types';
+import { TChannelmap, TChannelmapObject, TSubscribedChannel } from '../../types';
 import TDevice from '../../types/TDevice';
+import TEvent from '../../types/TEvent';
 import TRoom from '../../types/TRoom';
 import TUser from '../../types/TUser';
 import EventEmitter from './EventEmitter';
-import { defaultChatroomList, stage3relays, TChannelMapList } from './state/cons';
+import { aevent2, defaultChatroomList, stage3relays, TChannelMapList } from './state/cons';
 
 class MatrixClientA extends EventEmitter {
   store: { deleteAllData: () => Promise<any> };
@@ -90,14 +91,16 @@ class MatrixClientA extends EventEmitter {
     return this.publicRoomList.get(roomId) as TRoom;
   }
   getAccountData(accountId: string) {
-    let a: TContent;
-    a = { content: 'getAccountData', shortcut: ['ss', '33'], categorized: ['11', '33'] };
+    const ae1 = new TEvent(aevent2);
+    return ae1;
+    // let a: TContent;
+    // a = { content: 'getAccountData', shortcut: ['ss', '33'], categorized: ['11', '33'] };
 
-    return {
-      getContent: () => {
-        return a;
-      },
-    };
+    // return {
+    //   getContent: () => {
+    //     return a;
+    //   },
+    // };
   }
   getRooms() {
     return Array.from(this.publicRoomList.values());
@@ -163,7 +166,7 @@ class MatrixClientA extends EventEmitter {
     return Promise.resolve(true);
   }
   async sendReadReceipt(latestEvent) {}
-  setAccountData(arg0: string, arg1: TContent) {}
+  setAccountData(arg0: string, arg1: any) {}
   isRoomEncrypted(roomId: string) {
     return true;
   }
@@ -174,13 +177,25 @@ class MatrixClientA extends EventEmitter {
   async joinRoom(roomIdOrAlias: string, arg1: { viaServers: string[] }) {
     const a = this.publicRoomList.get(roomIdOrAlias);
     return Promise.resolve(a);
-
-    // const aroom = new TRoom();
-    // aroom.roomId = 'globalfeed';
-    // aroom.name = 'globalfeed';
-    // aroom.avatarUrl = 'https://randomuser.me/api/portraits/men/79.jpg';
-    // aroom.canonical_alias = 'alias';
-    // return Promise.resolve(aroom);
+  }
+  async redactEvent(roomId, eventId, undefined, arg3: any) {
+    console.log('redact event');
+  }
+  async sendEvent(roomId, arg1: string, content) {
+    console.log('send event');
+  }
+  sendTyping(roomId, isT: boolean, arg2: 5000 | undefined) {
+    console.log('sendTyping');
+  }
+  sendMessage(roomId, content) {
+    console.log('send message');
+  }
+  getSyncState() {
+    console.log('get sync state');
+    return 'getSyncState';
+  }
+  getPushActionsForEvent(mEvent) {
+    return 'actions';
   }
 }
 
