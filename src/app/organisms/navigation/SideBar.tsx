@@ -118,22 +118,22 @@ function FeaturedTab() {
   const [selectedTab] = useSelectedTab();
   useNotificationUpdate();
 
-  function getHomeNoti() {
+  function getHomeNoti(): { total: number; highlight: number } {
     const orphans = roomList.getOrphans();
-    let noti = null as any;
+    let noti = null as unknown as { total: number; highlight: number };
 
     orphans.forEach((roomId) => {
       if (accountData.spaceShortcut.has(roomId)) return;
       if (!notifications.hasNoti(roomId)) return;
       if (noti === null) noti = { total: 0, highlight: 0 };
       const childNoti = notifications.getNoti(roomId);
-      noti.total += childNoti.total;
-      noti.highlight += childNoti.highlight;
+      noti.total += childNoti?.total!;
+      noti.highlight += childNoti?.highlight!;
     });
 
     return noti;
   }
-  function getDMsNoti() {
+  function getDMsNoti(): { total: number; highlight: number } | null {
     if (roomList.directs.size === 0) return null;
     let noti = null as any;
 
@@ -141,8 +141,8 @@ function FeaturedTab() {
       if (!notifications.hasNoti(roomId)) return;
       if (noti === null) noti = { total: 0, highlight: 0 };
       const childNoti = notifications.getNoti(roomId);
-      noti.total += childNoti.total;
-      noti.highlight += childNoti.highlight;
+      noti.total += childNoti?.total;
+      noti.highlight += childNoti?.highlight;
     });
 
     return noti;

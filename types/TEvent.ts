@@ -1,4 +1,4 @@
-import TMember from './TMember';
+import TMember from './TRoomMember';
 
 class TEvent {
   event: TEventFormat;
@@ -25,10 +25,8 @@ class TEvent {
     };
   }
   getSender() {
-    console.log(this.event);
     return this.event.sender;
   }
-
   isRedacted() {
     return false;
   }
@@ -39,7 +37,7 @@ class TEvent {
     return this.event.event_id;
   }
   getRoomId() {
-    return 'globalfeed';
+    return this.event.room_id;
   }
   getContent() {
     return this.event.content;

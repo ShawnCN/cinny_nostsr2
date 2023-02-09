@@ -5,6 +5,7 @@ class TLiveTimeline {
   nextTimeline: any;
   prevTimeline: any;
   getEvents() {
+    console.log('nexttimeline', this.nextTimeline);
     const e1 = new TEvent(aevent1);
     const e2 = new TEvent(aevent2);
     const e3 = new TEvent(aevent3);

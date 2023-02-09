@@ -1,8 +1,10 @@
 /* eslint-disable lines-between-class-members */
 // import { RoomHierarchy } from 'matrix-js-sdk/lib/room-hierarchy';
 
+import MatrixClientA from '../MatrixClientA';
+
 class RoomsHierarchy {
-  matrixClient: any;
+  matrixClient: MatrixClientA;
 
   _maxDepth: number;
 
@@ -10,7 +12,7 @@ class RoomsHierarchy {
   _limit: number;
   roomIdToHierarchy: Map<any, any>;
 
-  constructor(matrixClient, limit = 20, maxDepth = 1, suggestedOnly = false) {
+  constructor(matrixClient: MatrixClientA, limit = 20, maxDepth = 1, suggestedOnly = false) {
     this.matrixClient = matrixClient;
     this._maxDepth = maxDepth;
     this._suggestedOnly = suggestedOnly;

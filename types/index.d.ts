@@ -44,3 +44,15 @@ export type TChannelmap = {
   sig: string;
   relayUrl?: url;
 };
+
+export type NostrEvent = {
+  id: string;
+  pubkey: string;
+  created_at: number;
+  kind: number;
+  tags: Array<Array<string>>;
+  content: string;
+  sig: string;
+};
+
+export type TSpaceContent = {};

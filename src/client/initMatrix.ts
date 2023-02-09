@@ -46,12 +46,13 @@ class InitMatrix extends EventEmitter {
     //   dbName: 'web-sync-store',
     // });
     // await indexedDBStore.startup();
+
+    this.roomList = {
+      spaces: new Set(),
+      rooms: new Set(),
+      directs: new Set(),
+    } as RoomList;
     this.matrixClient = matrixClientA;
-    // this.roomList = {
-    //   spaces: new Set(),
-    //   rooms: new Set(),
-    //   directs: new Set(),
-    // };
     // this.matrixClient = sdk.createClient({
     //   baseUrl: secret.baseUrl,
     //   accessToken: secret.accessToken,

@@ -3,6 +3,7 @@ import TLiveTimeline from '../../../types/TLiveTimeline';
 import TRoom from '../../../types/TRoom';
 import EventEmitter from '../EventEmitter';
 import initMatrix from '../InitMatrix';
+import MatrixClientA from '../MatrixClientA';
 import cons, { aevent2 } from './cons';
 
 import settings from './settings';
@@ -86,7 +87,7 @@ class RoomTimeline extends EventEmitter {
   editedTimeline: Map<any, any>;
   reactionTimeline: Map<any, any>;
   typingMembers: Set<unknown>;
-  matrixClient: import('e:/dev/cinny_nostsr2/src/client/MatrixClientA').default;
+  matrixClient: MatrixClientA;
   roomId: string;
   room: TRoom;
   isOngoingPagination: boolean;
@@ -164,14 +165,12 @@ class RoomTimeline extends EventEmitter {
       addToMap(this.reactionTimeline, mEvent);
       return;
     }
-    console.log('165', mEvent.getType());
     if (!cons.supportEventTypes.includes(mEvent.getType())) return;
     console.log('169', mEvent);
     if (isEdited(mEvent)) {
       addToMap(this.editedTimeline, mEvent);
       return;
     }
-    console.log('171');
     this.timeline.push(mEvent);
     console.log(this.timeline);
   }
@@ -380,18 +379,19 @@ class RoomTimeline extends EventEmitter {
       this.emit(cons.events.roomTimeline.EVENT, event);
     };
 
-    this._listenDecryptEvent = (event) => {
+    this._listenDecryptEvent = (event: TEvent) => {
+      console.log('_listenDecryptEvent', event.getRoomId(), this.roomId);
       if (event.getRoomId() !== this.roomId) return;
       if (this.isOngoingPagination) return;
-
+      console.log('0.1_listenDecryptEvent', this.ongoingDecryptionCount);
       // Not a live event.
       // so we don't need to process it here
       if (this.ongoingDecryptionCount === 0) return;
-
       if (this.ongoingDecryptionCount > 0) {
         this.ongoingDecryptionCount -= 1;
       }
       this.addToTimeline(event);
+      console.log('2_listenDecryptEvent');
       this.emit(cons.events.roomTimeline.EVENT, event);
     };
 

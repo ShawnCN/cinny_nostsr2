@@ -1,11 +1,12 @@
 import { Relay, relayInit } from 'nostr-tools';
-import { TChannelmap, TChannelmapObject, TSubscribedChannel } from '../../types';
+import { NostrEvent, TChannelmap, TChannelmapObject, TSubscribedChannel } from '../../types';
 import TDevice from '../../types/TDevice';
 import TEvent from '../../types/TEvent';
 import TRoom from '../../types/TRoom';
 import TUser from '../../types/TUser';
+import { formatGlobalMsg } from '../util/matrixUtil';
 import EventEmitter from './EventEmitter';
-import { aevent2, defaultChatroomList, stage3relays, TChannelMapList } from './state/cons';
+import { aevent2, stage3relays, TChannelMapList } from './state/cons';
 
 class MatrixClientA extends EventEmitter {
   store: { deleteAllData: () => Promise<any> };
@@ -13,7 +14,7 @@ class MatrixClientA extends EventEmitter {
   user: TUser;
   crypto: string;
   publicRoomList: Map<string, TRoom>;
-  // relayInstance: Map<string, Relay>;
+  relayInstance: Map<string, Relay>;
   constructor() {
     super();
     this.user = new TUser();
@@ -42,12 +43,12 @@ class MatrixClientA extends EventEmitter {
   async startClient({ lazyLoadMembers: boolean }) {
     console.log('startClient');
 
-    // for (let i = 0; i < stage3relays.length; i++) {
-    //   const pubkey = '33333';
-    //   setTimeout(async () => {
-    //     await this.connectAndJoin(stage3relays[i], pubkey);
-    //   }, 500);
-    // }
+    for (let i = 0; i < stage3relays.length; i++) {
+      const pubkey = '33333';
+      setTimeout(async () => {
+        await this.connectAndJoin(stage3relays[i], pubkey);
+      }, 500);
+    }
   }
   async connectAndJoin(wss: string, pubkey: string) {
     this.emit('startConnect', wss);
@@ -62,6 +63,7 @@ class MatrixClientA extends EventEmitter {
       // this.relayInstance.set(relay.url, relay);
       this.emit('relayConnected', relay.url);
       console.log(`connected: ${relay.url}`);
+      this.subGlobalMessages(relay);
     });
     relay.on('error', () => {
       console.log(`failed: ${relay.url}`);
@@ -120,7 +122,9 @@ class MatrixClientA extends EventEmitter {
   getProfileInfo(userId: string) {
     return Promise.resolve(this.user);
   }
-  downloadKeys(arg0: string[], arg1: boolean) {}
+  async downloadKeys(arg0: string[], arg1?: boolean) {
+    return new Map();
+  }
   getStoredDevicesForUser(userId: string) {
     const a = [{ deviceId: '1' }] as TDevice[];
     return a;
@@ -131,7 +135,8 @@ class MatrixClientA extends EventEmitter {
   getIgnoredUsers() {
     return [] as TUser[];
   }
-  mxcUrlToHttp(arg0: string, arg1: number, arg2: number, arg3: string) {
+  getCapabilities() {}
+  mxcUrlToHttp(arg0: string, arg1?: number, arg2?: number, arg3?: string) {
     return '';
   }
   setAvatarUrl(url: string) {
@@ -170,7 +175,11 @@ class MatrixClientA extends EventEmitter {
   isRoomEncrypted(roomId: string) {
     return true;
   }
-  async paginateEventTimeline(timelineToPaginate: any, { backwards, limit }) {}
+  async paginateEventTimeline(timelineToPaginate: any, { backwards, limit }) {
+    console.log(`paginateEventTimeline`);
+    console.log(timelineToPaginate);
+    console.log(backwards, limit);
+  }
   getEventTimeline(timelineSet, eventId) {
     return;
   }
@@ -184,8 +193,27 @@ class MatrixClientA extends EventEmitter {
   async sendEvent(roomId, arg1: string, content) {
     console.log('send event');
   }
+  async invite(roomId, userId, undefined, reason) {
+    return true;
+  }
+  async kick(roomId, userId, reason) {
+    return true;
+  }
+  async ban(roomId, userId, reason) {
+    return true;
+  }
+  async unban(roomId, userId) {
+    return true;
+  }
+  async setIgnoredUsers(ignoredUsers) {}
   sendTyping(roomId, isT: boolean, arg2: 5000 | undefined) {
     console.log('sendTyping');
+  }
+  async setPowerLevel(roomId, userId, powerLevel, powerlevelEvent) {
+    return true;
+  }
+  async resolveRoomAlias(alias): Promise<any> {
+    return {};
   }
   sendMessage(roomId, content) {
     console.log('send message');
@@ -196,6 +224,50 @@ class MatrixClientA extends EventEmitter {
   }
   getPushActionsForEvent(mEvent) {
     return 'actions';
+  }
+  subGlobalMessages = (relay: Relay) => {
+    const filter = {
+      kinds: [1],
+      limit: 20,
+    };
+    if (!relay) return;
+    const sub = relay.sub([filter]);
+    const subDetail = {
+      roomId: 'globalfeed',
+      type: 'groupRelay',
+      relayUrl: relay.url,
+      sub: sub,
+    };
+    // if (this.subList['globalfeed']) {
+    //   this.subList['globalfeed'].push(subDetail);
+    // } else {
+    //   this.subList['globalfeed'] = [subDetail];
+    // }
+    // store.dispatch(setRoomSubList({ ['globalfeed']: subDetail }));
+
+    sub.on('event', (event: NostrEvent) => {
+      const mevent = formatGlobalMsg(event);
+      const mc = new TEvent(mevent);
+
+      this.emit('Event.decrypted', mc);
+      // console.log(event);
+      //   store.dispatch(handleRelayMsgGlobal3(event, relay.url));
+      //   store.dispatch({
+      //     type: 'fetchOtherUserMeta',
+      //     payload: { user_id: event.pubkey },
+      //   });
+      // updateUsermap(store, event.pubkey);
+    });
+  };
+  uploadContent(isEncryptedRoom: any, { includeFilename: any, progressHandler }) {}
+  getRoomPushRule(arg0: 'global', roomId: string) {
+    return undefined;
+  }
+  getStoredCrossSigningForUser(userId: string): any {
+    return '';
+  }
+  getStoredDevice(userId, deviceId) {
+    return '';
   }
 }
 

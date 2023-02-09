@@ -87,7 +87,6 @@ class Notifications extends EventEmitter {
     const userId = this.matrixClient.getUserId();
     const readUpToId = room.getEventReadUpTo(userId);
     const liveEvents = room.getLiveTimeline().getEvents();
-    console.log('liveEvents', liveEvents);
     if (liveEvents[liveEvents.length - 1]?.getSender() === userId) {
       return false;
     }
@@ -121,7 +120,7 @@ class Notifications extends EventEmitter {
     return cons.notifs.MENTIONS_AND_KEYWORDS;
   }
 
-  getNoti(roomId) {
+  getNoti(roomId): { total: number; highlight: number; from: any } {
     return this.roomIdToNoti.get(roomId) || { total: 0, highlight: 0, from: null };
   }
 

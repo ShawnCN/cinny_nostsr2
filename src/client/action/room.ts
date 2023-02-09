@@ -2,6 +2,8 @@ import initMatrix from '../InitMatrix';
 import appDispatcher from '../dispatcher';
 import cons from '../state/cons';
 import { getIdServer } from '../../util/matrixUtil';
+import TRoom from '../../../types/TRoom';
+import TEvent from '../../../types/TEvent';
 
 /**
  * https://github.com/matrix-org/matrix-react-sdk/blob/1e6c6e9d800890c732d60429449bc280de01a647/src/Rooms.js#L73
@@ -50,7 +52,7 @@ function addRoomToMDirect(roomId, userId) {
  * @param {string} myUserId User ID of the current user
  * @returns {string} User ID of the user that the room is probably a DM with
  */
-function guessDMRoomTargetId(room, myUserId) {
+function guessDMRoomTargetId(room: TRoom, myUserId: string): string {
   let oldestMemberTs;
   let oldestMember;
 
@@ -101,7 +103,7 @@ function convertToRoom(roomId) {
  * @param {boolean} isDM
  * @param {string[]} via
  */
-async function join(roomIdOrAlias, isDM = false, via = undefined) {
+async function join(roomIdOrAlias: string, isDM = false, via = undefined) {
   const mx = initMatrix.matrixClient;
   const roomIdParts = roomIdOrAlias.split(':');
   const viaServers = via || [roomIdParts[1]];
@@ -110,8 +112,8 @@ async function join(roomIdOrAlias, isDM = false, via = undefined) {
     const resultRoom = await mx.joinRoom(roomIdOrAlias, { viaServers });
 
     if (isDM) {
-      const targetUserId = guessDMRoomTargetId(mx.getRoom(resultRoom.roomId), mx.getUserId());
-      await addRoomToMDirect(resultRoom.roomId, targetUserId);
+      const targetUserId = guessDMRoomTargetId(mx.getRoom(resultRoom!.roomId), mx.getUserId());
+      await addRoomToMDirect(resultRoom!.roomId, targetUserId);
     }
     appDispatcher.dispatch({
       type: cons.actions.room.JOIN,
@@ -343,8 +345,8 @@ async function setPowerLevel(roomId, userId, powerLevel) {
 async function setMyRoomNick(roomId, nick) {
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
-  const mEvent = room.currentState.getStateEvents('m.room.member', mx.getUserId());
-  const content = mEvent?.getContent();
+  const mEvent = room.currentState.getStateEvent('m.room.member', mx.getUserId());
+  const content = mEvent.getContent();
   if (!content) return;
   await mx.sendStateEvent(
     roomId,
@@ -360,8 +362,8 @@ async function setMyRoomNick(roomId, nick) {
 async function setMyRoomAvatar(roomId, mxc) {
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
-  const mEvent = room.currentState.getStateEvents('m.room.member', mx.getUserId());
-  const content = mEvent?.getContent();
+  const mEvent = room.currentState.getStateEvent('m.room.member', mx.getUserId());
+  const content = mEvent.getContent();
   if (!content) return;
   await mx.sendStateEvent(
     roomId,

@@ -67,12 +67,12 @@ MenuHeader.propTypes = {
 };
 
 export interface IPropsMenuItem {
-  variant: 'surface' | 'positive' | 'caution' | 'danger';
-  iconSrc: string;
-  type: 'button' | 'submit';
-  onClick: () => void;
+  variant?: 'surface' | 'positive' | 'caution' | 'danger';
+  iconSrc?: string;
+  type?: 'button' | 'submit';
+  onClick?: () => void;
   children: React.ReactNode;
-  disabled: boolean;
+  disabled?: boolean;
 }
 
 function MenuItem({

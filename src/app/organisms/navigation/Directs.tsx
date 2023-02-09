@@ -16,7 +16,7 @@ interface IPropsDirects {
 function Directs({ size }: IPropsDirects) {
   const mx = initMatrix.matrixClient;
   const { roomList, notifications } = initMatrix;
-  const [directIds, setDirectIds] = useState([]);
+  const [directIds, setDirectIds] = useState<string[]>([]);
 
   useEffect(() => setDirectIds([...roomList.directs].sort(roomIdByActivity)), [size]);
 
@@ -41,7 +41,7 @@ function Directs({ size }: IPropsDirects) {
   useEffect(() => {
     const selectorChanged = (selectedRoomId, prevSelectedRoomId) => {
       if (!drawerPostie.hasTopic('selector-change')) return;
-      const addresses = [];
+      const addresses = [] as string[];
       if (drawerPostie.hasSubscriber('selector-change', selectedRoomId))
         addresses.push(selectedRoomId);
       if (drawerPostie.hasSubscriber('selector-change', prevSelectedRoomId))

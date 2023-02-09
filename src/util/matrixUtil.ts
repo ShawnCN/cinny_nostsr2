@@ -6,6 +6,9 @@ import HashLockIC from '../../public/res/ic/outlined/hash-lock.svg';
 import SpaceIC from '../../public/res/ic/outlined/space.svg';
 import SpaceGlobeIC from '../../public/res/ic/outlined/space-globe.svg';
 import SpaceLockIC from '../../public/res/ic/outlined/space-lock.svg';
+import { NostrEvent } from '../../types';
+import { TContent, TEventFormat } from '../../types/TEvent';
+import TRoomMember from '../../types/TRoomMember';
 
 const WELL_KNOWN_URI = '/.well-known/matrix/client';
 
@@ -24,7 +27,7 @@ export async function getBaseUrl(servername) {
   }
 }
 
-export function getUsername(userId) {
+export function getUsername(userId: string): string {
   const mx = initMatrix.matrixClient;
   const user = mx.getUser(userId);
   if (user === null) return userId;
@@ -35,22 +38,22 @@ export function getUsername(userId) {
   return username;
 }
 
-export function getUsernameOfRoomMember(roomMember) {
+export function getUsernameOfRoomMember(roomMember: TRoomMember): string {
   return roomMember.name || roomMember.userId;
 }
 
-export async function isRoomAliasAvailable(alias) {
+export async function isRoomAliasAvailable(alias: string) {
   try {
     const result = await initMatrix.matrixClient.resolveRoomAlias(alias);
     if (result.room_id) return false;
     return false;
-  } catch (e) {
+  } catch (e: any) {
     if (e.errcode === 'M_NOT_FOUND') return true;
     return false;
   }
 }
 
-export function getPowerLabel(powerLevel) {
+export function getPowerLabel(powerLevel: number) {
   if (powerLevel > 9000) return 'Goku';
   if (powerLevel > 100) return 'Founder';
   if (powerLevel === 100) return 'Admin';
@@ -119,7 +122,7 @@ function getHighestPowerUserId(room) {
   const userIdToPower = room.currentState
     .getStateEvents('m.room.power_levels', '')
     ?.getContent().users;
-  let powerUserId = null;
+  let powerUserId = null as unknown as string;
   if (!userIdToPower) return powerUserId;
 
   Object.keys(userIdToPower).forEach((userId) => {
@@ -159,7 +162,7 @@ export function getServerToPopulation(room) {
 }
 
 export function genRoomVia(room) {
-  const via = [];
+  const via: any = [];
   const userId = getHighestPowerUserId(room);
   if (userId) {
     const server = getIdServer(userId);
@@ -226,3 +229,79 @@ export async function hasDevices(userId) {
     return false;
   }
 }
+
+export const formatGlobalMsg = (
+  event: import('../../types').NostrEvent
+  // pubkey: string,
+  // relayUrl: string
+) => {
+  const now = Math.floor(Date.now() / 1000);
+  const event_time = event.created_at;
+  // if (now - event_time < -600) return;
+  /**
+   * @param Array<string> events_replied_to [引帖的eventid]
+   */
+
+  const { events_replied_to, pubkeys_replied_to } = FormatCitedEventsAndCitedPubkeys(event);
+  let parent = 'globalfeed';
+  let replyingTo = '';
+  if (events_replied_to[0] && events_replied_to.length > 0) {
+    replyingTo = events_replied_to[events_replied_to.length - 1];
+    // array_of_replies.push([event.id, replyingTo]);
+  }
+  let content = event.content.replace(/&/g, '&#38;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  let shortened_content = content.replace(/\n/g, ' ').substring(0, 400);
+  // shortened_content = DOMPurify.sanitize(shortened_content);
+  shortened_content = shortened_content;
+  if (content.length > 50) {
+    shortened_content = shortened_content + '...';
+  }
+
+  // content = DOMPurify.sanitize(content);
+
+  // const color = getColor(event.pubkey);
+  // let citedMsg = {} as TCitedMsg | null;
+  // if (replyingTo != '') {
+  //   citedMsg = findCitedMsgFromLocalStorage(replyingTo, parent, pubkey);
+  // }
+
+  let contentObject: TContent = {
+    body: content,
+    msgtype: 'm.text',
+  };
+
+  let msg: TEventFormat = {
+    // color,
+    content: contentObject,
+    type: 'm.room.message',
+    // replyingTo,
+    // message: content,
+    // kind: event.kind,
+    // relayUrl: relayUrl,
+    origin_server_ts: event_time,
+    sender: event.pubkey,
+    event_id: event.id,
+    room_id: parent, // 母帖eventid或者是聊天室id
+  };
+  // if (citedMsg) {
+  //   msg['citedMsg'] = citedMsg;
+  // }
+  return msg;
+};
+
+const FormatCitedEventsAndCitedPubkeys = (event: NostrEvent) => {
+  let events_replied_to = [] as string[];
+  let pubkeys_replied_to = [] as string[];
+  for (let i = 0; i < event.tags.length; i++) {
+    if (event['tags'][i][0] == 'e') {
+      events_replied_to.push(event['tags'][i][1]);
+    }
+    if (event['tags'][i][0] == 'p') {
+      pubkeys_replied_to.push(event['tags'][i][1]);
+    }
+  }
+  return {
+    events_replied_to,
+    pubkeys_replied_to,
+  };
+};

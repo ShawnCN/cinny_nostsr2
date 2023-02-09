@@ -34,6 +34,7 @@ import { parseTimelineChange } from './common';
 import TimelineScroll from './TimelineScroll';
 import EventLimit from './EventLimit';
 import RoomTimeline from '../../../client/state/RoomTimeline';
+import TEvent from '../../../../types/TEvent';
 
 const PAG_LIMIT = 30;
 const MAX_MSG_DIFF_MINUTES = 5;
@@ -171,7 +172,6 @@ function useTimeline(roomTimeline: RoomTimeline, eventId, readUptoEvtStore, even
   useEffect(() => {
     const limit = eventLimitRef.current;
     const initTimeline = (eId) => {
-      console.log('starttttttttttttttt', eId);
       // NOTICE: eId can be id of readUpto, reply or specific event.
       // readUpTo: when user click jump to unread message button.
       // reply: when user click reply from timeline.
@@ -179,7 +179,6 @@ function useTimeline(roomTimeline: RoomTimeline, eventId, readUptoEvtStore, even
       const readUpToId = roomTimeline.getReadUpToEventId();
       let focusEventIndex = -1;
       const isSpecificEvent = eId && eId !== readUpToId;
-      console.log('2starttttttttttttttt', eId);
       if (isSpecificEvent) {
         focusEventIndex = roomTimeline.getEventIndex(eId);
       }
@@ -190,15 +189,12 @@ function useTimeline(roomTimeline: RoomTimeline, eventId, readUptoEvtStore, even
       if (readUptoEvtStore.getItem() && !isSpecificEvent) {
         focusEventIndex = roomTimeline.getUnreadEventIndex(readUptoEvtStore.getItem().getId());
       }
-      console.log('3starttttttttttttttt', eId);
       if (focusEventIndex > -1) {
         limit.setFrom(focusEventIndex - Math.round(limit.maxEvents / 2));
       } else {
         limit.setFrom(roomTimeline.timeline.length - limit.maxEvents);
       }
-      console.log('4starttttttttttttttt', eId);
       setTimelineInfo({ focusEventId: isSpecificEvent ? eId : null });
-      console.log('enddddddddddddd');
     };
 
     roomTimeline.on(cons.events.roomTimeline.READY, initTimeline);
@@ -213,7 +209,7 @@ function useTimeline(roomTimeline: RoomTimeline, eventId, readUptoEvtStore, even
 }
 
 function usePaginate(
-  roomTimeline,
+  roomTimeline: RoomTimeline,
   readUptoEvtStore,
   forceUpdateLimit,
   timelineScrollRef,
@@ -320,7 +316,7 @@ function useHandleScroll(
 
 function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, eventLimitRef) {
   const myUserId = initMatrix.matrixClient.getUserId();
-  const [newEvent, setEvent] = useState(null);
+  const [newEvent, setEvent] = useState<TEvent>(null as unknown as TEvent);
 
   useEffect(() => {
     const timelineScroll = timelineScrollRef.current;
@@ -350,7 +346,8 @@ function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, event
       }
     };
 
-    const handleEvent = (event) => {
+    const handleEvent = (event: TEvent) => {
+      console.log('handleevent', event);
       const tLength = roomTimeline.timeline.length;
       const isViewingLive = roomTimeline.isServingLiveTimeline() && limit.length >= tLength - 1;
       const isAttached = timelineScroll.bottom < SCROLL_TRIGGER_POS;

@@ -2,9 +2,8 @@ import RoomTimeline from '../src/client/state/RoomTimeline';
 import TEvent from './TEvent';
 import TEventTimelineSet from './TEventTimelineSet';
 import TLiveTimeline from './TLiveTimeline';
-import TMember from './TMember';
+import TMember from './TRoomMember';
 import TRoomMember from './TRoomMember';
-import TUser from './TUser';
 
 class TRoom {
   roomId: string;
@@ -25,6 +24,13 @@ class TRoom {
   getMember(userId: string) {
     const user = new TRoomMember();
     return user;
+  }
+  getMembers() {
+    return [];
+  }
+  getJoinedMembers() {
+    const user = new TRoomMember();
+    return [user];
   }
   getUnreadNotificationCount(arg0: string) {
     return 11;
@@ -79,7 +85,7 @@ class TRoom {
     return 2;
   }
   getMembersWithMembership(mship) {
-    const m = new TMember();
+    const m = new TMember('id');
     m.name = 'm1';
     m.userId = 'm1id:noteon.io';
     m.username = 'm1username';
@@ -105,12 +111,15 @@ class CurrentState {
   maySendMessage = (userId: string) => {
     return true;
   };
-  getStateEvents = (arg0: string) => {
+  getStateEvents = (arg0: string): TEvent[] => {
     return [] as TEvent[];
   };
   getStateEvent = (arg0: string, arg1: string) => {
     return {} as TEvent;
   };
+  getMembers() {
+    return [];
+  }
 }
 
 export default TRoom;

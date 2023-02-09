@@ -7,7 +7,7 @@ class AccountData extends EventEmitter {
   matrixClient: import('e:/dev/cinny_nostsr2/src/client/MatrixClientA').default;
   roomList: RoomList;
   spaces: Set<unknown>;
-  spaceShortcut: Set<unknown>;
+  spaceShortcut: Set<string>;
   categorizedSpaces: Set<string>;
   constructor(roomList: RoomList) {
     super();

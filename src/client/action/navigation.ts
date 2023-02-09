@@ -1,7 +1,7 @@
 import appDispatcher from '../dispatcher';
 import cons from '../state/cons';
 
-export function selectTab(tabId) {
+export function selectTab(tabId: string) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.SELECT_TAB,
     tabId,
@@ -9,7 +9,7 @@ export function selectTab(tabId) {
 }
 
 export function selectSpace(roomId) {
-  console.log('selectSpace', roomId, eventId);
+  console.log('selectSpace', roomId);
   appDispatcher.dispatch({
     type: cons.actions.navigation.SELECT_SPACE,
     roomId,

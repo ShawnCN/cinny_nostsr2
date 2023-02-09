@@ -82,13 +82,12 @@ class RoomList extends EventEmitter {
     const space = this.matrixClient.getRoom(roomId);
     // const space = null;
     if (space === null) return null;
-    console.log(space);
     const mSpaceChild = space?.currentState.getStateEvents('m.space.child');
 
     const children = [] as string[];
     mSpaceChild?.forEach((mEvent) => {
       const childId = mEvent.event.state_key;
-      if (isMEventSpaceChild(mEvent)) children.push(childId);
+      if (isMEventSpaceChild(mEvent)) children.push(childId!);
     });
     return children;
   }
@@ -169,8 +168,7 @@ class RoomList extends EventEmitter {
 
   roomActions(action) {
     const addRoom = (roomId, isDM) => {
-      // const myRoom = this.matrixClient.getRoom(roomId);
-      const myRoom = null as unknown as TRoom;
+      const myRoom = this.matrixClient.getRoom(roomId);
       if (myRoom === null) return false;
 
       if (isDM) this.directs.add(roomId);
