@@ -338,9 +338,11 @@ function ProfileViewer() {
   useRerenderOnProfileChange(roomId, userId);
 
   const mx = initMatrix.matrixClient;
+
   const room = mx.getRoom(roomId as string);
 
   const renderProfile = () => {
+    console.log(roomId);
     const roomMember = room.getMember(userId as string);
     const username = roomMember
       ? getUsernameOfRoomMember(roomMember)

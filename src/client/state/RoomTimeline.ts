@@ -159,20 +159,17 @@ class RoomTimeline extends EventEmitter {
     if (mEvent.getType() === 'm.room.member' && hideMemberEvents(mEvent)) {
       return;
     }
-    console.log('161');
     if (mEvent.isRedacted()) return;
     if (isReaction(mEvent)) {
       addToMap(this.reactionTimeline, mEvent);
       return;
     }
     if (!cons.supportEventTypes.includes(mEvent.getType())) return;
-    console.log('169', mEvent);
     if (isEdited(mEvent)) {
       addToMap(this.editedTimeline, mEvent);
       return;
     }
     this.timeline.push(mEvent);
-    console.log(this.timeline);
   }
 
   _populateAllLinkedEvents(timeline) {
@@ -386,10 +383,10 @@ class RoomTimeline extends EventEmitter {
       console.log('0.1_listenDecryptEvent', this.ongoingDecryptionCount);
       // Not a live event.
       // so we don't need to process it here
-      if (this.ongoingDecryptionCount === 0) return;
-      if (this.ongoingDecryptionCount > 0) {
-        this.ongoingDecryptionCount -= 1;
-      }
+      // if (this.ongoingDecryptionCount === 0) return;
+      // if (this.ongoingDecryptionCount > 0) {
+      //   this.ongoingDecryptionCount -= 1;
+      // }
       this.addToTimeline(event);
       console.log('2_listenDecryptEvent');
       this.emit(cons.events.roomTimeline.EVENT, event);

@@ -98,7 +98,7 @@ class Navigation extends EventEmitter {
   }
 
   _selectRoom(roomId: string, eventId?: string): void {
-    console.log(roomId, eventId);
+    console.log('_selectroom', roomId, eventId);
     const prevSelectedRoomId = this.selectedRoomId;
     this.selectedRoomId = roomId;
     if (prevSelectedRoomId !== roomId) this._mapRoomToSpace(roomId);
@@ -134,6 +134,7 @@ class Navigation extends EventEmitter {
     }
 
     const parents = roomList.roomIdToParents.get(roomId);
+    console.log('parents', parents);
 
     if (parents.has(this.selectedSpaceId)) {
       return;
@@ -210,7 +211,7 @@ class Navigation extends EventEmitter {
     this.emit(cons.events.navigation.TAB_SELECTED, this.selectedTab);
   }
 
-  _selectSpace(roomId, asRoot, selectRoom = true) {
+  _selectSpace(roomId, asRoot: boolean, selectRoom = true) {
     console.log('_selectSpace', roomId);
     this._addToSpacePath(roomId, asRoot);
     this.selectedSpaceId = roomId;
@@ -324,6 +325,7 @@ class Navigation extends EventEmitter {
         this._selectSpace(action.roomId, false);
       },
       [cons.actions.navigation.SELECT_ROOM]: () => {
+        console.log(action.roomId);
         if (action.roomId) this._selectTabWithRoom(action.roomId);
         this._selectRoom(action.roomId, action.eventId);
       },

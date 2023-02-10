@@ -15,6 +15,7 @@ import Input from '../../atoms/input/Input';
 import { MenuHeader } from '../../atoms/context-menu/ContextMenu';
 import SegmentedControls from '../../atoms/segmented-controls/SegmentedControls';
 import PeopleSelector from '../people-selector/PeopleSelector';
+import TRoomMember from '../../../../types/TRoomMember';
 
 const PER_PAGE_MEMBER = 50;
 
@@ -118,7 +119,7 @@ function RoomMembers({ roomId }: { roomId: string }) {
     setItemCount(itemCount + PER_PAGE_MEMBER);
   };
 
-  const mList = searchMembers ? searchMembers.data : members.slice(0, itemCount);
+  const mList: TRoomMember[] = searchMembers ? searchMembers.data : members.slice(0, itemCount);
   return (
     <div className="room-members">
       <MenuHeader>Search member</MenuHeader>

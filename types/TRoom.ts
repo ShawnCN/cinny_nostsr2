@@ -14,19 +14,27 @@ class TRoom {
   aliases?: string[];
   topic: string;
   currentState: CurrentState;
+  roomMembers: Map<string, TRoomMember>;
   // currentState: {
   //   getStateEvents: typeof getStateEvents;
   // };
   constructor() {
     // this.currentState.getStateEvents = getStateEvents();
     this.currentState = new CurrentState();
+    this.roomMembers = new Map();
   }
   getMember(userId: string) {
-    const user = new TRoomMember(userId);
+    const user = this.roomMembers.get(userId);
     return user;
   }
+  addMember(m: TRoomMember) {
+    this.roomMembers.set(m.userId, m);
+  }
   getMembers() {
-    return [];
+    return Array.from(this.roomMembers.values());
+  }
+  getMembersWithMembership(mship) {
+    return Array.from(this.roomMembers.values());
   }
   getJoinedMembers() {
     const user = new TRoomMember('1');
@@ -83,14 +91,6 @@ class TRoom {
   }
   getJoinedMemberCount() {
     return 2;
-  }
-  getMembersWithMembership(mship) {
-    const m = new TMember('id');
-    m.name = 'm1';
-    m.userId = 'm1id:noteon.io';
-    m.username = 'm1username';
-
-    return [m];
   }
 }
 

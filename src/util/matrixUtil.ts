@@ -9,6 +9,7 @@ import SpaceLockIC from '../../public/res/ic/outlined/space-lock.svg';
 import { NostrEvent } from '../../types';
 import { TContent, TEventFormat } from '../../types/TEvent';
 import TRoomMember from '../../types/TRoomMember';
+import { nip19 } from 'nostr-tools';
 
 const WELL_KNOWN_URI = '/.well-known/matrix/client';
 
@@ -360,3 +361,19 @@ const FormatCitedEventsAndCitedPubkeys = (event: NostrEvent) => {
     pubkeys_replied_to,
   };
 };
+
+export function formatRoomMemberFromNostrEvent(event: NostrEvent) {
+  const { name, about, picture } = JSON.parse(event.content);
+  const userIdNpub = nip19.npubEncode(event.pubkey);
+  let member = new TRoomMember(userIdNpub);
+  if (name && name != '') {
+    member.name = name;
+  }
+  if (about && about != '') {
+    member.about = about;
+  }
+  if (picture && picture != '') {
+    member.avatarSrc = picture;
+  }
+  return member;
+}

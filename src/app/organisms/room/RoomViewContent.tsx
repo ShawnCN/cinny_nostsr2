@@ -610,7 +610,6 @@ function RoomViewContent({ eventId, roomTimeline }: IPropsRoomViewContent) {
       );
       itemCountIndex += 1;
     }
-    console.log(limit.length, timeline.length, timeline, roomTimeline);
     if (roomTimeline.canPaginateForward() || limit.length < timeline.length) {
       tl.push(loadingMsgPlaceholders(2, PLACEHOLDER_COUNT));
     }

@@ -16,7 +16,7 @@ import MatrixClientA from './MatrixClientA';
 import { TChannelmapObject } from '../../types';
 import { TChannelMapList } from './state/cons';
 import TRoom from '../../types/TRoom';
-const matrixClientA = new MatrixClientA();
+// const matrixClientA = new MatrixClientA();
 
 // global.Olm = Olm;
 
@@ -52,7 +52,7 @@ class InitMatrix extends EventEmitter {
       rooms: new Set(),
       directs: new Set(),
     } as RoomList;
-    this.matrixClient = matrixClientA;
+    this.matrixClient = new MatrixClientA(secret.userId!);
     // this.matrixClient = sdk.createClient({
     //   baseUrl: secret.baseUrl,
     //   accessToken: secret.accessToken,
@@ -101,7 +101,7 @@ class InitMatrix extends EventEmitter {
               this.matrixClient.subChannelMessage(room.roomId);
               // this.roomList.directs.add(room.roomId);
             }
-            // this.matrixClient.subGlobalMessages();
+            this.matrixClient.subGlobalMessages();
 
             this.accountData = new AccountData(this.roomList);
             this.roomsInput = new RoomsInput(this.matrixClient, this.roomList);

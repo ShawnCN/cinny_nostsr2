@@ -16,7 +16,7 @@ export function selectSpace(roomId) {
   });
 }
 
-export function selectRoom(roomId, eventId) {
+export function selectRoom(roomId, eventId?: string) {
   console.log('selectRoom', roomId, eventId);
   appDispatcher.dispatch({
     type: cons.actions.navigation.SELECT_ROOM,
