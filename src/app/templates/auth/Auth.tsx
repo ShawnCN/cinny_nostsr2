@@ -517,6 +517,69 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
       });
   };
 
+  const signUpAndLogin = async (values, actions) => {
+    console.log('signUpAndLogin', values);
+    try {
+      let data2 = {
+        user_id: '1',
+        name: 'username',
+        about: '',
+        profile_img: '',
+        pubkey: '',
+        privatekey: '',
+      };
+      let privatekey = '';
+      let pubkey = '';
+      // @ts-ignore
+      // if (window.nostr) {
+      // @ts-ignore
+      // pubkey = await window.nostr.getPublicKey();
+      // // @ts-ignore
+      // const relays = await window.nostr.getRelays();
+      // data2.user_id = pubkey;
+      // data2.name = pubkey.slice(0, 8);
+      // localStorage.setItem('pub_key', pubkey);
+      let identifier = {} as any;
+      const username = initialValues.username;
+      if (username) {
+        identifier.type = 'm.id.user';
+        identifier.user = username;
+      } else throw new Error('Bad Input');
+      localStorage.setItem(cons.secretKey.USER_ID, username);
+      localStorage.setItem(cons.secretKey.ACCESS_TOKEN, username);
+      if (localStorage['my-meta-info']) {
+        const myMetaInfo = JSON.parse(localStorage['my-meta-info']);
+        data2.profile_img = myMetaInfo?.picture;
+        data2 = { ...data2, ...myMetaInfo };
+      } else {
+        localStorage['my-meta-info'] = JSON.stringify(data2);
+      }
+      data2 = { ...data2, pubkey, privatekey };
+      // dispatch(setLogin(data2));
+      // swal('Success', 'Login successful', 'success');
+
+      actions.setSubmitting(true);
+      window.location.reload();
+      // } else {
+      //   let msg = 'cannot find browser extension of Nostr protcol.';
+      //   actions.setErrors({
+      //     password: msg === 'Invalid password' ? msg : undefined,
+      //     other: msg !== 'Invalid password' ? msg : undefined,
+      //   });
+      // console.log('cannot find browser extension of Nostr protcol.');
+      // dispatch(setLoginTip('Cannot find browser extension of Nostr protcol.'));
+      // }
+    } catch (error: any) {
+      let msg = error.message;
+      if (msg === 'Unknown message') msg = 'Please check your credentials';
+      actions.setErrors({
+        password: msg === 'Invalid password' ? msg : undefined,
+        other: msg !== 'Invalid password' ? msg : undefined,
+      });
+      actions.setSubmitting(false);
+    }
+  };
+
   const refreshWindow = () => window.location.reload();
 
   const getInputs = () => {
@@ -641,7 +704,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
         {isDisabled && <Text className="auth-form__error">{registerInfo.error}</Text>}
       </div>
       {!isDisabled && (
-        <Formik initialValues={initialValues} onSubmit={submitter} validate={validator}>
+        <Formik initialValues={initialValues} onSubmit={signUpAndLogin} validate={validator}>
           {({ values, errors, handleChange, handleSubmit, isSubmitting }) => (
             <>
               {console.log(values, initialValues)}
