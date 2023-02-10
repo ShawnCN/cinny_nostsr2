@@ -151,15 +151,15 @@ async function create(options, isDM = false) {
   try {
     const result = await mx.createRoom(options);
     if (isDM && typeof options.invite?.[0] === 'string') {
-      await addRoomToMDirect(result.room_id, options.invite[0]);
+      await addRoomToMDirect(result.roomId, options.invite[0]);
     }
     appDispatcher.dispatch({
       type: cons.actions.room.CREATE,
-      roomId: result.room_id,
+      roomId: result.roomId,
       isDM,
     });
     return result;
-  } catch (e) {
+  } catch (e: any) {
     const errcodes = [
       'M_UNKNOWN',
       'M_BAD_JSON',
@@ -282,7 +282,7 @@ async function createRoom(opts) {
         suggested: false,
         via: [getIdServer(mx.getUserId())],
       },
-      result.room_id
+      result.roomId
     );
   }
 

@@ -215,6 +215,14 @@ class MatrixClientA extends EventEmitter {
   async resolveRoomAlias(alias): Promise<any> {
     return {};
   }
+  async leave(roomId) {
+    console.log('leave');
+  }
+  async createRoom(options): Promise<TRoom> {
+    const a = new TRoom();
+    console.log('createRoom');
+    return Promise.resolve(a);
+  }
   sendMessage(roomId, content) {
     console.log('send message');
   }

@@ -19,10 +19,10 @@ function Home({ spaceId }) {
   useCategorizedSpaces();
   const isCategorized = accountData.categorizedSpaces.has(spaceId);
 
-  let categories = null;
-  let spaceIds = [];
-  let roomIds = [];
-  let directIds = [];
+  let categories = null as unknown as Map<any, any>;
+  let spaceIds = [] as string[];
+  let roomIds = [] as string[];
+  let directIds = [] as string[];
 
   if (spaceId) {
     const spaceChildIds = roomList.getSpaceChildren(spaceId) ?? [];
@@ -42,7 +42,7 @@ function Home({ spaceId }) {
   useEffect(() => {
     const selectorChanged = (selectedRoomId, prevSelectedRoomId) => {
       if (!drawerPostie.hasTopic('selector-change')) return;
-      const addresses = [];
+      const addresses = [] as string[];
       if (drawerPostie.hasSubscriber('selector-change', selectedRoomId))
         addresses.push(selectedRoomId);
       if (drawerPostie.hasSubscriber('selector-change', prevSelectedRoomId))
@@ -96,9 +96,9 @@ function Home({ spaceId }) {
 
       {isCategorized &&
         [...categories.keys()].sort(roomIdByAtoZ).map((catId) => {
-          const rms = [];
-          const dms = [];
-          categories.get(catId).forEach((id) => {
+          const rms = [] as string[];
+          const dms = [] as string[];
+          categories.get(catId).forEach((id: string) => {
             if (directs.has(id)) dms.push(id);
             else rms.push(id);
           });

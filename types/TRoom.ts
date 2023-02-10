@@ -22,14 +22,14 @@ class TRoom {
     this.currentState = new CurrentState();
   }
   getMember(userId: string) {
-    const user = new TRoomMember();
+    const user = new TRoomMember(userId);
     return user;
   }
   getMembers() {
     return [];
   }
   getJoinedMembers() {
-    const user = new TRoomMember();
+    const user = new TRoomMember('1');
     return [user];
   }
   getUnreadNotificationCount(arg0: string) {
