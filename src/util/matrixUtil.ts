@@ -231,7 +231,7 @@ export async function hasDevices(userId) {
 }
 
 export const formatGlobalMsg = (
-  event: import('../../types').NostrEvent
+  event: NostrEvent
   // pubkey: string,
   // relayUrl: string
 ) => {
@@ -286,6 +286,61 @@ export const formatGlobalMsg = (
   // if (citedMsg) {
   //   msg['citedMsg'] = citedMsg;
   // }
+  return msg;
+};
+
+export const formatChannelMsg = (event: NostrEvent) => {
+  const event_time = event.created_at;
+  const { events_replied_to, pubkeys_replied_to } = FormatCitedEventsAndCitedPubkeys(event);
+
+  let parent = '';
+  let replyingTo = '';
+  if (events_replied_to[0] && events_replied_to.length > 1) {
+    replyingTo = events_replied_to[events_replied_to.length - 1];
+    // array_of_replies.push([event.id, replyingTo]);
+  }
+  if (events_replied_to[0] && event.kind == 42) {
+    parent = events_replied_to[0]; // root event.id
+  }
+  let content = event.content.replace(/&/g, '&#38;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  let shortened_content = content.replace(/\n/g, ' ').substring(0, 400);
+  shortened_content = shortened_content;
+  if (content.length > 50) {
+    shortened_content = shortened_content + '...';
+  }
+  // array_of_replies.forEach(function (item) {
+  //   if (item[0] == event.id) {
+  //     let replyPubkey = event.pubkey;
+  //     if (event.pubkey in namemap && namemap[event.pubkey] != 'none') {
+  //       let person_name = event.pubkey;
+  //     } else {
+  //       let person_name = replyPubkey.substring(0, 15);
+  //     }
+  //   }
+  // });
+
+  // let citedMsg = {} as TCitedMsg | null;
+  // if (replyingTo != '') {
+  //   citedMsg = findCitedMsgFromLocalStorage(replyingTo, parent, pubkey);
+  // }
+  let contentObject: TContent = {
+    body: content,
+    msgtype: 'm.text',
+  };
+  let msg: TEventFormat = {
+    // color,
+    content: contentObject,
+    type: 'm.room.message',
+    // replyingTo,
+    // message: content,
+    // kind: event.kind,
+    // relayUrl: relayUrl,
+    origin_server_ts: event_time,
+    sender: event.pubkey,
+    event_id: event.id,
+    room_id: parent, // 母帖eventid或者是聊天室id
+  };
+
   return msg;
 };
 

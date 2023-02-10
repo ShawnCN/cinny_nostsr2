@@ -98,8 +98,10 @@ class InitMatrix extends EventEmitter {
               room.avatarUrl = channels[k].profile_img!;
               room.canonical_alias = channels[k].about!;
               this.roomList.rooms.add(room.roomId);
+              this.matrixClient.subChannelMessage(room.roomId);
               // this.roomList.directs.add(room.roomId);
             }
+            // this.matrixClient.subGlobalMessages();
 
             this.accountData = new AccountData(this.roomList);
             this.roomsInput = new RoomsInput(this.matrixClient, this.roomList);

@@ -2,13 +2,14 @@ import EventEmitter from '../EventEmitter';
 import appDispatcher from '../dispatcher';
 import cons from './cons';
 import RoomList from './RoomList';
+import MatrixClientA from '../MatrixClientA';
 
 class AccountData extends EventEmitter {
-  matrixClient: import('e:/dev/cinny_nostsr2/src/client/MatrixClientA').default;
+  matrixClient: MatrixClientA;
   roomList: RoomList;
-  spaces: Set<unknown>;
-  spaceShortcut: Set<string>;
-  categorizedSpaces: Set<string>;
+  spaces: Set<string>; //space id
+  spaceShortcut: Set<string>; // room id
+  categorizedSpaces: Set<string>; // space id
   constructor(roomList: RoomList) {
     super();
 

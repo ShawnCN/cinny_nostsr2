@@ -155,7 +155,7 @@ class RoomTimeline extends EventEmitter {
   }
 
   addToTimeline(mEvent: TEvent) {
-    console.log(mEvent);
+    console.log(mEvent.getRoomId(), mEvent);
     if (mEvent.getType() === 'm.room.member' && hideMemberEvents(mEvent)) {
       return;
     }

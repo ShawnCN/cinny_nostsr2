@@ -159,6 +159,7 @@ function Client() {
     const file = files[0];
     initMatrix.roomsInput.setAttachment(roomId, file);
     initMatrix.roomsInput.emit(cons.events.roomsInput.ATTACHMENT_SET, file);
+    initMatrix.matrixClient.emit('unsub_and_disconnect_relay');
   }
 
   return (

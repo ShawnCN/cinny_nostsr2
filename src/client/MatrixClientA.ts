@@ -4,7 +4,7 @@ import TDevice from '../../types/TDevice';
 import TEvent from '../../types/TEvent';
 import TRoom from '../../types/TRoom';
 import TUser from '../../types/TUser';
-import { formatGlobalMsg } from '../util/matrixUtil';
+import { formatChannelMsg, formatGlobalMsg } from '../util/matrixUtil';
 import EventEmitter from './EventEmitter';
 import { aevent2, stage3relays, TChannelMapList } from './state/cons';
 
@@ -23,6 +23,7 @@ class MatrixClientA extends EventEmitter {
     this.user.avatarUrl =
       'https://nostr.build/i/karnage/nostr.build_1aae77a4637a40d0fb21cf59ac963fade0fab3744a775bd88fb06b4400696e26.png';
     this.publicRoomList = new Map();
+    this.relayInstance = new Map();
     // this.store = {
     //   deleteAllData:()=>Promise<any>
     // }
@@ -35,6 +36,8 @@ class MatrixClientA extends EventEmitter {
       room.canonical_alias = channels[k].about!;
       this.publicRoomList.set(room.roomId, room);
     }
+
+    this.on('unsub_and_disconnect_relay', this.disconnectRelayInstance());
   }
 
   async initCrypto() {
@@ -42,12 +45,9 @@ class MatrixClientA extends EventEmitter {
   }
   async startClient({ lazyLoadMembers: boolean }) {
     console.log('startClient');
-
     for (let i = 0; i < stage3relays.length; i++) {
       const pubkey = '33333';
-      setTimeout(async () => {
-        await this.connectAndJoin(stage3relays[i], pubkey);
-      }, 500);
+      await this.connectAndJoin(stage3relays[i], pubkey);
     }
   }
   async connectAndJoin(wss: string, pubkey: string) {
@@ -55,6 +55,8 @@ class MatrixClientA extends EventEmitter {
     const relay = relayInit(wss);
     try {
       await relay.connect();
+      this.relayInstance.set(wss, relay);
+      console.log('1111111111', this.relayInstance);
     } catch (err) {
       console.log('发现了错误', err);
       this.emit('startConnectError', wss);
@@ -63,7 +65,7 @@ class MatrixClientA extends EventEmitter {
       // this.relayInstance.set(relay.url, relay);
       this.emit('relayConnected', relay.url);
       console.log(`connected: ${relay.url}`);
-      this.subGlobalMessages(relay);
+      // this.subGlobalMessages(relay);
     });
     relay.on('error', () => {
       console.log(`failed: ${relay.url}`);
@@ -233,39 +235,58 @@ class MatrixClientA extends EventEmitter {
   getPushActionsForEvent(mEvent) {
     return 'actions';
   }
-  subGlobalMessages = (relay: Relay) => {
-    const filter = {
-      kinds: [1],
-      limit: 20,
-    };
-    if (!relay) return;
-    const sub = relay.sub([filter]);
-    const subDetail = {
-      roomId: 'globalfeed',
-      type: 'groupRelay',
-      relayUrl: relay.url,
-      sub: sub,
-    };
-    // if (this.subList['globalfeed']) {
-    //   this.subList['globalfeed'].push(subDetail);
-    // } else {
-    //   this.subList['globalfeed'] = [subDetail];
-    // }
-    // store.dispatch(setRoomSubList({ ['globalfeed']: subDetail }));
+  subGlobalMessages = () => {
+    for (let [k, relay] of this.relayInstance) {
+      const filter = {
+        kinds: [1],
+        limit: 20,
+      };
+      if (!relay) return;
+      const sub = relay.sub([filter]);
+      const subDetail = {
+        roomId: 'globalfeed',
+        type: 'groupRelay',
+        relayUrl: relay.url,
+        sub: sub,
+      };
+      // if (this.subList['globalfeed']) {
+      //   this.subList['globalfeed'].push(subDetail);
+      // } else {
+      //   this.subList['globalfeed'] = [subDetail];
+      // }
+      // store.dispatch(setRoomSubList({ ['globalfeed']: subDetail }));
 
-    sub.on('event', (event: NostrEvent) => {
-      const mevent = formatGlobalMsg(event);
-      const mc = new TEvent(mevent);
-
-      this.emit('Event.decrypted', mc);
-      // console.log(event);
-      //   store.dispatch(handleRelayMsgGlobal3(event, relay.url));
-      //   store.dispatch({
-      //     type: 'fetchOtherUserMeta',
-      //     payload: { user_id: event.pubkey },
-      //   });
-      // updateUsermap(store, event.pubkey);
-    });
+      sub.on('event', (event: NostrEvent) => {
+        const mevent = formatGlobalMsg(event);
+        const mc = new TEvent(mevent);
+        this.emit('Event.decrypted', mc);
+        // console.log(mc);
+        //   store.dispatch(handleRelayMsgGlobal3(event, relay.url));
+        //   store.dispatch({
+        //     type: 'fetchOtherUserMeta',
+        //     payload: { user_id: event.pubkey },
+        //   });
+        // updateUsermap(store, event.pubkey);
+      });
+    }
+  };
+  subChannelMessage = (channelId: string) => {
+    for (let [k, relay] of this.relayInstance) {
+      const filter = {
+        kinds: [42],
+        '#e': [channelId],
+        limit: 13,
+      };
+      if (!relay) return;
+      const sub = relay.sub([filter]);
+      sub.on('event', (event: NostrEvent) => {
+        const mevent = formatChannelMsg(event);
+        const mc = new TEvent(mevent);
+        this.emit('Event.decrypted', mc);
+        // console.log('channel event', event);
+        // store.dispatch(handleRelayMsgChannel3(event, relay.url));
+      });
+    }
   };
   uploadContent(isEncryptedRoom: any, { includeFilename: any, progressHandler }) {}
   getRoomPushRule(arg0: 'global', roomId: string) {
@@ -276,6 +297,12 @@ class MatrixClientA extends EventEmitter {
   }
   getStoredDevice(userId, deviceId) {
     return '';
+  }
+  async disconnectRelayInstance() {
+    for (let [k, relay] of this.relayInstance) {
+      console.log(`close relay ${relay.url}`);
+      await relay.close();
+    }
   }
 }
 

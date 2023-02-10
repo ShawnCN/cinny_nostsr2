@@ -32,7 +32,7 @@ class RoomList extends EventEmitter {
   inviteSpaces: Set<unknown>;
   inviteRooms: Set<unknown>;
   directs: Set<string>; // roomId set
-  spaces: Set<string>;
+  spaces: Set<string>; // space id set
   rooms: Set<string>;
   processingRooms: Map<any, any>;
   constructor(matrixClient: MatrixClientA) {
@@ -270,7 +270,7 @@ class RoomList extends EventEmitter {
 
   _listenEvents() {
     // Update roomList when m.direct changes
-    this.matrixClient?.on('accountData', (event) => {
+    this.matrixClient.on('accountData', (event) => {
       if (event.getType() !== 'm.direct') return;
 
       const latestMDirects = this.getMDirects();
