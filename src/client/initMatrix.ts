@@ -16,6 +16,7 @@ import MatrixClientA from './MatrixClientA';
 import { TChannelmapObject } from '../../types';
 import { TChannelMapList } from './state/cons';
 import TRoom from '../../types/TRoom';
+import TRoomMember from '../../types/TRoomMember';
 // const matrixClientA = new MatrixClientA();
 
 // global.Olm = Olm;
@@ -71,9 +72,9 @@ class InitMatrix extends EventEmitter {
     this.matrixClient.setGlobalErrorOnUnknownDevices(false);
   }
 
-  setupSync() {
+  async setupSync() {
     console.log('setupSync');
-    const sync = ({ state, prevState }) => {
+    const sync = async ({ state, prevState }) => {
       console.log(state);
       switch (state) {
         case 'NULL':
@@ -92,7 +93,7 @@ class InitMatrix extends EventEmitter {
 
             const channels: TChannelmapObject = TChannelMapList;
             for (let k in channels) {
-              let room = new TRoom();
+              let room = new TRoom(channels[k].user_id);
               room.roomId = channels[k].user_id;
               room.name = channels[k].name!;
               room.avatarUrl = channels[k].profile_img!;
@@ -111,6 +112,24 @@ class InitMatrix extends EventEmitter {
             this.notifications._initNoti();
           } else {
             this.notifications?._initNoti();
+          }
+          console.log('444444444444');
+          const contactsList = await this.matrixClient.fetchContactUserList();
+          console.log('1111111444444444444');
+          console.log(contactsList);
+          if (contactsList && contactsList.length > 0) {
+            contactsList.forEach((contact) => {
+              this.roomList.directs.add(contact[0]);
+              if (!this.matrixClient.publicRoomList.get(contact[0])) {
+                let aroom = new TRoom(contact[0]);
+                const member = new TRoomMember(contact[0]);
+                aroom.addMember(member);
+                let me = new TRoomMember(this.matrixClient.user.userId);
+                me.name = this.matrixClient.user.displayName;
+                me.avatarSrc = this.matrixClient.user.avatarUrl;
+                aroom.addMember(me);
+              }
+            });
           }
 
           break;
@@ -166,7 +185,7 @@ class InitMatrix extends EventEmitter {
       // },
     };
     // this.matrixClient.on('sync', (state, prevState) => sync[state](prevState));
-    this.matrixClient.on('sync', ({ state, prevState }) => sync({ state, prevState }));
+    this.matrixClient.on('sync', async ({ state, prevState }) => await sync({ state, prevState }));
   }
 
   listenEvents() {

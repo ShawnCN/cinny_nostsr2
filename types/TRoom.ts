@@ -18,10 +18,12 @@ class TRoom {
   // currentState: {
   //   getStateEvents: typeof getStateEvents;
   // };
-  constructor() {
+  constructor(roomId: string) {
     // this.currentState.getStateEvents = getStateEvents();
     this.currentState = new CurrentState();
     this.roomMembers = new Map();
+    this.roomId = roomId;
+    this.name = roomId;
   }
   getMember(userId: string) {
     const user = this.roomMembers.get(userId);

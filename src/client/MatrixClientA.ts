@@ -37,7 +37,7 @@ class MatrixClientA extends EventEmitter {
     // }
     const channels: TChannelmapObject = TChannelMapList;
     for (let k in channels) {
-      let room = new TRoom();
+      let room = new TRoom(channels[k].user_id);
       room.roomId = channels[k].user_id;
       room.name = channels[k].name!;
       room.avatarUrl = channels[k].profile_img!;
@@ -99,7 +99,10 @@ class MatrixClientA extends EventEmitter {
     console.log('setGlobalErrorOnUnknownDevices');
   }
   getRoom(roomId: string): TRoom {
-    return this.publicRoomList.get(roomId) as TRoom;
+    const room = this.publicRoomList.get(roomId);
+    if (room) return room;
+
+    return new TRoom(roomId);
   }
   getAccountData(accountId: string) {
     const ae1 = new TEvent(aevent2);
@@ -228,7 +231,7 @@ class MatrixClientA extends EventEmitter {
     console.log('leave');
   }
   async createRoom(options): Promise<TRoom> {
-    const a = new TRoom();
+    const a = new TRoom('1');
     console.log('createRoom');
     return Promise.resolve(a);
   }
@@ -260,7 +263,6 @@ class MatrixClientA extends EventEmitter {
       sub.on('event', async (event: NostrEvent) => {
         const mevent = formatGlobalMsg(event);
         const mc = new TEvent(mevent);
-
         const roomId = mevent.room_id;
         const senderId = mevent.sender;
         const room = this.publicRoomList.get(roomId);
@@ -351,6 +353,64 @@ class MatrixClientA extends EventEmitter {
       });
 
     return event;
+  }
+  async fetchContactUserList() {
+    const user_id = this.user.userId;
+    console.log('3444444');
+    for (let [key, relay] of this.relayInstance) {
+      const event = await this.fetchContacts(relay, user_id);
+      if (event) {
+        const tags = event.tags;
+        let list = [] as string[][];
+        for (let i = 0; i < tags.length; i++) {
+          if (event['tags'][i][0] == 'p') {
+            let a = [] as string[];
+            a.push(event['tags'][i][1]);
+            if (event['tags'][i].length > 2) {
+              a.push(event['tags'][i][2]);
+            }
+            list.push(a);
+          }
+        }
+        console.log('33444444');
+        return list;
+      }
+    }
+  }
+  async fetchContacts(relay: Relay, pubkey: string) {
+    const filter = {
+      authors: [
+        // pubkey
+        '46060722131ab09a10c410b9522605aee09ce8ff363145f4319f7461ca57f276',
+      ],
+      kinds: [3],
+      // '#e': [id],
+      limit: 1,
+    };
+    if (!relay || relay.status !== 1) return null;
+    const sub = relay.sub([filter]);
+    const contact = new Promise<NostrEvent>((resolve, reject) => {
+      let tevent = {} as NostrEvent;
+      sub.on('event', (event: NostrEvent) => {
+        tevent = event;
+      });
+      sub.on('eose', () => {
+        sub.unsub();
+        resolve(tevent);
+      });
+    })
+      .then((event: NostrEvent) => {
+        if (event && Object.keys(event).length > 0) {
+          return event;
+        } else {
+          return null;
+        }
+      })
+      .catch((e) => {
+        console.error(e);
+        return null;
+      });
+    return contact;
   }
   uploadContent(isEncryptedRoom: any, { includeFilename: any, progressHandler }) {}
   getRoomPushRule(arg0: 'global', roomId: string) {
