@@ -90,7 +90,6 @@ class InitMatrix extends EventEmitter {
           // global.initMatrix = this;
           if (prevState === null) {
             this.roomList = new RoomList(this.matrixClient);
-
             const channels: TChannelmapObject = TChannelMapList;
             for (let k in channels) {
               let room = new TRoom(channels[k].user_id);
@@ -128,6 +127,7 @@ class InitMatrix extends EventEmitter {
                 me.name = this.matrixClient.user.displayName;
                 me.avatarSrc = this.matrixClient.user.avatarUrl;
                 aroom.addMember(me);
+                this.matrixClient.publicRoomList.set(contact[0], aroom);
               }
             });
           }

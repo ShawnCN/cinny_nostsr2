@@ -1,8 +1,8 @@
+import initMatrix from '../src/client/InitMatrix';
 import RoomTimeline from '../src/client/state/RoomTimeline';
 import TEvent from './TEvent';
 import TEventTimelineSet from './TEventTimelineSet';
 import TLiveTimeline from './TLiveTimeline';
-import TMember from './TRoomMember';
 import TRoomMember from './TRoomMember';
 
 class TRoom {
@@ -66,7 +66,13 @@ class TRoom {
   getEventReadUpTo(userId: string) {
     return '1';
   }
+  // 一对一聊天室，选择对方用户。
   getAvatarFallbackMember() {
+    for (let [k, v] of this.roomMembers) {
+      if (k != initMatrix.matrixClient.user.avatarUrl) {
+        return v;
+      }
+    }
     // let aroom = new TRoom();
     // (aroom.roomId = 'globalfeed'), (aroom.name = 'aaa');
     // return aroom;

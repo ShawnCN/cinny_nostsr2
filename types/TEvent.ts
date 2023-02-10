@@ -1,13 +1,13 @@
-import TMember from './TRoomMember';
+import TRoomMember from './TRoomMember';
 
 class TEvent {
   event: TEventFormat;
-  sender: TMember;
+  sender: TRoomMember;
   replyEventId: string;
   clearEvent: boolean;
   constructor(event: TEventFormat) {
     this.event = event;
-    this.sender = new TMember(this.event.sender);
+    this.sender = new TRoomMember(this.event.sender);
   }
   getTs() {
     return this.event.origin_server_ts;
