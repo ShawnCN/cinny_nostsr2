@@ -93,7 +93,7 @@ export function trimHTMLReply(html) {
   return html.slice(i + suffix.length);
 }
 
-export function hasDMWith(userId) {
+export function hasDMWith(userId: string) {
   const mx = initMatrix.matrixClient;
   const directIds = [...initMatrix.roomList.directs];
 

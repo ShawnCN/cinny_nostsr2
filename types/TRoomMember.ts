@@ -35,7 +35,6 @@ class TRoomMember {
       }
       if (picture && picture != '') {
         this.avatarSrc = picture;
-        console.log('11111111111', this.avatarSrc, picture);
       }
       // const asender = formatRoomMemberFromNostrEvent(nostrEvent);
     }

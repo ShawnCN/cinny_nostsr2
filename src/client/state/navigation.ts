@@ -271,6 +271,7 @@ class Navigation extends EventEmitter {
     const { roomList } = this.initMatrix;
     if (tabId === cons.tabs.HOME || tabId === cons.tabs.DIRECTS) {
       const data = this.spaceToRoom.get(tabId);
+      console.log('data: ' + JSON.stringify(data));
       if (data) {
         // @ts-ignore
         this._selectRoom(data.roomId);
@@ -317,6 +318,8 @@ class Navigation extends EventEmitter {
           action.tabId !== cons.tabs.HOME && action.tabId !== cons.tabs.DIRECTS
             ? action.tabId
             : null;
+
+        console.log('selecttab action: ' + action.tabId, roomId);
 
         this._selectSpace(roomId, true);
         this._selectTab(action.tabId);

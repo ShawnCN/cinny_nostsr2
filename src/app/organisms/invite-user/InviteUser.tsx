@@ -126,8 +126,8 @@ function InviteUser({
       updateUsers([
         {
           user_id: inputUsername,
-          display_name: result.displayName,
-          avatarUrl: result.avatarUrl,
+          display_name: result?.displayName,
+          avatarUrl: result?.avatarUrl,
         },
       ]);
     } catch (e) {
@@ -173,7 +173,7 @@ function InviteUser({
       invitedUserIds.add(userId);
       updateInvitedUserIds(new Set(Array.from(invitedUserIds)));
       deleteUserFromProc(userId);
-    } catch (e) {
+    } catch (e: any) {
       deleteUserFromProc(userId);
       if (typeof e.message === 'string') procUserError.set(userId, e.message);
       else procUserError.set(userId, 'Something went wrong!');
@@ -253,7 +253,8 @@ function InviteUser({
           key={userId}
           avatarSrc={
             typeof user.avatarUrl === 'string'
-              ? mx.mxcUrlToHttp(user.avatarUrl, 42, 42, 'crop')
+              ? // ? mx.mxcUrlToHttp(user.avatarUrl, 42, 42, 'crop')
+                user.avatarUrl
               : null
           }
           name={name}

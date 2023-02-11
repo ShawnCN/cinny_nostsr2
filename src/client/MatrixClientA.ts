@@ -100,11 +100,11 @@ class MatrixClientA extends EventEmitter {
   setGlobalErrorOnUnknownDevices(arg0: boolean) {
     console.log('setGlobalErrorOnUnknownDevices');
   }
-  getRoom(roomId: string): TRoom {
+  getRoom(roomId: string): TRoom | undefined {
     const room = this.publicRoomList.get(roomId);
-    if (room) return room;
-
-    return new TRoom(roomId);
+    return room;
+    // if (room) return room;
+    // return new TRoom(roomId);
   }
   getAccountData(eventType: string) {
     const ae1 = new TEvent(aevent2);
@@ -136,20 +136,18 @@ class MatrixClientA extends EventEmitter {
   // search user from relays
   async getProfileInfo(userId: string) {
     const nostrEvent = await this.fetchUserMeta(userId);
-    let user = {} as any;
+    let user = {} as { displayName: string; about: string; avatarUrl: string };
     if (!nostrEvent) {
       return null;
     }
     const { name, about, picture } = JSON.parse(nostrEvent.content);
-    if (name && name != '') {
-      user.displayName = name;
-    }
-    if (about && about != '') {
-      user.about = about;
-    }
-    if (picture && picture != '') {
-      user.avatarUrl = picture;
-    }
+
+    user.displayName = name;
+
+    user.about = about;
+
+    user.avatarUrl = picture;
+
     return user;
   }
   async searchUserDirectory({ term: string, limit: number }) {
@@ -416,93 +414,26 @@ class MatrixClientA extends EventEmitter {
       }
     }
   }
-  async fetchChannelMeta(channelId: string, relay: Relay) {
-    if (!relay || relay.status != 1) return null;
-
-    const filter = {
-      ids: [channelId],
-      // kinds:[40,41]
-    };
-    const sub = relay.sub([filter]);
-    const channel = new Promise<TChannelmap>((resolve, reject) => {
-      let channel = {} as TChannelmap;
-      sub.on('event', (event: NostrEvent) => {
-        if (event.kind != 40) {
-          reject(`${channelId} is not a valid channel id.`);
-          return;
-        }
-        const { name, about, picture } = JSON.parse(event.content);
-        if (name && name != '') {
-          channel['name'] = name;
-        }
-        if (about && about != '') {
-          channel['about'] = about;
-        }
-        if (picture && picture != '') {
-          channel['profile_img'] = picture;
-        }
-        if (channel && Object.keys(channel).length > 0) {
-          channel['query_time'] = Math.floor(Date.now() / 1000);
-        }
-        channel['sig'] = event.sig;
-        channel['created_at'] = event.created_at;
-        channel['creatorPubkey'] = event.pubkey;
-        channel['type'] = 'groupChannel';
-        channel['user_id'] = channelId;
-        if (channel && Object.keys(channel).length > 0) {
-          channel['query_time'] = Math.floor(Date.now() / 1000);
-          const channelmap = getOneLocalStorage('channelmap') as TChannelmapObject | undefined;
-          if (channelmap) {
-            channelmap[channelId] = channel;
-            localStorage['channelmap'] = JSON.stringify(channelmap);
-          } else {
-            let channelmap = {} as TUsermapObject;
-            channelmap[channelId] = channel;
-            localStorage['channelmap'] = JSON.stringify(channelmap);
-          }
-        }
-
-        resolve(channel);
-      });
-      sub.on('eose', () => {
-        sub.unsub();
-        if (!channel || Object.keys(channel).length == 0) {
-          // reject('not found...');
-          console.log('not found...');
-          reject(null);
-        }
-      });
-    })
-      .then((v) => {
-        return v;
-      })
-      .catch((e) => {
-        console.error(e);
-        return null;
-        // toast.error(e);
-      });
-
-    return channel;
-  }
   async fetchUserMetaFromRelay(pubkey: string, relay: Relay) {
     if (!relay || relay.status != 1) return null;
     const filter = { authors: [pubkey], kinds: [0], limit: 1 };
     const sub = relay.sub([filter]);
+    let aevent = {} as NostrEvent;
     const event = new Promise<NostrEvent>((resolve, reject) => {
       sub.on('event', (event: NostrEvent) => {
-        resolve(event);
+        aevent = event;
+        resolve(aevent);
       });
-    })
-      .then((v) => {
-        sub.on('eose', () => {
-          sub.unsub();
-        });
-        return v;
-      })
-      .catch((e) => {
-        console.error(e);
-        return null;
+      sub.on('eose', () => {
+        sub.unsub();
+        if (!aevent || Object.keys(aevent).length == 0) {
+          reject(null);
+        }
       });
+    }).catch((e) => {
+      console.error(e);
+      return null;
+    });
 
     return event;
   }
