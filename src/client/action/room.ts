@@ -4,6 +4,7 @@ import cons from '../state/cons';
 import { getIdServer } from '../../util/matrixUtil';
 import TRoom from '../../../types/TRoom';
 import TEvent from '../../../types/TEvent';
+import { SearchResultUser } from '../../../types';
 
 /**
  * https://github.com/matrix-org/matrix-react-sdk/blob/1e6c6e9d800890c732d60429449bc280de01a647/src/Rooms.js#L73
@@ -112,12 +113,12 @@ async function join(roomIdOrAlias: string, isDM = false, via = undefined) {
     const resultRoom = await mx.joinRoom(roomIdOrAlias, { viaServers });
 
     if (isDM) {
-      const targetUserId = guessDMRoomTargetId(mx.getRoom(resultRoom!.roomId), mx.getUserId());
+      const targetUserId = guessDMRoomTargetId(mx.getRoom(resultRoom!.roomId)!, mx.getUserId());
       await addRoomToMDirect(resultRoom!.roomId, targetUserId);
     }
     appDispatcher.dispatch({
       type: cons.actions.room.JOIN,
-      roomId: resultRoom.roomId,
+      roomId: resultRoom!.roomId,
       isDM,
     });
     return resultRoom.roomId;
@@ -146,13 +147,14 @@ async function leave(roomId) {
   }
 }
 
-async function create(options, isDM = false) {
+async function create(options, isDM = false, dmUser?: SearchResultUser) {
   const mx = initMatrix.matrixClient;
   try {
-    const result = await mx.createRoom(options);
-    if (isDM && typeof options.invite?.[0] === 'string') {
-      await addRoomToMDirect(result.roomId, options.invite[0]);
-    }
+    const result = await mx.createRoom(options, dmUser);
+    // 将用户添加到direct列表
+    // if (isDM && typeof options.invite?.[0] === 'string') {
+    //   await addRoomToMDirect(result.roomId, options.invite[0]);
+    // }
     appDispatcher.dispatch({
       type: cons.actions.room.CREATE,
       roomId: result.roomId,
@@ -174,13 +176,13 @@ async function create(options, isDM = false) {
   }
 }
 
-async function createDM(userIdOrIds, isEncrypted = true) {
+async function createDM(userIdOrIds, isEncrypted = true, user?: SearchResultUser) {
   const options = {
     is_direct: true,
     invite: Array.isArray(userIdOrIds) ? userIdOrIds : [userIdOrIds],
     visibility: 'private',
     preset: 'trusted_private_chat',
-    initial_state: [],
+    initial_state: [] as any,
   };
   if (isEncrypted) {
     options.initial_state.push({
@@ -192,7 +194,8 @@ async function createDM(userIdOrIds, isEncrypted = true) {
     });
   }
 
-  const result = await create(options, true);
+  const result = await create(options, true, user);
+  console.log('10111111111111', result);
   return result;
 }
 

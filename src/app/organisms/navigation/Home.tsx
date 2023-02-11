@@ -108,7 +108,7 @@ function Home({ spaceId }) {
             <RoomsCategory
               key={catId}
               spaceId={catId}
-              name={mx.getRoom(catId).name}
+              name={mx.getRoom(catId)!.name}
               roomIds={rms.concat(dms)}
               drawerPostie={drawerPostie}
             />

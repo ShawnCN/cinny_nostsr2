@@ -1,5 +1,11 @@
-import { nip19, Relay, relayInit } from 'nostr-tools';
-import { NostrEvent, TChannelmap, TChannelmapObject, TSubscribedChannel } from '../../types';
+import { Relay, relayInit } from 'nostr-tools';
+import {
+  NostrEvent,
+  SearchResultUser,
+  TChannelmap,
+  TChannelmapObject,
+  TSubscribedChannel,
+} from '../../types';
 import TDevice from '../../types/TDevice';
 import TEvent from '../../types/TEvent';
 import TRoom from '../../types/TRoom';
@@ -100,11 +106,10 @@ class MatrixClientA extends EventEmitter {
   setGlobalErrorOnUnknownDevices(arg0: boolean) {
     console.log('setGlobalErrorOnUnknownDevices');
   }
-  getRoom(roomId: string): TRoom | undefined {
+  getRoom(roomId: string): TRoom | null {
     const room = this.publicRoomList.get(roomId);
+    if (!room) return null;
     return room;
-    // if (room) return room;
-    // return new TRoom(roomId);
   }
   getAccountData(eventType: string) {
     const ae1 = new TEvent(aevent2);
@@ -252,10 +257,31 @@ class MatrixClientA extends EventEmitter {
   async leave(roomId) {
     console.log('leave');
   }
-  async createRoom(options): Promise<TRoom> {
-    const a = new TRoom('1');
-    console.log('createRoom');
-    return Promise.resolve(a);
+  async createRoom(
+    options: {
+      is_direct: boolean;
+      invite: string[];
+      visibility: 'private';
+      preset: 'trusted_private_chat';
+      initial_state: any[];
+    },
+    dmUser?: SearchResultUser
+  ) {
+    if (options.is_direct == true) {
+      const a = new TRoom(options.invite[0]);
+      a.name = dmUser!.display_name;
+      a.avatarUrl = dmUser!.avatarUrl;
+      const m1 = new TRoomMember(options.invite[0], a.name, a.avatarUrl);
+      const m2 = new TRoomMember(this.user.userId, this.user.displayName, this.user.avatarUrl);
+      a.addMember(m1);
+      a.addMember(m2);
+      this.publicRoomList.set(a.roomId, a);
+      return Promise.resolve(a);
+    } else {
+      const a = new TRoom('1');
+      console.log('createRoom');
+      return Promise.resolve(a);
+    }
   }
   sendMessage(roomId, content) {
     console.log('send message');

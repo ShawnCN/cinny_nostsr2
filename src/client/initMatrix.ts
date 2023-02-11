@@ -103,12 +103,12 @@ class InitMatrix extends EventEmitter {
                 let room = new TRoom(subscribed_channels[i].user_id);
                 room.roomId = subscribed_channels[i].user_id;
                 this.roomList.rooms.add(room.roomId);
-                this.matrixClient.subChannelMessage(room.roomId);
+                // this.matrixClient.subChannelMessage(room.roomId);
               } else if (subscribed_channels[i].type == 'single') {
                 let room = new TRoom(subscribed_channels[i].user_id);
                 room.roomId = subscribed_channels[i].user_id;
                 this.roomList.directs.add(room.roomId);
-                this.matrixClient.subdmMessages(subscribed_channels[i].user_id);
+                // this.matrixClient.subdmMessages(subscribed_channels[i].user_id);
               } else if (subscribed_channels[i].type == 'groupRelay') {
                 // this.matrixClient.subGlobalMessages();
               }

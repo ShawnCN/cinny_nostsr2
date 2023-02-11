@@ -1,4 +1,3 @@
-import { nip19 } from 'nostr-tools';
 import initMatrix from '../src/client/InitMatrix';
 import { formatRoomMemberFromNostrEvent } from '../src/util/matrixUtil';
 import TEvent from './TEvent';
@@ -11,13 +10,14 @@ class TRoomMember {
   avatarSrc: string;
   peopleRole: string;
   powerLevel: number;
-  membership: string; //'join'|'leave'|'ban'
+  membership: string; //'join'|'leave'|'ban'|'invite'
   events: TEvent[];
-  constructor(id: string) {
-    // const pubkeyNpub = nip19.npubEncode(id);
+  constructor(id: string, name?: string, avatarSrc?: string) {
     this.userId = id;
-    this.name = id;
     this.username = id;
+    this.membership = 'join';
+    if (name) this.name = name;
+    if (avatarSrc) this.avatarSrc = avatarSrc;
   }
 
   async init() {
@@ -25,7 +25,6 @@ class TRoomMember {
     // console.log('2666666666', nostrEvent?.content);
     if (nostrEvent) {
       const { name, about, picture } = JSON.parse(nostrEvent.content);
-      // const userIdNpub = nip19.npubEncode(event.pubkey);
       // let member = new TRoomMember(userIdNpub);
       if (name && name != '') {
         this.name = name;

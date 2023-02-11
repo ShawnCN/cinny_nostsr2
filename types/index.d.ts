@@ -56,3 +56,9 @@ export type NostrEvent = {
 };
 
 export type TSpaceContent = {};
+
+export type SearchResultUser = {
+  user_id: string;
+  display_name: string;
+  avatarUrl: string;
+};

@@ -18,6 +18,7 @@ import RoomTile from '../../molecules/room-tile/RoomTile';
 
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
+import { SearchResultUser } from '../../../../types';
 
 interface IPropsInviteUser {
   isOpen: boolean;
@@ -34,7 +35,7 @@ function InviteUser({
 }: IPropsInviteUser) {
   const [isSearching, updateIsSearching] = useState(false);
   const [searchQuery, updateSearchQuery] = useState<{ username?: string; error?: string }>({});
-  const [users, updateUsers] = useState<any[]>([]);
+  const [users, updateUsers] = useState<SearchResultUser[]>([]);
 
   const [procUsers, updateProcUsers] = useState<Set<string>>(new Set()); // proc stands for processing.
   const [procUserError, updateUserProcError] = useState(new Map());
@@ -89,8 +90,8 @@ function InviteUser({
         updateUsers([
           {
             user_id: inputUsername,
-            display_name: result.displayName,
-            avatarUrl: result.avatarUrl,
+            display_name: result!.displayName,
+            avatarUrl: result!.avatarUrl,
           },
         ]);
       } catch (e) {
@@ -123,20 +124,24 @@ function InviteUser({
 
     try {
       const result = await mx.getProfileInfo(inputUsername);
-      updateUsers([
-        {
-          user_id: inputUsername,
-          display_name: result?.displayName,
-          avatarUrl: result?.avatarUrl,
-        },
-      ]);
+      if (result) {
+        updateUsers([
+          {
+            user_id: inputUsername,
+            display_name: result.displayName,
+            avatarUrl: result.avatarUrl,
+          },
+        ]);
+      } else {
+        updateSearchQuery({ error: `${inputUsername} not found!` });
+      }
     } catch (e) {
       updateSearchQuery({ error: `${inputUsername} not found!` });
     }
     updateIsSearching(false);
   }
 
-  async function createDM(userId) {
+  async function createDM(userId, user: SearchResultUser) {
     if (mx.getUserId() === userId) return;
     const dmRoomId = hasDMWith(userId);
     if (dmRoomId) {
@@ -150,7 +155,7 @@ function InviteUser({
       procUserError.delete(userId);
       updateUserProcError(getMapCopy(procUserError));
 
-      const result = await roomActions.createDM(userId, await hasDevices(userId));
+      const result = await roomActions.createDM(userId, await hasDevices(userId), user);
       roomIdToUserId.set(result.roomId, userId);
       updateRoomIdToUserId(getMapCopy(roomIdToUserId));
     } catch (e: any) {
@@ -182,7 +187,7 @@ function InviteUser({
   }
 
   function renderUserList() {
-    const renderOptions = (userId) => {
+    const renderOptions = (userId: string, user: SearchResultUser) => {
       const messageJSX = (message, isPositive) => (
         <Text variant="b2">
           <span style={{ color: isPositive ? 'var(--bg-positive)' : 'var(--bg-negative)' }}>
@@ -212,7 +217,7 @@ function InviteUser({
         return messageJSX('Invited', true);
       }
       if (typeof roomId === 'string') {
-        const member = mx.getRoom(roomId).getMember(userId);
+        const member = mx.getRoom(roomId)!.getMember(userId);
         if (member !== null) {
           const userMembership = member.membership;
           switch (userMembership) {
@@ -231,7 +236,7 @@ function InviteUser({
           Invite
         </Button>
       ) : (
-        <Button onClick={() => createDM(userId)} variant="primary">
+        <Button onClick={() => createDM(userId, user)} variant="primary">
           Message
         </Button>
       );
@@ -259,7 +264,7 @@ function InviteUser({
           }
           name={name}
           id={userId}
-          options={renderOptions(userId)}
+          options={renderOptions(userId, user)}
           desc={renderError(userId)}
         />
       );
@@ -290,7 +295,9 @@ function InviteUser({
   return (
     <PopupWindow
       isOpen={isOpen}
-      title={typeof roomId === 'string' ? `Invite to ${mx.getRoom(roomId).name}` : 'Direct message'}
+      title={
+        typeof roomId === 'string' ? `Invite to ${mx.getRoom(roomId)?.name}` : 'Direct message'
+      }
       contentOptions={<IconButton src={CrossIC} onClick={onRequestClose} tooltip="Close" />}
       onRequestClose={onRequestClose}
     >

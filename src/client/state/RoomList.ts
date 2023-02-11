@@ -26,12 +26,12 @@ async function waitFor(callback, timeout = 400, maxTry = -1) {
 
 class RoomList extends EventEmitter {
   matrixClient: MatrixClientA;
-  mDirects: Set<unknown>;
+  mDirects: Set<string>; //用户的可以私聊的列表，相当于好友列表。
   roomIdToParents: Map<any, any>;
   inviteDirects: Set<unknown>;
   inviteSpaces: Set<unknown>;
   inviteRooms: Set<unknown>;
-  directs: Set<string>; // roomId set
+  directs: Set<string>; // roomId set  当前私聊的窗口列表。
   spaces: Set<string>; // space id set
   rooms: Set<string>;
   processingRooms: Map<any, any>;
@@ -167,7 +167,7 @@ class RoomList extends EventEmitter {
   }
 
   roomActions(action) {
-    const addRoom = (roomId, isDM) => {
+    const addRoom = (roomId: string, isDM: boolean) => {
       const myRoom = this.matrixClient.getRoom(roomId);
       if (myRoom === null) return false;
 
@@ -210,9 +210,6 @@ class RoomList extends EventEmitter {
       },
     };
     actions[action.type]?.();
-  }
-  emit(ROOM_JOINED: string, roomId: any) {
-    throw new Error('Method not implemented.');
   }
 
   getMDirects() {
@@ -280,7 +277,7 @@ class RoomList extends EventEmitter {
 
         const myRoom = this.matrixClient.getRoom(directId);
         if (myRoom === null) return;
-        if (myRoom.getMyMembership() === 'join') {
+        if (myRoom!.getMyMembership() === 'join') {
           this.directs.add(directId);
           this.rooms.delete(directId);
           // @ts-ignore
@@ -340,78 +337,81 @@ class RoomList extends EventEmitter {
       }
     });
 
-    this.matrixClient.on('Room.myMembership', async (room, membership, prevMembership) => {
-      // room => prevMembership = null | invite | join | leave | kick | ban | unban
-      // room => membership = invite | join | leave | kick | ban | unban
-      const { roomId } = room;
-      const isRoomReady = () => this.matrixClient.getRoom(roomId) !== null;
-      if (['join', 'invite'].includes(membership) && isRoomReady() === false) {
-        if ((await waitFor(isRoomReady, 200, 100)) === false) return;
+    this.matrixClient.on(
+      'Room.myMembership',
+      async (room: TRoom, membership: string, prevMembership: string) => {
+        // room => prevMembership = null | invite | join | leave | kick | ban | unban
+        // room => membership = invite | join | leave | kick | ban | unban
+        const { roomId } = room;
+        const isRoomReady = () => this.matrixClient.getRoom(roomId) !== null;
+        if (['join', 'invite'].includes(membership) && isRoomReady() === false) {
+          if ((await waitFor(isRoomReady, 200, 100)) === false) return;
+        }
+
+        if (membership === 'unban') return;
+
+        if (membership === 'invite') {
+          if (this._isDMInvite(room)) this.inviteDirects.add(roomId);
+          else if (room.isSpaceRoom()) this.inviteSpaces.add(roomId);
+          else this.inviteRooms.add(roomId);
+
+          this.emit(cons.events.roomList.INVITELIST_UPDATED, roomId);
+          return;
+        }
+
+        if (prevMembership === 'invite') {
+          if (this.inviteDirects.has(roomId)) this.inviteDirects.delete(roomId);
+          else if (this.inviteSpaces.has(roomId)) this.inviteSpaces.delete(roomId);
+          else this.inviteRooms.delete(roomId);
+
+          this.emit(cons.events.roomList.INVITELIST_UPDATED, roomId);
+        }
+
+        if (['leave', 'kick', 'ban'].includes(membership)) {
+          if (this.directs.has(roomId)) this.directs.delete(roomId);
+          else if (this.spaces.has(roomId)) this.deleteFromSpaces(roomId);
+          else this.rooms.delete(roomId);
+          this.emit(cons.events.roomList.ROOM_LEAVED, roomId);
+          // @ts-ignore
+          this.emit(cons.events.roomList.ROOMLIST_UPDATED);
+          return;
+        }
+
+        // when user create room/DM OR accept room/dm invite from this client.
+        // we will update this.rooms/this.directs with user action
+        if (membership === 'join' && this.processingRooms.has(roomId)) {
+          const procRoomInfo = this.processingRooms.get(roomId);
+
+          if (procRoomInfo.isDM) this.directs.add(roomId);
+          else if (room.isSpaceRoom()) this.addToSpaces(roomId);
+          else this.rooms.add(roomId);
+
+          if (procRoomInfo.task === 'CREATE') this.emit(cons.events.roomList.ROOM_CREATED, roomId);
+          this.emit(cons.events.roomList.ROOM_JOINED, roomId);
+          // @ts-ignore
+          this.emit(cons.events.roomList.ROOMLIST_UPDATED);
+
+          this.processingRooms.delete(roomId);
+          return;
+        }
+
+        if (this.mDirects.has(roomId) && membership === 'join') {
+          this.directs.add(roomId);
+          this.emit(cons.events.roomList.ROOM_JOINED, roomId);
+          // @ts-ignore
+          this.emit(cons.events.roomList.ROOMLIST_UPDATED);
+          return;
+        }
+
+        if (membership === 'join') {
+          if (room.isSpaceRoom()) this.addToSpaces(roomId);
+          else this.rooms.add(roomId);
+          this.emit(cons.events.roomList.ROOM_JOINED, roomId);
+          // @ts-ignore
+          this.emit(cons.events.roomList.ROOMLIST_UPDATED);
+        }
       }
-
-      if (membership === 'unban') return;
-
-      if (membership === 'invite') {
-        if (this._isDMInvite(room)) this.inviteDirects.add(roomId);
-        else if (room.isSpaceRoom()) this.inviteSpaces.add(roomId);
-        else this.inviteRooms.add(roomId);
-
-        this.emit(cons.events.roomList.INVITELIST_UPDATED, roomId);
-        return;
-      }
-
-      if (prevMembership === 'invite') {
-        if (this.inviteDirects.has(roomId)) this.inviteDirects.delete(roomId);
-        else if (this.inviteSpaces.has(roomId)) this.inviteSpaces.delete(roomId);
-        else this.inviteRooms.delete(roomId);
-
-        this.emit(cons.events.roomList.INVITELIST_UPDATED, roomId);
-      }
-
-      if (['leave', 'kick', 'ban'].includes(membership)) {
-        if (this.directs.has(roomId)) this.directs.delete(roomId);
-        else if (this.spaces.has(roomId)) this.deleteFromSpaces(roomId);
-        else this.rooms.delete(roomId);
-        this.emit(cons.events.roomList.ROOM_LEAVED, roomId);
-        // @ts-ignore
-        this.emit(cons.events.roomList.ROOMLIST_UPDATED);
-        return;
-      }
-
-      // when user create room/DM OR accept room/dm invite from this client.
-      // we will update this.rooms/this.directs with user action
-      if (membership === 'join' && this.processingRooms.has(roomId)) {
-        const procRoomInfo = this.processingRooms.get(roomId);
-
-        if (procRoomInfo.isDM) this.directs.add(roomId);
-        else if (room.isSpaceRoom()) this.addToSpaces(roomId);
-        else this.rooms.add(roomId);
-
-        if (procRoomInfo.task === 'CREATE') this.emit(cons.events.roomList.ROOM_CREATED, roomId);
-        this.emit(cons.events.roomList.ROOM_JOINED, roomId);
-        // @ts-ignore
-        this.emit(cons.events.roomList.ROOMLIST_UPDATED);
-
-        this.processingRooms.delete(roomId);
-        return;
-      }
-
-      if (this.mDirects.has(roomId) && membership === 'join') {
-        this.directs.add(roomId);
-        this.emit(cons.events.roomList.ROOM_JOINED, roomId);
-        // @ts-ignore
-        this.emit(cons.events.roomList.ROOMLIST_UPDATED);
-        return;
-      }
-
-      if (membership === 'join') {
-        if (room.isSpaceRoom()) this.addToSpaces(roomId);
-        else this.rooms.add(roomId);
-        this.emit(cons.events.roomList.ROOM_JOINED, roomId);
-        // @ts-ignore
-        this.emit(cons.events.roomList.ROOMLIST_UPDATED);
-      }
-    });
+    );
   }
 }
 export default RoomList;

@@ -22,11 +22,24 @@ import HorizontalMenuIC from '../../../../public/res/ic/outlined/horizontal-menu
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 import ChevronRightIC from '../../../../public/res/ic/outlined/chevron-right.svg';
 
-function RoomsCategory({ spaceId, name, hideHeader, roomIds, drawerPostie }) {
+interface IPropsRoomsCategory {
+  spaceId?: string;
+  name: string;
+  hideHeader?: boolean;
+  roomIds: string[];
+  drawerPostie: any;
+}
+function RoomsCategory({
+  spaceId = null as unknown as string,
+  name,
+  hideHeader = false,
+  roomIds,
+  drawerPostie,
+}: IPropsRoomsCategory) {
   const { spaces, directs } = initMatrix.roomList;
   const [isOpen, setIsOpen] = useState(true);
 
-  const openSpaceOptions = (e) => {
+  const openSpaceOptions = (e: any) => {
     e.preventDefault();
     openReusableContextMenu('bottom', getEventCords(e, '.header'), (closeMenu) => (
       <SpaceOptions roomId={spaceId} afterOptionSelect={closeMenu} />
@@ -89,21 +102,23 @@ function RoomsCategory({ spaceId, name, hideHeader, roomIds, drawerPostie }) {
         </div>
       )}
       {(isOpen || hideHeader) && (
-        <div className="room-category__content">{roomIds.map(renderSelector)}</div>
+        <div className="room-category__content">
+          {roomIds.map((roomId) => renderSelector(roomId))}
+        </div>
       )}
     </div>
   );
 }
-RoomsCategory.defaultProps = {
-  spaceId: null,
-  hideHeader: false,
-};
-RoomsCategory.propTypes = {
-  spaceId: PropTypes.string,
-  name: PropTypes.string.isRequired,
-  hideHeader: PropTypes.bool,
-  roomIds: PropTypes.arrayOf(PropTypes.string).isRequired,
-  drawerPostie: PropTypes.shape({}).isRequired,
-};
+// RoomsCategory.defaultProps = {
+//   spaceId: null,
+//   hideHeader: false,
+// };
+// RoomsCategory.propTypes = {
+//   spaceId: PropTypes.string,
+//   name: PropTypes.string.isRequired,
+//   hideHeader: PropTypes.bool,
+//   roomIds: PropTypes.arrayOf(PropTypes.string).isRequired,
+//   drawerPostie: PropTypes.shape({}).isRequired,
+// };
 
 export default RoomsCategory;
