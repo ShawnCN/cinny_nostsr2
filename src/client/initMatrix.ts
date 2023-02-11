@@ -13,8 +13,8 @@ import { cryptoCallbacks } from './state/secretStorageKeys';
 import navigation from './state/navigation';
 
 import MatrixClientA from './MatrixClientA';
-import { TChannelmapObject } from '../../types';
-import { TChannelMapList } from './state/cons';
+import { TChannelmapObject, TSubscribedChannel } from '../../types';
+import { defaultChatroomList, TChannelMapList } from './state/cons';
 import TRoom from '../../types/TRoom';
 import TRoomMember from '../../types/TRoomMember';
 // const matrixClientA = new MatrixClientA();
@@ -90,18 +90,31 @@ class InitMatrix extends EventEmitter {
           // global.initMatrix = this;
           if (prevState === null) {
             this.roomList = new RoomList(this.matrixClient);
-            const channels: TChannelmapObject = TChannelMapList;
-            for (let k in channels) {
-              let room = new TRoom(channels[k].user_id);
-              room.roomId = channels[k].user_id;
-              room.name = channels[k].name!;
-              room.avatarUrl = channels[k].profile_img!;
-              room.canonical_alias = channels[k].about!;
-              this.roomList.rooms.add(room.roomId);
-              this.matrixClient.subChannelMessage(room.roomId);
-              // this.roomList.directs.add(room.roomId);
+
+            let subscribed_channels = [] as TSubscribedChannel[];
+            if (localStorage['subscribed_channels']) {
+              const sc = localStorage['subscribed_channels'];
+              subscribed_channels = JSON.parse(sc);
+            } else {
+              subscribed_channels = defaultChatroomList;
+              localStorage.setItem('subscribed_channels', JSON.stringify(subscribed_channels));
             }
-            this.matrixClient.subGlobalMessages();
+            for (let i = 0; i < subscribed_channels.length; i++) {
+              if (subscribed_channels[i].type == 'groupChannel') {
+                let room = new TRoom(subscribed_channels[i].user_id);
+                room.roomId = subscribed_channels[i].user_id;
+                this.roomList.rooms.add(room.roomId);
+                this.matrixClient.subChannelMessage(room.roomId);
+              } else if (subscribed_channels[i].type == 'single') {
+                let room = new TRoom(subscribed_channels[i].user_id);
+                room.roomId = subscribed_channels[i].user_id;
+                this.roomList.directs.add(room.roomId);
+                this.matrixClient.subdmMessages(subscribed_channels[i].user_id);
+              } else if (subscribed_channels[i].type == 'groupRelay') {
+                // this.matrixClient.subGlobalMessages();
+              }
+            }
+            this.matrixClient.subOpenDmFromStranger();
 
             this.accountData = new AccountData(this.roomList);
             this.roomsInput = new RoomsInput(this.matrixClient, this.roomList);
@@ -112,16 +125,14 @@ class InitMatrix extends EventEmitter {
           } else {
             this.notifications?._initNoti();
           }
-          console.log('444444444444');
           const contactsList = await this.matrixClient.fetchContactUserList();
-          console.log('1111111444444444444');
-          console.log(contactsList);
           if (contactsList && contactsList.length > 0) {
             contactsList.forEach((contact) => {
               this.roomList.directs.add(contact[0]);
               if (!this.matrixClient.publicRoomList.get(contact[0])) {
                 let aroom = new TRoom(contact[0]);
                 const member = new TRoomMember(contact[0]);
+                member.init();
                 aroom.addMember(member);
                 let me = new TRoomMember(this.matrixClient.user.userId);
                 me.name = this.matrixClient.user.displayName;

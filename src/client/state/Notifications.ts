@@ -409,7 +409,7 @@ class Notifications extends EventEmitter {
       }
     });
 
-    this.matrixClient.on('Room.myMembership', (room, membership) => {
+    this.matrixClient.on('Room.myMembership', (room: TRoom, membership: string) => {
       if (membership === 'leave' && this.hasNoti(room.roomId)) {
         this.deleteNoti(room.roomId);
       }

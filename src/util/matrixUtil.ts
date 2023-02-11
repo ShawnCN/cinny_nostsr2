@@ -364,8 +364,8 @@ const FormatCitedEventsAndCitedPubkeys = (event: NostrEvent) => {
 
 export function formatRoomMemberFromNostrEvent(event: NostrEvent) {
   const { name, about, picture } = JSON.parse(event.content);
-  const userIdNpub = nip19.npubEncode(event.pubkey);
-  let member = new TRoomMember(userIdNpub);
+  // const userIdNpub = nip19.npubEncode(event.pubkey);
+  let member = new TRoomMember(event.pubkey);
   if (name && name != '') {
     member.name = name;
   }

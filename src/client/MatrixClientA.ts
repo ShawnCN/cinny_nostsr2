@@ -104,7 +104,7 @@ class MatrixClientA extends EventEmitter {
 
     return new TRoom(roomId);
   }
-  getAccountData(accountId: string) {
+  getAccountData(eventType: string) {
     const ae1 = new TEvent(aevent2);
     return ae1;
     // let a: TContent;
@@ -263,6 +263,7 @@ class MatrixClientA extends EventEmitter {
       sub.on('event', async (event: NostrEvent) => {
         const mevent = formatGlobalMsg(event);
         const mc = new TEvent(mevent);
+
         const roomId = mevent.room_id;
         const senderId = mevent.sender;
         const room = this.publicRoomList.get(roomId);
@@ -272,6 +273,7 @@ class MatrixClientA extends EventEmitter {
           mc.sender = sender;
         } else {
           const asender = new TRoomMember(senderId);
+          asender.init();
           room.addMember(asender);
           mc.sender = asender;
         }
@@ -315,12 +317,62 @@ class MatrixClientA extends EventEmitter {
         '#e': [channelId],
         limit: 13,
       };
-      if (!relay) return;
+      if (!relay || relay.status != 1) continue;
       const sub = relay.sub([filter]);
       sub.on('event', (event: NostrEvent) => {
         const mevent = formatChannelMsg(event);
         const mc = new TEvent(mevent);
         this.emit('Event.decrypted', mc);
+      });
+    }
+  };
+  subdmMessages = (friendPubkey: string) => {
+    const userPubkey = this.user.userId;
+    for (let [k, relay] of this.relayInstance) {
+      if (!relay || relay.status != 1) continue;
+      // updateUsermap(store, friendPubkey);
+      let time_for_since = 0;
+      const filter = {
+        authors: [userPubkey, friendPubkey],
+        kinds: [4],
+        '#p': [userPubkey, friendPubkey],
+        since: time_for_since,
+        limit: 13,
+      };
+      const sub = relay.sub([filter]);
+      const subDetail = {
+        roomId: friendPubkey,
+        type: 'single',
+        relayUrl: relay.url,
+        sub: sub,
+      };
+      sub.on('event', (event: NostrEvent) => {
+        console.log(event, event.content);
+      });
+      sub.on('eose', () => {
+        // sub.unsub();
+        // console.log('sub dm messages eose')
+      });
+    }
+  };
+  subOpenDmFromStranger = () => {
+    const pubkey = this.user.userId;
+    for (let [k, relay] of this.relayInstance) {
+      const filter = {
+        kinds: [4],
+        '#p': [pubkey],
+        limit: 30,
+      };
+      if (!relay || relay.status != 1) continue;
+      // updateUsermap(store, pubkey);
+      const sub = relay.sub([filter]);
+      sub.on('event', (event: NostrEvent) => {
+        console.log('from stranger', event.pubkey, event.content);
+        // updateUsermap(store, event.pubkey);
+      });
+      sub.on('eose', () => {
+        // sub.unsub();
+        // console.log('sub dm from stanger eose')
       });
     }
   };

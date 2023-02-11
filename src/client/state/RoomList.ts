@@ -217,13 +217,12 @@ class RoomList extends EventEmitter {
 
   getMDirects() {
     const mDirectsId = new Set<string>();
-    // const mDirect = this.matrixClient.getAccountData('m.direct')?.getContent();
-    const mDirect = {};
+    const mDirect = this.matrixClient.getAccountData('m.direct')?.getContent();
 
     if (typeof mDirect === 'undefined') return mDirectsId;
 
     Object.keys(mDirect).forEach((direct) => {
-      mDirect[direct].forEach((directId) => mDirectsId.add(directId));
+      // mDirect[direct].forEach((directId) => mDirectsId.add(directId));
     });
 
     return mDirectsId;
