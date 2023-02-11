@@ -19,20 +19,32 @@ import RoomTile from '../../molecules/room-tile/RoomTile';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
 
-function InviteUser({ isOpen, roomId, searchTerm, onRequestClose }) {
-  const [isSearching, updateIsSearching] = useState(false);
-  const [searchQuery, updateSearchQuery] = useState({});
-  const [users, updateUsers] = useState([]);
+interface IPropsInviteUser {
+  isOpen: boolean;
+  roomId?: string;
+  searchTerm?: string;
+  onRequestClose: () => void;
+}
 
-  const [procUsers, updateProcUsers] = useState(new Set()); // proc stands for processing.
+function InviteUser({
+  isOpen,
+  roomId = undefined,
+  searchTerm = undefined,
+  onRequestClose,
+}: IPropsInviteUser) {
+  const [isSearching, updateIsSearching] = useState(false);
+  const [searchQuery, updateSearchQuery] = useState<{ username?: string; error?: string }>({});
+  const [users, updateUsers] = useState<any[]>([]);
+
+  const [procUsers, updateProcUsers] = useState<Set<string>>(new Set()); // proc stands for processing.
   const [procUserError, updateUserProcError] = useState(new Map());
 
   const [createdDM, updateCreatedDM] = useState(new Map());
-  const [roomIdToUserId, updateRoomIdToUserId] = useState(new Map());
+  const [roomIdToUserId, updateRoomIdToUserId] = useState<Map<string, string>>(new Map()); // roomId, userId
 
   const [invitedUserIds, updateInvitedUserIds] = useState(new Set());
 
-  const usernameRef = useRef(null);
+  const usernameRef = useRef<any>(null);
 
   const mx = initMatrix.matrixClient;
 
@@ -43,16 +55,16 @@ function InviteUser({ isOpen, roomId, searchTerm, onRequestClose }) {
     });
     return newMap;
   }
-  function addUserToProc(userId) {
+  function addUserToProc(userId: string) {
     procUsers.add(userId);
     updateProcUsers(new Set(Array.from(procUsers)));
   }
-  function deleteUserFromProc(userId) {
+  function deleteUserFromProc(userId: string) {
     procUsers.delete(userId);
     updateProcUsers(new Set(Array.from(procUsers)));
   }
 
-  function onDMCreated(newRoomId) {
+  function onDMCreated(newRoomId: string) {
     const myDMPartnerId = roomIdToUserId.get(newRoomId);
     if (typeof myDMPartnerId === 'undefined') return;
 
@@ -64,7 +76,7 @@ function InviteUser({ isOpen, roomId, searchTerm, onRequestClose }) {
     updateRoomIdToUserId(getMapCopy(roomIdToUserId));
   }
 
-  async function searchUser(username) {
+  async function searchUser(username: string) {
     const inputUsername = username.trim();
     if (isSearching || inputUsername === '' || inputUsername === searchQuery.username) return;
     const isInputUserId = inputUsername[0] === '@' && inputUsername.indexOf(':') > 1;
@@ -77,7 +89,7 @@ function InviteUser({ isOpen, roomId, searchTerm, onRequestClose }) {
         updateUsers([
           {
             user_id: inputUsername,
-            display_name: result.displayname,
+            display_name: result.displayName,
             avatarUrl: result.avatarUrl,
           },
         ]);
@@ -86,7 +98,7 @@ function InviteUser({ isOpen, roomId, searchTerm, onRequestClose }) {
       }
     } else {
       try {
-        const result = await mx.searchUserDirectory({
+        const result: any = await mx.searchUserDirectory({
           term: inputUsername,
           limit: 20,
         });
@@ -99,6 +111,27 @@ function InviteUser({ isOpen, roomId, searchTerm, onRequestClose }) {
       } catch (e) {
         updateSearchQuery({ error: 'Something went wrong!' });
       }
+    }
+    updateIsSearching(false);
+  }
+  async function searchNostrUser(username: string) {
+    const inputUsername = username.trim();
+    if (isSearching || inputUsername === '' || inputUsername === searchQuery.username) return;
+    // const isInputUserId = inputUsername[0] === '@' && inputUsername.indexOf(':') > 1;
+    updateIsSearching(true);
+    updateSearchQuery({ username: inputUsername });
+
+    try {
+      const result = await mx.getProfileInfo(inputUsername);
+      updateUsers([
+        {
+          user_id: inputUsername,
+          display_name: result.displayName,
+          avatarUrl: result.avatarUrl,
+        },
+      ]);
+    } catch (e) {
+      updateSearchQuery({ error: `${inputUsername} not found!` });
     }
     updateIsSearching(false);
   }
@@ -118,9 +151,9 @@ function InviteUser({ isOpen, roomId, searchTerm, onRequestClose }) {
       updateUserProcError(getMapCopy(procUserError));
 
       const result = await roomActions.createDM(userId, await hasDevices(userId));
-      roomIdToUserId.set(result.room_id, userId);
+      roomIdToUserId.set(result.roomId, userId);
       updateRoomIdToUserId(getMapCopy(roomIdToUserId));
-    } catch (e) {
+    } catch (e: any) {
       deleteUserFromProc(userId);
       if (typeof e.message === 'string') procUserError.set(userId, e.message);
       else procUserError.set(userId, 'Something went wrong!');
@@ -233,7 +266,7 @@ function InviteUser({ isOpen, roomId, searchTerm, onRequestClose }) {
   }
 
   useEffect(() => {
-    if (isOpen && typeof searchTerm === 'string') searchUser(searchTerm);
+    if (isOpen && typeof searchTerm === 'string') searchNostrUser(searchTerm);
     return () => {
       updateIsSearching(false);
       updateSearchQuery({});
@@ -265,7 +298,7 @@ function InviteUser({ isOpen, roomId, searchTerm, onRequestClose }) {
           className="invite-user__form"
           onSubmit={(e) => {
             e.preventDefault();
-            searchUser(usernameRef.current.value);
+            searchNostrUser(usernameRef.current.value);
           }}
         >
           <Input value={searchTerm} forwardRef={usernameRef} label="Name or userId" />
@@ -295,16 +328,16 @@ function InviteUser({ isOpen, roomId, searchTerm, onRequestClose }) {
   );
 }
 
-InviteUser.defaultProps = {
-  roomId: undefined,
-  searchTerm: undefined,
-};
+// InviteUser.defaultProps = {
+//   roomId: undefined,
+//   searchTerm: undefined,
+// };
 
-InviteUser.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  roomId: PropTypes.string,
-  searchTerm: PropTypes.string,
-  onRequestClose: PropTypes.func.isRequired,
-};
+// InviteUser.propTypes = {
+//   isOpen: PropTypes.bool.isRequired,
+//   roomId: PropTypes.string,
+//   searchTerm: PropTypes.string,
+//   onRequestClose: PropTypes.func.isRequired,
+// };
 
 export default InviteUser;

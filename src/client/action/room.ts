@@ -289,7 +289,7 @@ async function createRoom(opts) {
   return result;
 }
 
-async function invite(roomId, userId, reason) {
+async function invite(roomId, userId, reason?: any) {
   const mx = initMatrix.matrixClient;
 
   const result = await mx.invite(roomId, userId, undefined, reason);

@@ -44,8 +44,6 @@ class MatrixClientA extends EventEmitter {
       room.canonical_alias = channels[k].about!;
       this.publicRoomList.set(room.roomId, room);
     }
-
-    this.on('unsub_and_disconnect_relay', this.disconnectRelayInstance());
   }
 
   async initCrypto() {
@@ -94,6 +92,10 @@ class MatrixClientA extends EventEmitter {
   }
   async clearStores() {
     console.log('clearStores');
+    for (let [k, relay] of this.relayInstance) {
+      console.log(`close relay ${relay.url}`);
+      await relay.close();
+    }
   }
   setGlobalErrorOnUnknownDevices(arg0: boolean) {
     console.log('setGlobalErrorOnUnknownDevices');
@@ -131,8 +133,30 @@ class MatrixClientA extends EventEmitter {
   getDevices() {
     return Promise.resolve({ devices: [] });
   }
-  getProfileInfo(userId: string) {
-    return Promise.resolve(this.user);
+  // search user from relays
+  async getProfileInfo(userId: string) {
+    const nostrEvent = await this.fetchUserMeta(userId);
+    let user = {} as any;
+    if (!nostrEvent) {
+      return null;
+    }
+    const { name, about, picture } = JSON.parse(nostrEvent.content);
+    if (name && name != '') {
+      user.displayName = name;
+    }
+    if (about && about != '') {
+      user.about = about;
+    }
+    if (picture && picture != '') {
+      user.avatarUrl = picture;
+    }
+    return user;
+  }
+  async searchUserDirectory({ term: string, limit: number }) {
+    return Promise.resolve(null);
+  }
+  async Directory({ term: string, limit: number }) {
+    return Promise.resolve(null);
   }
   async downloadKeys(arg0: string[], arg1?: boolean) {
     return new Map();
@@ -378,11 +402,87 @@ class MatrixClientA extends EventEmitter {
   };
   async fetchUserMeta(user_id: string) {
     for (let [key, relay] of this.relayInstance) {
+      if (!relay || relay.status != 1) {
+        console.log('not found', relay.url);
+        continue;
+      }
+      console.log('start searching', relay.url);
       const a = await this.fetchUserMetaFromRelay(user_id, relay);
       if (a && Object.keys(a).length > 1) {
+        console.log('Found', relay.url);
         return a;
+      } else {
+        console.log('not found', relay.url);
       }
     }
+  }
+  async fetchChannelMeta(channelId: string, relay: Relay) {
+    if (!relay || relay.status != 1) return null;
+
+    const filter = {
+      ids: [channelId],
+      // kinds:[40,41]
+    };
+    const sub = relay.sub([filter]);
+    const channel = new Promise<TChannelmap>((resolve, reject) => {
+      let channel = {} as TChannelmap;
+      sub.on('event', (event: NostrEvent) => {
+        if (event.kind != 40) {
+          reject(`${channelId} is not a valid channel id.`);
+          return;
+        }
+        const { name, about, picture } = JSON.parse(event.content);
+        if (name && name != '') {
+          channel['name'] = name;
+        }
+        if (about && about != '') {
+          channel['about'] = about;
+        }
+        if (picture && picture != '') {
+          channel['profile_img'] = picture;
+        }
+        if (channel && Object.keys(channel).length > 0) {
+          channel['query_time'] = Math.floor(Date.now() / 1000);
+        }
+        channel['sig'] = event.sig;
+        channel['created_at'] = event.created_at;
+        channel['creatorPubkey'] = event.pubkey;
+        channel['type'] = 'groupChannel';
+        channel['user_id'] = channelId;
+        if (channel && Object.keys(channel).length > 0) {
+          channel['query_time'] = Math.floor(Date.now() / 1000);
+          const channelmap = getOneLocalStorage('channelmap') as TChannelmapObject | undefined;
+          if (channelmap) {
+            channelmap[channelId] = channel;
+            localStorage['channelmap'] = JSON.stringify(channelmap);
+          } else {
+            let channelmap = {} as TUsermapObject;
+            channelmap[channelId] = channel;
+            localStorage['channelmap'] = JSON.stringify(channelmap);
+          }
+        }
+
+        resolve(channel);
+      });
+      sub.on('eose', () => {
+        sub.unsub();
+        if (!channel || Object.keys(channel).length == 0) {
+          // reject('not found...');
+          console.log('not found...');
+          reject(null);
+        }
+      });
+    })
+      .then((v) => {
+        return v;
+      })
+      .catch((e) => {
+        console.error(e);
+        return null;
+        // toast.error(e);
+      });
+
+    return channel;
   }
   async fetchUserMetaFromRelay(pubkey: string, relay: Relay) {
     if (!relay || relay.status != 1) return null;
@@ -473,12 +573,6 @@ class MatrixClientA extends EventEmitter {
   }
   getStoredDevice(userId, deviceId) {
     return '';
-  }
-  async disconnectRelayInstance() {
-    for (let [k, relay] of this.relayInstance) {
-      console.log(`close relay ${relay.url}`);
-      await relay.close();
-    }
   }
 }
 
