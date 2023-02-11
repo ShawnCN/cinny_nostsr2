@@ -164,12 +164,15 @@ class MatrixClientA extends EventEmitter {
       return null;
     }
     const { name, about, picture } = JSON.parse(nostrEvent.content);
-
-    user.displayName = name;
-
-    user.about = about;
-
-    user.avatarUrl = picture;
+    if (name && name.length > 0) {
+      user.displayName = name;
+    }
+    if (about && about.length > 0) {
+      user.about = about;
+    }
+    if (picture && picture.length > 0) {
+      user.avatarUrl = picture;
+    }
 
     return user;
   }

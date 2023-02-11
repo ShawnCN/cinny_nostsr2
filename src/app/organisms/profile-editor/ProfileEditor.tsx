@@ -23,7 +23,8 @@ function ProfileEditor({ userId }) {
 
   const displayNameRef = useRef<any>(null);
   const [avatarSrc, setAvatarSrc] = useState(
-    user.avatarUrl ? mx.mxcUrlToHttp(user.avatarUrl, 80, 80, 'crop') : null
+    // user.avatarUrl ? mx.mxcUrlToHttp(user.avatarUrl, 80, 80, 'crop') : null
+    user.avatarUrl ? user.avatarUrl : null
   );
   const [username, setUsername] = useState(user.displayName);
   const [disabled, setDisabled] = useState(true);
@@ -31,8 +32,9 @@ function ProfileEditor({ userId }) {
   useEffect(() => {
     let isMounted = true;
     mx.getProfileInfo(mx.getUserId()).then((info) => {
-      if (!isMounted) return;
-      setAvatarSrc(info.avatarUrl ? mx.mxcUrlToHttp(info.avatarUrl, 80, 80, 'crop') : null);
+      if (!isMounted || !info) return;
+      // setAvatarSrc(info.avatarUrl ? mx.mxcUrlToHttp(info.avatarUrl, 80, 80, 'crop') : null);
+      setAvatarSrc(info.avatarUrl ? info.avatarUrl : null);
       setUsername(info.displayName);
     });
     return () => {

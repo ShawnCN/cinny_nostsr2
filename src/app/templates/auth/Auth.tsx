@@ -521,7 +521,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
     console.log('signUpAndLogin', values);
     try {
       let data2 = {
-        user_id: '1',
+        user_id: 'user_id',
         name: 'username',
         about: '',
         profile_img: '',
@@ -544,6 +544,8 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
       if (username) {
         identifier.type = 'm.id.user';
         identifier.user = username;
+        data2.user_id = username;
+        data2.name = username.slice(username.length - 4, username.length);
       } else throw new Error('Bad Input');
       localStorage.setItem(cons.secretKey.USER_ID, username);
       localStorage.setItem(cons.secretKey.ACCESS_TOKEN, username);

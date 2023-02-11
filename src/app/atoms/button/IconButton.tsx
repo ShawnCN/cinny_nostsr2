@@ -14,7 +14,7 @@ interface IPropsIconButton {
   tooltip?: string;
   tooltipPlacement?: 'top' | 'right' | 'bottom' | 'left';
   src: string;
-  onClick?: (e: any) => void;
+  onClick?: (e?: any) => void;
   tabIndex?: number;
   disabled?: boolean;
   isImage?: boolean;

@@ -460,7 +460,7 @@ function Settings() {
 
   return (
     <PopupWindow
-      isOpen={isOpen}
+      isOpen={isOpen as boolean}
       className="settings-window"
       title={
         <Text variant="s1" weight="medium" primary>
@@ -472,7 +472,7 @@ function Settings() {
           <Button variant="danger" iconSrc={PowerIC} onClick={handleLogout}>
             Logout
           </Button>
-          <IconButton src={CrossIC} onClick={requestClose} tooltip="Close" />
+          <IconButton src={CrossIC} onClick={requestClose as () => void} tooltip="Close" />
         </>
       }
       onRequestClose={requestClose}
