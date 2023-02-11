@@ -125,7 +125,7 @@ class InitMatrix extends EventEmitter {
             this.notifications?._initNoti();
           }
 
-          // await this.getContactsList();
+          await this.getContactsList();
 
           break;
         case 'RECONNECTING':
@@ -211,6 +211,7 @@ class InitMatrix extends EventEmitter {
     if (contactsList && contactsList.length > 0) {
       contactsList.forEach((contact) => {
         this.roomList.directs.add(contact[0]);
+        this.roomList.mDirects.add(contact[0]);
         if (!this.matrixClient.publicRoomList.get(contact[0])) {
           let aroom = new TRoom(contact[0]);
           const member = new TRoomMember(contact[0]);

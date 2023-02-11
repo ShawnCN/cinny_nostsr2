@@ -49,7 +49,7 @@ function PeopleDrawer({ roomId }) {
   const searchRef = useRef(null);
 
   const getMembersWithMembership = useCallback(
-    (mship) => room.getMembersWithMembership(mship),
+    (mship) => room!.getMembersWithMembership(mship),
     [roomId, membership]
   );
 

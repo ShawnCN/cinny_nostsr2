@@ -44,7 +44,7 @@ function useMemberOfMembership(roomId, membership) {
       if (isLoadingMembers) return;
       if (event && event?.getRoomId() !== roomId) return;
       const memberOfMembership = normalizeMembers(
-        room.getMembersWithMembership(membership).sort(memberByAtoZ).sort(memberByPowerLevel)
+        room!.getMembersWithMembership(membership).sort(memberByAtoZ).sort(memberByPowerLevel)
       );
       setMembers(memberOfMembership);
     };

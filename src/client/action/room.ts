@@ -195,7 +195,7 @@ async function createDM(userIdOrIds, isEncrypted = true, user?: SearchResultUser
   }
 
   const result = await create(options, true, user);
-  console.log('10111111111111', result);
+
   return result;
 }
 

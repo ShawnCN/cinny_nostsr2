@@ -12,6 +12,8 @@ import TRoom from '../../types/TRoom';
 import TRoomMember from '../../types/TRoomMember';
 import TUser from '../../types/TUser';
 import {
+  fetchContacts,
+  fetchUserMetaFromRelay,
   formatChannelMsg,
   formatGlobalMsg,
   formatRoomMemberFromNostrEvent,
@@ -111,9 +113,25 @@ class MatrixClientA extends EventEmitter {
     if (!room) return null;
     return room;
   }
-  getAccountData(eventType: string) {
-    const ae1 = new TEvent(aevent2);
-    return ae1;
+  getAccountData(eventType: 'm.direct' | string) {
+    if (eventType === 'm.direct') {
+      // const contactsList = await this.fetchContactUserList();
+      // if (!contactsList) return null;
+      // type
+      // {
+      //   "content": {
+      //     "@bob:example.com": [
+      //       "!abcdefgh:example.com",
+      //       "!hgfedcba:example.com"
+      //     ]
+      //   },
+      //   "type": "m.direct"
+      // }
+    } else {
+      const ae1 = new TEvent(aevent2);
+      return ae1;
+    }
+
     // let a: TContent;
     // a = { content: 'getAccountData', shortcut: ['ss', '33'], categorized: ['11', '33'] };
 
@@ -431,7 +449,7 @@ class MatrixClientA extends EventEmitter {
         continue;
       }
       console.log('start searching', relay.url);
-      const a = await this.fetchUserMetaFromRelay(user_id, relay);
+      const a = await fetchUserMetaFromRelay(user_id, relay);
       if (a && Object.keys(a).length > 1) {
         console.log('Found', relay.url);
         return a;
@@ -440,34 +458,12 @@ class MatrixClientA extends EventEmitter {
       }
     }
   }
-  async fetchUserMetaFromRelay(pubkey: string, relay: Relay) {
-    if (!relay || relay.status != 1) return null;
-    const filter = { authors: [pubkey], kinds: [0], limit: 1 };
-    const sub = relay.sub([filter]);
-    let aevent = {} as NostrEvent;
-    const event = new Promise<NostrEvent>((resolve, reject) => {
-      sub.on('event', (event: NostrEvent) => {
-        aevent = event;
-        resolve(aevent);
-      });
-      sub.on('eose', () => {
-        sub.unsub();
-        if (!aevent || Object.keys(aevent).length == 0) {
-          reject(null);
-        }
-      });
-    }).catch((e) => {
-      console.error(e);
-      return null;
-    });
 
-    return event;
-  }
   async fetchContactUserList() {
     const user_id = this.user.userId;
     console.log('3444444');
     for (let [key, relay] of this.relayInstance) {
-      const event = await this.fetchContacts(relay, user_id);
+      const event = await fetchContacts(relay, user_id);
       if (event) {
         const tags = event.tags;
         let list = [] as string[][];
@@ -485,41 +481,6 @@ class MatrixClientA extends EventEmitter {
         return list;
       }
     }
-  }
-  async fetchContacts(relay: Relay, pubkey: string) {
-    const filter = {
-      authors: [
-        // pubkey
-        '46060722131ab09a10c410b9522605aee09ce8ff363145f4319f7461ca57f276',
-      ],
-      kinds: [3],
-      // '#e': [id],
-      limit: 1,
-    };
-    if (!relay || relay.status !== 1) return null;
-    const sub = relay.sub([filter]);
-    const contact = new Promise<NostrEvent>((resolve, reject) => {
-      let tevent = {} as NostrEvent;
-      sub.on('event', (event: NostrEvent) => {
-        tevent = event;
-      });
-      sub.on('eose', () => {
-        sub.unsub();
-        resolve(tevent);
-      });
-    })
-      .then((event: NostrEvent) => {
-        if (event && Object.keys(event).length > 0) {
-          return event;
-        } else {
-          return null;
-        }
-      })
-      .catch((e) => {
-        console.error(e);
-        return null;
-      });
-    return contact;
   }
   uploadContent(isEncryptedRoom: any, { includeFilename: any, progressHandler }) {}
   getRoomPushRule(arg0: 'global', roomId: string) {

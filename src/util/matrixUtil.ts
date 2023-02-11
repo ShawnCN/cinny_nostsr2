@@ -9,6 +9,7 @@ import SpaceLockIC from '../../public/res/ic/outlined/space-lock.svg';
 import { NostrEvent } from '../../types';
 import { TContent, TEventFormat } from '../../types/TEvent';
 import TRoomMember from '../../types/TRoomMember';
+import { Relay } from 'nostr-tools';
 
 const WELL_KNOWN_URI = '/.well-known/matrix/client';
 
@@ -375,3 +376,62 @@ export function formatRoomMemberFromNostrEvent(event: NostrEvent) {
   }
   return member;
 }
+export const fetchContacts = async (relay: Relay, pubkey: string) => {
+  const filter = {
+    authors: [
+      // pubkey
+      '46060722131ab09a10c410b9522605aee09ce8ff363145f4319f7461ca57f276',
+    ],
+    kinds: [3],
+    // '#e': [id],
+    limit: 1,
+  };
+  if (!relay || relay.status !== 1) return null;
+  const sub = relay.sub([filter]);
+  const contact = new Promise<NostrEvent>((resolve, reject) => {
+    let tevent = {} as NostrEvent;
+    sub.on('event', (event: NostrEvent) => {
+      tevent = event;
+    });
+    sub.on('eose', () => {
+      sub.unsub();
+      resolve(tevent);
+    });
+  })
+    .then((event: NostrEvent) => {
+      if (event && Object.keys(event).length > 0) {
+        return event;
+      } else {
+        return null;
+      }
+    })
+    .catch((e) => {
+      console.error(e);
+      return null;
+    });
+  return contact;
+};
+
+export const fetchUserMetaFromRelay = async (pubkey: string, relay: Relay) => {
+  if (!relay || relay.status != 1) return null;
+  const filter = { authors: [pubkey], kinds: [0], limit: 1 };
+  const sub = relay.sub([filter]);
+  let aevent = {} as NostrEvent;
+  const event = new Promise<NostrEvent>((resolve, reject) => {
+    sub.on('event', (event: NostrEvent) => {
+      aevent = event;
+      resolve(aevent);
+    });
+    sub.on('eose', () => {
+      sub.unsub();
+      if (!aevent || Object.keys(aevent).length == 0) {
+        reject(null);
+      }
+    });
+  }).catch((e) => {
+    console.error(e);
+    return null;
+  });
+
+  return event;
+};
