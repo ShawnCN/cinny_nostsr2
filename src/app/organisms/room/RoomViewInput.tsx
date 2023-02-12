@@ -242,8 +242,6 @@ function RoomViewInput({ roomId, roomTimeline, viewEvent, roomType }: IPropsRoom
     }
     if (msgBody === '' && attachment === null) return;
     sendBody(msgBody, roomType);
-    console.log('333333333333333', roomType);
-    console.log(roomTimeline);
   };
 
   const handleSendSticker = async (data) => {

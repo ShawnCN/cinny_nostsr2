@@ -28,7 +28,7 @@ class RoomList extends EventEmitter {
   matrixClient: MatrixClientA;
   mDirects: Set<string>; //用户的可以私聊的列表，相当于好友列表。
   roomIdToParents: Map<any, any>;
-  inviteDirects: Set<unknown>;
+  inviteDirects: Set<string>;
   inviteSpaces: Set<unknown>;
   inviteRooms: Set<unknown>;
   directs: Set<string>; // roomId set  当前私聊的窗口列表。
@@ -343,23 +343,28 @@ class RoomList extends EventEmitter {
         // room => prevMembership = null | invite | join | leave | kick | ban | unban
         // room => membership = invite | join | leave | kick | ban | unban
         const { roomId } = room;
+        console.log('44444444444444444444444', roomId, membership, prevMembership);
         const isRoomReady = () => this.matrixClient.getRoom(roomId) !== null;
         if (['join', 'invite'].includes(membership) && isRoomReady() === false) {
           if ((await waitFor(isRoomReady, 200, 100)) === false) return;
         }
 
         if (membership === 'unban') return;
-
+        console.log('2244444444444444444444444');
         if (membership === 'invite') {
-          if (this._isDMInvite(room)) this.inviteDirects.add(roomId);
-          else if (room.isSpaceRoom()) this.inviteSpaces.add(roomId);
-          else this.inviteRooms.add(roomId);
+          // only consider dm invite now.
+          // if (this._isDMInvite(room)) this.inviteDirects.add(roomId);
+          // else if (room.isSpaceRoom()) this.inviteSpaces.add(roomId);
+          // else this.inviteRooms.add(roomId);
+          console.log('3344444444444444444444444');
+          this.inviteDirects.add(roomId);
 
           this.emit(cons.events.roomList.INVITELIST_UPDATED, roomId);
           return;
         }
 
         if (prevMembership === 'invite') {
+          console.log('prevMembership,3344444444444444444444444');
           if (this.inviteDirects.has(roomId)) this.inviteDirects.delete(roomId);
           else if (this.inviteSpaces.has(roomId)) this.inviteSpaces.delete(roomId);
           else this.inviteRooms.delete(roomId);

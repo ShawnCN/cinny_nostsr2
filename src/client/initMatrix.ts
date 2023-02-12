@@ -211,6 +211,7 @@ class InitMatrix extends EventEmitter {
     const contactsList = [
       ['2e94f749531f1fa2b6754dd0516ebd61061bae20b61b370a4fda277d580e3f21'],
       ['2ca02292d8cd954cbc57a4f3544e13ee263cb740b29ce090344b64e59da9cea1'],
+      ['5a80ef3c6d8520bdc5fefe193255cc71d4e53c07bf43077317df0eb7e13a2534'],
     ];
 
     if (contactsList && contactsList.length > 0) {
@@ -218,7 +219,7 @@ class InitMatrix extends EventEmitter {
         this.roomList.directs.add(contact[0]);
         this.roomList.mDirects.add(contact[0]);
         if (!this.matrixClient.publicRoomList.get(contact[0])) {
-          let aroom = new TRoom(contact[0]);
+          let aroom = new TRoom(contact[0], 'single');
           const member = new TRoomMember(contact[0]);
           member.init();
           aroom.addMember(member);

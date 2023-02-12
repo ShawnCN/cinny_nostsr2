@@ -36,6 +36,7 @@ function InviteList({ isOpen, onRequestClose }) {
     const rl = initMatrix.roomList;
     const totalInvites = rl.inviteDirects.size + rl.inviteRooms.size + rl.inviteSpaces.size;
     const room = initMatrix.matrixClient.getRoom(roomId);
+    console.log('invite list', roomId);
     const isRejected = room === null || room?.getMyMembership() !== 'join';
     if (!isRejected) {
       if (room.isSpaceRoom()) selectTab(roomId);
@@ -66,7 +67,7 @@ function InviteList({ isOpen, onRequestClose }) {
         key={myRoom.roomId}
         name={roomName}
         avatarSrc={initMatrix.matrixClient
-          .getRoom(roomId)
+          .getRoom(roomId)!
           .getAvatarUrl(initMatrix.matrixClient.baseUrl, 42, 42, 'crop')}
         id={roomAlias}
         inviterName={inviterName}
@@ -75,8 +76,8 @@ function InviteList({ isOpen, onRequestClose }) {
             <Spinner size="small" />
           ) : (
             <div className="invite-btn__container">
-              <Button onClick={() => rejectInvite(myRoom.roomId)}>Reject</Button>
-              <Button onClick={() => acceptInvite(myRoom.roomId)} variant="primary">
+              <Button onClick={() => rejectInvite(myRoom.roomId, true)}>Reject</Button>
+              <Button onClick={() => acceptInvite(myRoom.roomId, true)} variant="primary">
                 Accept
               </Button>
             </div>

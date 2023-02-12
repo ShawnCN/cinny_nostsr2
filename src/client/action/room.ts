@@ -121,7 +121,7 @@ async function join(roomIdOrAlias: string, isDM = false, via = undefined) {
       roomId: resultRoom!.roomId,
       isDM,
     });
-    return resultRoom.roomId;
+    return resultRoom!.roomId;
   } catch (e) {
     throw new Error(e);
   }

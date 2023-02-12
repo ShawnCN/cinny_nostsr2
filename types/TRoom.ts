@@ -56,6 +56,9 @@ class TRoom {
   canInvite(userId: string) {
     return true;
   }
+  getDMInviter() {
+    return null;
+  }
   getMyMembership(): 'join' | 'invite' {
     return 'join';
   }

@@ -329,6 +329,7 @@ class MatrixClientA extends EventEmitter {
     return;
   }
   async joinRoom(roomIdOrAlias: string, arg1: { viaServers: string[] }) {
+    console.log(`joinRoom`);
     const a = this.publicRoomList.get(roomIdOrAlias);
     return Promise.resolve(a);
   }
@@ -536,21 +537,43 @@ class MatrixClientA extends EventEmitter {
         // updateUsermap(store, event.pubkey);
         const mevent = await formatDmMsgFromOthersOrMe(event, this.user);
         const mc = new TEvent(mevent);
+
         const roomId = mevent.room_id;
         const senderId = mevent.sender;
         const room = this.publicRoomList.get(roomId);
-        if (!room) return;
-        const sender = room.getMember(senderId);
-        if (sender) {
-          mc.sender = sender;
+        if (room) {
+          const me = room.getMember(this.user.userId);
+          if (me?.membership == 'invite') {
+            const membership = 'invite';
+            const prevMembership = 'invite';
+            this.emit('Room.myMembership', room, membership, prevMembership);
+          } else {
+            const sender = room.getMember(senderId);
+            if (sender) {
+              mc.sender = sender;
+            } else {
+              const asender = new TRoomMember(senderId);
+              asender.init();
+              room.addMember(asender);
+              mc.sender = asender;
+            }
+          }
+          console.log(mc);
+          // this.emit('Event.decrypted', mc);
         } else {
+          const room = new TRoom(senderId, 'single');
           const asender = new TRoomMember(senderId);
           asender.init();
           room.addMember(asender);
           mc.sender = asender;
+          const me = new TRoomMember(this.user.userId, this.user.displayName, this.user.avatarUrl);
+          me.membership = 'invite';
+          room.addMember(me);
+          this.publicRoomList.set(senderId, room);
+          const membership = 'invite';
+          const prevMembership = null;
+          this.emit('Room.myMembership', room, membership, prevMembership);
         }
-
-        this.emit('Event.decrypted', mc);
       });
       sub.on('eose', () => {
         // sub.unsub();

@@ -327,7 +327,7 @@ class Notifications extends EventEmitter {
     if (!this._inviteAudio) {
       this._inviteAudio = document.getElementById('inviteSound');
     }
-    this._inviteAudio.play();
+    // this._inviteAudio.play();
   }
 
   _listenEvents() {

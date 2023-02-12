@@ -15,8 +15,8 @@ import PeopleDrawer from './PeopleDrawer';
 
 function Room() {
   const [roomInfo, setRoomInfo] = useState({
-    roomTimeline: null,
-    eventId: null,
+    roomTimeline: null as unknown as RoomTimeline,
+    eventId: null as unknown as string,
   });
   const [isDrawer, setIsDrawer] = useState(settings.isPeopleDrawer);
 
@@ -34,8 +34,8 @@ function Room() {
       } else {
         // TODO: add ability to join room if roomId is invalid
         setRoomInfo({
-          roomTimeline: null,
-          eventId: null,
+          roomTimeline: null as unknown as RoomTimeline,
+          eventId: null as unknown as string,
         });
       }
     };
