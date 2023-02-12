@@ -16,27 +16,30 @@ import RoomTile from '../../molecules/room-tile/RoomTile';
 
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
-function InviteList({ isOpen, onRequestClose }) {
+interface IPropsInviteList {
+  isOpen: boolean;
+  onRequestClose: () => void;
+}
+function InviteList({ isOpen, onRequestClose }: IPropsInviteList) {
   const [procInvite, changeProcInvite] = useState(new Set());
 
-  function acceptInvite(roomId, isDM) {
+  function acceptInvite(roomId: string, isDM: boolean) {
     procInvite.add(roomId);
     changeProcInvite(new Set(Array.from(procInvite)));
     roomActions.join(roomId, isDM);
   }
-  function rejectInvite(roomId, isDM) {
+  function rejectInvite(roomId: string, isDM: boolean) {
     procInvite.add(roomId);
     changeProcInvite(new Set(Array.from(procInvite)));
     roomActions.leave(roomId, isDM);
   }
-  function updateInviteList(roomId) {
+  function updateInviteList(roomId: string) {
     if (procInvite.has(roomId)) procInvite.delete(roomId);
     changeProcInvite(new Set(Array.from(procInvite)));
 
     const rl = initMatrix.roomList;
     const totalInvites = rl.inviteDirects.size + rl.inviteRooms.size + rl.inviteSpaces.size;
     const room = initMatrix.matrixClient.getRoom(roomId);
-    console.log('invite list', roomId);
     const isRejected = room === null || room?.getMyMembership() !== 'join';
     if (!isRejected) {
       if (room.isSpaceRoom()) selectTab(roomId);
@@ -54,7 +57,7 @@ function InviteList({ isOpen, onRequestClose }) {
     };
   }, [procInvite]);
 
-  function renderRoomTile(roomId) {
+  function renderRoomTile(roomId: string) {
     const mx = initMatrix.matrixClient;
     const myRoom = mx.getRoom(roomId);
     if (!myRoom) return null;
@@ -148,9 +151,9 @@ function InviteList({ isOpen, onRequestClose }) {
   );
 }
 
-InviteList.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  onRequestClose: PropTypes.func.isRequired,
-};
+// InviteList.propTypes = {
+//   isOpen: PropTypes.bool.isRequired,
+//   onRequestClose: PropTypes.func.isRequired,
+// };
 
 export default InviteList;

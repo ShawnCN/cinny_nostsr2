@@ -25,7 +25,7 @@ class TRoom {
     this.currentState = new CurrentState();
     this.roomMembers = new Map();
     this.roomId = roomId;
-    this.name = roomId;
+    this.name = roomId.slice(0, 4);
     if (type) {
       this.type = type;
     }
@@ -42,6 +42,12 @@ class TRoom {
   }
   getMembersWithMembership(mship) {
     return Array.from(this.roomMembers.values());
+  }
+  setMemberWithMembership(memberId: string, membership: string) {
+    let a = this.roomMembers.get(memberId);
+    if (!a) return null;
+    a.membership = membership;
+    this.roomMembers.set(memberId, a);
   }
   getJoinedMembers() {
     const user = new TRoomMember('1');
@@ -63,10 +69,10 @@ class TRoom {
     return 'join';
   }
   isSpaceRoom() {
-    return true;
+    return false;
   }
   getAvatarUrl(arg0: string, arg1: number, arg2: number, arg3: string) {
-    return '';
+    return this.avatarUrl;
   }
   getUsersReadUpTo(arg0: TEvent) {
     return [0, 1];

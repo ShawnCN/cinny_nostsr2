@@ -74,7 +74,6 @@ class InitMatrix extends EventEmitter {
 
   async setupSync() {
     const sync = async ({ state, prevState }) => {
-      console.log(state);
       switch (state) {
         case 'NULL':
           console.log('NULL state');
@@ -212,6 +211,7 @@ class InitMatrix extends EventEmitter {
       ['2e94f749531f1fa2b6754dd0516ebd61061bae20b61b370a4fda277d580e3f21'],
       ['2ca02292d8cd954cbc57a4f3544e13ee263cb740b29ce090344b64e59da9cea1'],
       ['5a80ef3c6d8520bdc5fefe193255cc71d4e53c07bf43077317df0eb7e13a2534'],
+      ['3e81efdc94aae511eae0b0d2fc3db2db1b335301134aae2d825f56c9cbc1f856'],
     ];
 
     if (contactsList && contactsList.length > 0) {

@@ -688,3 +688,11 @@ export const getSignedEvent = async (event: NostrEvent, privateKey: string | und
   }
   return event;
 };
+
+export const getRelayStatus = (relay: Relay) => {
+  try {
+    return relay.status;
+  } catch (e) {
+    return 3;
+  }
+};

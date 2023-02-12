@@ -47,7 +47,6 @@ class TRoomMember {
   }
 
   getAvatarUrl(arg0: string, arg1: number, arg2: number, arg3: string) {
-    console.log('getAvatarUrl', this.avatarSrc);
     return this.avatarSrc;
   }
   getMxcAvatarUrl() {

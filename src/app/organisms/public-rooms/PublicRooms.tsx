@@ -228,7 +228,6 @@ function PublicRooms({ isOpen, searchTerm = undefined, onRequestClose }: IPropsP
           generic_search_term: inputRoomName,
         },
       });
-      console.log('result: ', JSON.stringify(result));
       if (!result) {
         updateSearchQuery({
           error:
@@ -273,7 +272,7 @@ function PublicRooms({ isOpen, searchTerm = undefined, onRequestClose }: IPropsP
   }, [isOpen]);
 
   function handleOnRoomAdded(roomId) {
-    console.log('onRoomAdded');
+    console.log('276 onRoomAdded', roomId, joiningRooms);
     if (joiningRooms.has(roomId)) {
       joiningRooms.delete(roomId);
       updateJoiningRooms(new Set(Array.from(joiningRooms)));

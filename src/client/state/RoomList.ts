@@ -28,9 +28,9 @@ class RoomList extends EventEmitter {
   matrixClient: MatrixClientA;
   mDirects: Set<string>; //用户的可以私聊的列表，相当于好友列表。
   roomIdToParents: Map<any, any>;
-  inviteDirects: Set<string>;
-  inviteSpaces: Set<unknown>;
-  inviteRooms: Set<unknown>;
+  inviteDirects: Set<string>; // id
+  inviteSpaces: Set<string>; // id
+  inviteRooms: Set<string>; // id
   directs: Set<string>; // roomId set  当前私聊的窗口列表。
   spaces: Set<string>; // space id set
   rooms: Set<string>;
@@ -178,8 +178,10 @@ class RoomList extends EventEmitter {
     };
     const actions = {
       [cons.actions.room.JOIN]: () => {
+        console.log('1777777', action.roomId, action.isDM);
         if (addRoom(action.roomId, action.isDM)) {
           setTimeout(() => {
+            console.log('2777777', action.roomId, action.isDM);
             this.emit(cons.events.roomList.ROOM_JOINED, action.roomId);
             // @ts-ignore
             this.emit(cons.events.roomList.ROOMLIST_UPDATED);

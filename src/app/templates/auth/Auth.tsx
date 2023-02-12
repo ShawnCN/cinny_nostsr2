@@ -196,7 +196,6 @@ function Login({ loginFlow, baseUrl }: IPropsLogin) {
     return errors;
   };
   const submitter = async (values, actions) => {
-    console.log('66666666666');
     let userBaseUrl = baseUrl;
     let { username } = values;
     const mxIdMatch = username.match(/^@(.+):(.+\..+)$/);
@@ -536,7 +535,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
         identifier.type = 'm.id.user';
         identifier.user = username;
         data2.user_id = username;
-        data2.name = username.slice(username.length - 4, username.length);
+        data2.name = username.slice(0, 8);
       } else throw new Error('Bad Input');
       localStorage.setItem(cons.secretKey.USER_ID, username);
       localStorage.setItem(cons.secretKey.ACCESS_TOKEN, initialValues.password);

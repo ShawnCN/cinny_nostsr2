@@ -113,7 +113,9 @@ async function join(roomIdOrAlias: string, isDM = false, via = undefined) {
     const resultRoom = await mx.joinRoom(roomIdOrAlias, { viaServers });
 
     if (isDM) {
-      const targetUserId = guessDMRoomTargetId(mx.getRoom(resultRoom!.roomId)!, mx.getUserId());
+      // to do. Need to added user to my contacts list and store on relays.
+      // const targetUserId = guessDMRoomTargetId(mx.getRoom(resultRoom!.roomId)!, mx.getUserId());
+      const targetUserId = resultRoom?.roomId;
       await addRoomToMDirect(resultRoom!.roomId, targetUserId);
     }
     appDispatcher.dispatch({
@@ -122,7 +124,7 @@ async function join(roomIdOrAlias: string, isDM = false, via = undefined) {
       isDM,
     });
     return resultRoom!.roomId;
-  } catch (e) {
+  } catch (e: any) {
     throw new Error(e);
   }
 }

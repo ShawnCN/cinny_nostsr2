@@ -16,6 +16,7 @@ import {
   formatGlobalMsg,
   formatRoomFromNostrEvent,
   formatRoomMemberFromNostrEvent,
+  getRelayStatus,
 } from '../util/matrixUtil';
 import EventEmitter from './EventEmitter';
 import { aevent2, defaultChatroomList, stage3relays, TChannelMapList } from './state/cons';
@@ -27,10 +28,13 @@ class MatrixClientA extends EventEmitter {
   crypto: string;
   publicRoomList: Map<string, TRoom>;
   relayInstance: Map<string, Relay>;
+  eventsById: Map<string, NostrEvent>;
   constructor(userId: string, privkey?: string) {
     super();
     this.user = new TUser();
+    this.eventsById = new Map();
     // this.user.userId = userId + ':abc';
+
     this.user.userId = userId;
     this.user.displayName = userId.slice(0, 8);
     this.user.privatekey = privkey!;
@@ -270,7 +274,7 @@ class MatrixClientA extends EventEmitter {
       };
     }
     for (let [key, relay] of this.relayInstance) {
-      if (!relay || relay.status != 1) {
+      if (!relay || getRelayStatus(relay) != 1) {
         console.log('not found', relay.url);
         continue;
       }
@@ -330,7 +334,14 @@ class MatrixClientA extends EventEmitter {
   }
   async joinRoom(roomIdOrAlias: string, arg1: { viaServers: string[] }) {
     console.log(`joinRoom`);
-    const a = this.publicRoomList.get(roomIdOrAlias);
+    const a = this.publicRoomList.get(roomIdOrAlias.split(':')[0]);
+    let me = a?.getMember(this.user.userId);
+    if (me?.membership != 'join') {
+      a?.setMemberWithMembership(this.user.userId, 'join');
+    }
+    const membership = 'join';
+    const prevMembership = 'invite';
+    this.emit('Room.myMembership', a, membership, prevMembership);
     return Promise.resolve(a);
   }
   async redactEvent(roomId, eventId, undefined, arg3: any) {
@@ -405,7 +416,7 @@ class MatrixClientA extends EventEmitter {
   }
   sendMsgToGroupChannel(event: NostrEvent) {
     for (let [k, relay] of this.relayInstance) {
-      if (!relay || relay.status != 1) continue;
+      if (!relay || getRelayStatus(relay) != 1) continue;
       const pub = relay.publish(event);
       pub.on('ok', () => {
         console.log(`${relay.url} has accepted our event`);
@@ -420,7 +431,7 @@ class MatrixClientA extends EventEmitter {
   }
   sendMsgToSingle = (event: NostrEvent) => {
     for (let [k, relay] of this.relayInstance) {
-      if (!relay || relay.status != 1) continue;
+      if (!relay || getRelayStatus(relay) != 1) continue;
       const pub = relay.publish(event);
       pub.on('ok', () => {
         console.log(`${relay.url} has accepted our event`);
@@ -456,23 +467,7 @@ class MatrixClientA extends EventEmitter {
       };
 
       sub.on('event', async (event: NostrEvent) => {
-        const mevent = formatGlobalMsg(event);
-        const mc = new TEvent(mevent);
-        const roomId = mevent.room_id;
-        const senderId = mevent.sender;
-        const room = this.publicRoomList.get(roomId);
-        if (!room) return;
-        const sender = room.getMember(senderId);
-        if (sender) {
-          mc.sender = sender;
-        } else {
-          const asender = new TRoomMember(senderId);
-          asender.init();
-          room.addMember(asender);
-          mc.sender = asender;
-        }
-
-        this.emit('Event.decrypted', mc);
+        this.handleEvent(event);
       });
     }
   };
@@ -483,7 +478,7 @@ class MatrixClientA extends EventEmitter {
         '#e': [channelId],
         limit: 13,
       };
-      if (!relay || relay.status != 1) continue;
+      if (!relay || getRelayStatus(relay) != 1) continue;
       const sub = relay.sub([filter]);
       sub.on('event', (event: NostrEvent) => {
         const mevent = formatChannelMsg(event);
@@ -495,7 +490,7 @@ class MatrixClientA extends EventEmitter {
   subdmMessages = (friendPubkey: string) => {
     const userPubkey = this.user.userId;
     for (let [k, relay] of this.relayInstance) {
-      if (!relay || relay.status != 1) continue;
+      if (!relay || getRelayStatus(relay) != 1) continue;
       // updateUsermap(store, friendPubkey);
       let time_for_since = 0;
       const filter = {
@@ -529,51 +524,11 @@ class MatrixClientA extends EventEmitter {
         '#p': [pubkey],
         limit: 30,
       };
-      if (!relay || relay.status != 1) continue;
+      if (!relay || getRelayStatus(relay) != 1) continue;
       // updateUsermap(store, pubkey);
       const sub = relay.sub([filter]);
       sub.on('event', async (event: NostrEvent) => {
-        console.log('from stranger', event.pubkey, event.content);
-        // updateUsermap(store, event.pubkey);
-        const mevent = await formatDmMsgFromOthersOrMe(event, this.user);
-        const mc = new TEvent(mevent);
-
-        const roomId = mevent.room_id;
-        const senderId = mevent.sender;
-        const room = this.publicRoomList.get(roomId);
-        if (room) {
-          const me = room.getMember(this.user.userId);
-          if (me?.membership == 'invite') {
-            const membership = 'invite';
-            const prevMembership = 'invite';
-            this.emit('Room.myMembership', room, membership, prevMembership);
-          } else {
-            const sender = room.getMember(senderId);
-            if (sender) {
-              mc.sender = sender;
-            } else {
-              const asender = new TRoomMember(senderId);
-              asender.init();
-              room.addMember(asender);
-              mc.sender = asender;
-            }
-          }
-          console.log(mc);
-          // this.emit('Event.decrypted', mc);
-        } else {
-          const room = new TRoom(senderId, 'single');
-          const asender = new TRoomMember(senderId);
-          asender.init();
-          room.addMember(asender);
-          mc.sender = asender;
-          const me = new TRoomMember(this.user.userId, this.user.displayName, this.user.avatarUrl);
-          me.membership = 'invite';
-          room.addMember(me);
-          this.publicRoomList.set(senderId, room);
-          const membership = 'invite';
-          const prevMembership = null;
-          this.emit('Room.myMembership', room, membership, prevMembership);
-        }
+        this.handleEvent(event);
       });
       sub.on('eose', () => {
         // sub.unsub();
@@ -588,7 +543,7 @@ class MatrixClientA extends EventEmitter {
       user_id = data as string;
     }
     for (let [key, relay] of this.relayInstance) {
-      if (!relay || relay.status != 1) {
+      if (!relay || getRelayStatus(relay) != 1) {
         console.log('not found', relay.url);
         continue;
       }
@@ -636,6 +591,138 @@ class MatrixClientA extends EventEmitter {
   getStoredDevice(userId, deviceId) {
     return '';
   }
+  handleEvent(event: NostrEvent, force = false) {
+    if (!event) return;
+    if (this.eventsById.has(event.id) && !force) {
+      return;
+    }
+    // if (!this.knownUsers.has(event.pubkey) && !this.subscribedPosts.has(event.id)) {
+    //   return;
+    // }
+    // if (this.blockedUsers.has(event.pubkey)) {
+    //   return;
+    // }
+    // if (this.deletedEvents.has(event.id)) {
+    //   return;
+    // }
+    // if (event.created_at > Date.now() / 1000) {
+    //   this.futureEventIds.add(event);
+    //   if (this.futureEventIds.has(event.id)) {
+    //     this.eventsById.set(event.id, event); // TODO should limit stored future events
+    //   }
+    //   if (this.futureEventIds.first() === event.id) {
+    //     this.handleNextFutureEvent();
+    //   }
+    //   return;
+    // }
+
+    // this.handledMsgsPerSecond++;
+
+    // this.subscribedPosts.delete(event.id);
+
+    switch (event.kind) {
+      case 0:
+        // if (this.handleMetadata(event) === false) {
+        //   return;
+        // }
+        break;
+      case 1:
+        this.handlePublicNostrEvent(event);
+        break;
+      case 4:
+        this.handleDirectMessage(event);
+        break;
+      case 5:
+        // this.handleDelete(event);
+        break;
+      case 3:
+        // if (this.followEventByUser.get(event.pubkey)?.created_at >= event.created_at) {
+        //   return;
+        // }
+        // this.maybeAddNotification(event);
+        // this.handleFollow(event);
+        break;
+      case 6:
+        // this.maybeAddNotification(event);
+        // this.handleBoost(event);
+        break;
+      case 7:
+        // this.maybeAddNotification(event);
+        // this.handleReaction(event);
+        break;
+      case 16462:
+        // TODO return if already have
+        // this.handleBlockList(event);
+        break;
+      case 16463:
+        // this.handleFlagList(event);
+        break;
+      case 30000:
+        // this.handleKeyValue(event);
+        break;
+    }
+  }
+  handlePublicNostrEvent(event: NostrEvent) {
+    this.eventsById.set(event.id, event);
+    const mevent = formatGlobalMsg(event);
+    const mc = new TEvent(mevent);
+    const roomId = mevent.room_id;
+    const senderId = mevent.sender;
+    const room = this.publicRoomList.get(roomId);
+    if (!room) return;
+    const sender = room.getMember(senderId);
+    if (sender) {
+      mc.sender = sender;
+    } else {
+      const asender = new TRoomMember(senderId);
+      asender.init();
+      room.addMember(asender);
+      mc.sender = asender;
+    }
+    this.emit('Event.decrypted', mc);
+  }
+  handleDirectMessage = async (event: NostrEvent) => {
+    this.eventsById.set(event.id, event);
+    console.log('from stranger', event.pubkey, event.content);
+    const mevent = await formatDmMsgFromOthersOrMe(event, this.user);
+    const mc = new TEvent(mevent);
+    const roomId = mevent.room_id;
+    const senderId = mevent.sender;
+    const room = this.publicRoomList.get(roomId);
+    if (room) {
+      const me = room.getMember(this.user.userId);
+      if (me?.membership == 'invite') {
+        const membership = 'invite';
+        const prevMembership = 'invite';
+        this.emit('Room.myMembership', room, membership, prevMembership);
+      } else if (me?.membership == 'join') {
+        const sender = room.getMember(senderId);
+        if (sender) {
+          mc.sender = sender;
+        } else {
+          const asender = new TRoomMember(senderId);
+          asender.init();
+          room.addMember(asender);
+          mc.sender = asender;
+        }
+        this.emit('Event.decrypted', mc);
+      }
+      console.log(mc);
+    } else {
+      const room = new TRoom(senderId, 'single');
+      const asender = new TRoomMember(senderId);
+      asender.init();
+      room.addMember(asender);
+      mc.sender = asender;
+      const me = new TRoomMember(this.user.userId, this.user.displayName, this.user.avatarUrl);
+      me.membership = 'invite';
+      room.addMember(me);
+      this.publicRoomList.set(senderId, room);
+      const membership = 'invite';
+      const prevMembership = null;
+      this.emit('Room.myMembership', room, membership, prevMembership);
+    }
+  };
 }
 
 type TPublicRooms = {
