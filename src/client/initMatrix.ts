@@ -105,7 +105,7 @@ class InitMatrix extends EventEmitter {
                 this.roomList.rooms.add(room.roomId);
                 // this.matrixClient.subChannelMessage(room.roomId);
               } else if (subscribed_channels[i].type == 'single') {
-                let room = new TRoom(subscribed_channels[i].user_id);
+                let room = new TRoom(subscribed_channels[i].user_id, 'single');
                 room.roomId = subscribed_channels[i].user_id;
                 this.roomList.directs.add(room.roomId);
                 // this.matrixClient.subdmMessages(subscribed_channels[i].user_id);

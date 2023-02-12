@@ -802,6 +802,8 @@ function Message({
   cancelEdit = null as unknown as () => void,
 }: IPropsMessage) {
   const roomId = mEvent.getRoomId();
+  const { room } = roomTimeline;
+
   const { editedTimeline, reactionTimeline } = roomTimeline ?? {};
 
   const className = ['message', isBodyOnly ? 'message--body-only' : 'message--full'];
@@ -887,7 +889,7 @@ function Message({
             }
             onSave={(newBody, oldBody) => {
               if (newBody !== oldBody) {
-                initMatrix.roomsInput.sendEditedMessage(roomId, mEvent, newBody);
+                initMatrix.roomsInput.sendEditedMessage(roomId, mEvent, newBody, room.type);
               }
               cancelEdit();
             }}

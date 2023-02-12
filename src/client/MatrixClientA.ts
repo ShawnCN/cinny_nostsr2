@@ -1,5 +1,5 @@
 import { nip19, Relay, relayInit } from 'nostr-tools';
-import { NostrEvent, SearchResultUser, TChannelmapObject } from '../../types';
+import { NostrEvent, SearchResultUser, TChannelmapObject, TSubscribedChannel } from '../../types';
 import TDevice from '../../types/TDevice';
 import TEvent from '../../types/TEvent';
 import TRoom from '../../types/TRoom';
@@ -12,12 +12,13 @@ import {
   formatChannelEvent,
   formatChannelMsg,
   formatDMEvent,
+  formatDmMsgFromOthersOrMe,
   formatGlobalMsg,
   formatRoomFromNostrEvent,
   formatRoomMemberFromNostrEvent,
 } from '../util/matrixUtil';
 import EventEmitter from './EventEmitter';
-import { aevent2, stage3relays, TChannelMapList } from './state/cons';
+import { aevent2, defaultChatroomList, stage3relays, TChannelMapList } from './state/cons';
 
 class MatrixClientA extends EventEmitter {
   store: { deleteAllData: () => Promise<any> };
@@ -43,14 +44,26 @@ class MatrixClientA extends EventEmitter {
     // this.store = {
     //   deleteAllData:()=>Promise<any>
     // }
-    const channels: TChannelmapObject = TChannelMapList;
-    for (let k in channels) {
-      let room = new TRoom(channels[k].user_id, 'groupChannel');
-      room.roomId = channels[k].user_id;
-      room.name = channels[k].name!;
-      room.avatarUrl = channels[k].profile_img!;
-      room.canonical_alias = channels[k].about!;
-      this.publicRoomList.set(room.roomId, room);
+    let subscribed_channels = [] as TSubscribedChannel[];
+    if (localStorage['subscribed_channels']) {
+      const sc = localStorage['subscribed_channels'];
+      subscribed_channels = JSON.parse(sc);
+    } else {
+      subscribed_channels = defaultChatroomList;
+      localStorage.setItem('subscribed_channels', JSON.stringify(subscribed_channels));
+    }
+    for (let i = 0; i < subscribed_channels.length; i++) {
+      if (subscribed_channels[i].type == 'groupChannel') {
+        let room = new TRoom(subscribed_channels[i].user_id, 'groupChannel');
+        room.roomId = subscribed_channels[i].user_id;
+        this.publicRoomList.set(room.roomId, room);
+        // this.matrixClient.subChannelMessage(room.roomId);
+      } else if (subscribed_channels[i].type == 'single') {
+        let room = new TRoom(subscribed_channels[i].user_id, 'single');
+        room.roomId = subscribed_channels[i].user_id;
+        this.publicRoomList.set(room.roomId, room);
+      } else if (subscribed_channels[i].type == 'groupRelay') {
+      }
     }
   }
 
@@ -78,7 +91,6 @@ class MatrixClientA extends EventEmitter {
       // this.relayInstance.set(relay.url, relay);
       this.emit('relayConnected', relay.url);
       console.log(`connected: ${relay.url}`);
-      // this.subGlobalMessages(relay);
     });
     relay.on('error', () => {
       console.log(`failed: ${relay.url}`);
@@ -281,14 +293,14 @@ class MatrixClientA extends EventEmitter {
       let { type, data } = nip19.decode(roomId);
       if (type == 'note') return null;
       roomId = data as string;
-      const room = new TRoom(roomId);
+      const room = new TRoom(roomId, 'groupChannel');
       return {
         chunk: [room],
         next_batch: '',
       };
     }
     if ((roomId.length = 64)) {
-      const room = new TRoom(roomId);
+      const room = new TRoom(roomId, 'groupChannel');
       return {
         chunk: [room],
         next_batch: '',
@@ -362,7 +374,7 @@ class MatrixClientA extends EventEmitter {
     dmUser?: SearchResultUser
   ) {
     if (options.is_direct == true) {
-      const a = new TRoom(options.invite[0]);
+      const a = new TRoom(options.invite[0], 'single');
       a.name = dmUser!.display_name;
       a.avatarUrl = dmUser!.avatarUrl;
       const m1 = new TRoomMember(options.invite[0], a.name, a.avatarUrl);
@@ -372,7 +384,7 @@ class MatrixClientA extends EventEmitter {
       this.publicRoomList.set(a.roomId, a);
       return Promise.resolve(a);
     } else {
-      const a = new TRoom('1');
+      const a = new TRoom('1', 'groupChannel');
       console.log('createRoom');
       return Promise.resolve(a);
     }
@@ -445,7 +457,6 @@ class MatrixClientA extends EventEmitter {
       sub.on('event', async (event: NostrEvent) => {
         const mevent = formatGlobalMsg(event);
         const mc = new TEvent(mevent);
-
         const roomId = mevent.room_id;
         const senderId = mevent.sender;
         const room = this.publicRoomList.get(roomId);
@@ -460,34 +471,6 @@ class MatrixClientA extends EventEmitter {
           mc.sender = asender;
         }
 
-        // console.log(mc.getRoomId(), mc.getContent());
-        // find event sender object
-        // const roomId = mevent.room_id;
-        // const senderId = mevent.sender;
-        // const room = this.publicRoomList.get(roomId);
-        // if (room) {
-        //   console.log('666666666');
-        //   const sender = room.getMember(senderId);
-        //   if (sender) {
-        //     mc.sender = sender;
-        //   } else {
-        //     console.log('1666666666');
-        //     const nostrEvent = await this.fetchUserMeta(senderId);
-        //     console.log('2666666666', nostrEvent);
-        //     if (nostrEvent) {
-        //       console.log('3666666666');
-        //       const asender = formatRoomMemberFromNostrEvent(nostrEvent);
-        //       mc.sender = asender;
-        //       room.addMember(asender);
-        //       this.publicRoomList.set(roomId, room);
-        //     } else {
-        //       console.log('4666666666');
-        //       const member = new TRoomMember(senderId);
-        //       room.addMember(member);
-        //     }
-        //     console.log('8666666666');
-        //   }
-        // }
         this.emit('Event.decrypted', mc);
       });
     }
@@ -548,9 +531,26 @@ class MatrixClientA extends EventEmitter {
       if (!relay || relay.status != 1) continue;
       // updateUsermap(store, pubkey);
       const sub = relay.sub([filter]);
-      sub.on('event', (event: NostrEvent) => {
+      sub.on('event', async (event: NostrEvent) => {
         console.log('from stranger', event.pubkey, event.content);
         // updateUsermap(store, event.pubkey);
+        const mevent = await formatDmMsgFromOthersOrMe(event, this.user);
+        const mc = new TEvent(mevent);
+        const roomId = mevent.room_id;
+        const senderId = mevent.sender;
+        const room = this.publicRoomList.get(roomId);
+        if (!room) return;
+        const sender = room.getMember(senderId);
+        if (sender) {
+          mc.sender = sender;
+        } else {
+          const asender = new TRoomMember(senderId);
+          asender.init();
+          room.addMember(asender);
+          mc.sender = asender;
+        }
+
+        this.emit('Event.decrypted', mc);
       });
       sub.on('eose', () => {
         // sub.unsub();

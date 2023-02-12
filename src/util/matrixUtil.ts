@@ -291,6 +291,60 @@ export const formatGlobalMsg = (
   // }
   return msg;
 };
+export const formatDmMsgFromOthersOrMe = async (event: NostrEvent, user: TUser) => {
+  let otherKey = '';
+  if (event.pubkey == user.userId) {
+    for (let i = 0; i < event.tags.length; i++) {
+      if (event['tags'][i][0] == 'p' && (!otherKey || otherKey == '')) {
+        otherKey = event['tags'][i][1];
+        break;
+      } else {
+        otherKey = event.pubkey;
+      }
+    }
+  } else {
+    otherKey = event.pubkey;
+  }
+  const parent = otherKey;
+  let events_replied_to: string[] = [];
+  let pubkeys_replied_to: string[] = [];
+  let replyingTo = '';
+  for (let i = 0; i < event.tags.length; i++) {
+    if (event['tags'][i][0] == 'e') {
+      events_replied_to.push(event['tags'][i][1]);
+    }
+    if (event['tags'][i][0] == 'p') {
+      pubkeys_replied_to.push(event['tags'][i][1]);
+    }
+  }
+  if (events_replied_to[0]) {
+    replyingTo = events_replied_to[0];
+  }
+
+  const event_time = event.created_at;
+
+  let content = await decryptContent(user, event);
+  content = content.replace(/&/g, '&#38;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  //If the current message is already in the message cache, return, otherwise add to the number of unread messages
+  // let citedMsg = {} as TCitedMsg | null;
+  // if (replyingTo != '') {
+  //   citedMsg = findCitedMsgFromLocalStorage(replyingTo, parent, user.pubkey);
+  // }
+  let contentObject: TContent = {
+    body: content,
+    msgtype: 'm.text',
+  };
+  let msg: TEventFormat = {
+    content: contentObject,
+    type: 'm.room.message',
+    origin_server_ts: event_time,
+    sender: event.pubkey,
+    event_id: event.id,
+    room_id: parent, // 母帖eventid或者是聊天室id
+  };
+
+  return msg;
+};
 
 export const formatChannelMsg = (event: NostrEvent) => {
   const event_time = event.created_at;
@@ -345,6 +399,36 @@ export const formatChannelMsg = (event: NostrEvent) => {
   };
 
   return msg;
+};
+
+export const decryptContent = async (user: TUser, event: NostrEvent) => {
+  let sk2 = user.privatekey;
+  let pk1 = '';
+  if (event.pubkey == user.userId) {
+    //说明消息是作者自己发的。
+    // const sender = event.tags.find(([k, v]) => k === 'p' && v && v !== '')[1];
+    const sender = event.tags.find((tag) => tag[0] == 'p' && tag[1] && tag[1] != '');
+    if (sender) {
+      pk1 = sender[1];
+    }
+  } else {
+    pk1 = event.pubkey;
+  }
+  let plaintext = '';
+  try {
+    // @ts-ignore
+    if (window.nostr) {
+      // @ts-ignore
+      plaintext = await window.nostr.nip04.decrypt(pk1, event.content);
+    } else if (sk2) {
+      plaintext = await nip04.decrypt(sk2, pk1, event.content);
+    }
+    return plaintext;
+  } catch (err) {
+    plaintext = event.content;
+
+    return plaintext;
+  }
 };
 
 const FormatCitedEventsAndCitedPubkeys = (event: NostrEvent) => {
@@ -480,7 +564,7 @@ export const fetchChannelMetaFromRelay = async (channelId: string, relay: Relay)
 };
 
 export function formatRoomFromNostrEvent(channelId: string, event: NostrEvent) {
-  const room = new TRoom(channelId);
+  const room = new TRoom(channelId, 'groupChannel');
   const { name, about, picture } = JSON.parse(event.content);
   if (name && name != '') {
     room.name = name;

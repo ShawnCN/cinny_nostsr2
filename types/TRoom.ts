@@ -20,7 +20,7 @@ class TRoom {
   // currentState: {
   //   getStateEvents: typeof getStateEvents;
   // };
-  constructor(roomId: string, type = 'single') {
+  constructor(roomId: string, type) {
     // this.currentState.getStateEvents = getStateEvents();
     this.currentState = new CurrentState();
     this.roomMembers = new Map();

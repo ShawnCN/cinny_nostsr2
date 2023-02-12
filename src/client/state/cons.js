@@ -182,13 +182,13 @@ export const stage3relays = [
 ];
 
 export const defaultChatroomList = [
-  {
-    user_id: 'globalfeed',
-    type: 'groupRelay',
-    unread: 0,
-    new_message: '',
-    new_message_created_at: 0,
-  },
+  // {
+  //   user_id: 'globalfeed',
+  //   type: 'groupRelay',
+  //   unread: 0,
+  //   new_message: '',
+  //   new_message_created_at: 0,
+  // },
   {
     user_id: 'aa82def2a4110b491eb1874138b7eb97514c53be43627babe25e5c15660aff3d',
     type: 'groupChannel',

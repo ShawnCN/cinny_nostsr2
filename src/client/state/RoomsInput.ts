@@ -275,7 +275,7 @@ class RoomsInput extends EventEmitter {
     input.isSending = true;
     this.roomIdToInput.set(roomId, input);
     if (input.attachment) {
-      await this.sendFile(roomId, input.attachment.file);
+      await this.sendFile(roomId, input.attachment.file, roomType);
       if (!this.isSending(roomId)) return;
     }
 
@@ -316,7 +316,7 @@ class RoomsInput extends EventEmitter {
     this.emit(cons.events.roomsInput.MESSAGE_SENT, roomId);
   }
 
-  async sendFile(roomId, file) {
+  async sendFile(roomId, file, roomType) {
     const fileType = getBlobSafeMimeType(file.type).slice(0, file.type.indexOf('/'));
     const info = {
       mimetype: file.type,
@@ -382,10 +382,10 @@ class RoomsInput extends EventEmitter {
     }
     if (this.matrixClient.isRoomEncrypted(roomId)) {
       content.file = uploadData.file;
-      await this.matrixClient.sendMessage(roomId, content);
+      await this.matrixClient.sendMessage(roomId, content, roomType);
     } else {
       content.url = uploadData.url;
-      await this.matrixClient.sendMessage(roomId, content);
+      await this.matrixClient.sendMessage(roomId, content, roomType);
     }
   }
 
@@ -429,7 +429,7 @@ class RoomsInput extends EventEmitter {
     return { url };
   }
 
-  async sendEditedMessage(roomId, mEvent, editedBody) {
+  async sendEditedMessage(roomId, mEvent, editedBody, roomType) {
     const content = this.getContent(
       roomId,
       { msgType: mEvent.getWireContent().msgtype },
@@ -437,7 +437,7 @@ class RoomsInput extends EventEmitter {
       null,
       mEvent
     );
-    this.matrixClient.sendMessage(roomId, content);
+    this.matrixClient.sendMessage(roomId, content, roomType);
   }
 }
 
