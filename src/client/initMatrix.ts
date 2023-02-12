@@ -14,7 +14,7 @@ import navigation from './state/navigation';
 
 import MatrixClientA from './MatrixClientA';
 import { TChannelmapObject, TSubscribedChannel } from '../../types';
-import { defaultChatroomList, TChannelMapList } from './state/cons';
+import { defaultChatroomList } from './state/cons';
 import TRoom from '../../types/TRoom';
 import TRoomMember from '../../types/TRoomMember';
 // const matrixClientA = new MatrixClientA();
@@ -53,7 +53,7 @@ class InitMatrix extends EventEmitter {
       rooms: new Set(),
       directs: new Set(),
     } as RoomList;
-    this.matrixClient = new MatrixClientA(secret.userId!);
+    this.matrixClient = new MatrixClientA(secret.userId!, secret.accessToken!);
     // this.matrixClient = sdk.createClient({
     //   baseUrl: secret.baseUrl,
     //   accessToken: secret.accessToken,
@@ -100,7 +100,7 @@ class InitMatrix extends EventEmitter {
             }
             for (let i = 0; i < subscribed_channels.length; i++) {
               if (subscribed_channels[i].type == 'groupChannel') {
-                let room = new TRoom(subscribed_channels[i].user_id);
+                let room = new TRoom(subscribed_channels[i].user_id, 'groupChannel');
                 room.roomId = subscribed_channels[i].user_id;
                 this.roomList.rooms.add(room.roomId);
                 // this.matrixClient.subChannelMessage(room.roomId);
@@ -113,7 +113,7 @@ class InitMatrix extends EventEmitter {
                 // this.matrixClient.subGlobalMessages();
               }
             }
-            this.matrixClient.subOpenDmFromStranger();
+            this.matrixClient.subDmFromStranger();
 
             this.accountData = new AccountData(this.roomList);
             this.roomsInput = new RoomsInput(this.matrixClient, this.roomList);
@@ -207,7 +207,12 @@ class InitMatrix extends EventEmitter {
     window.location.reload();
   }
   async getContactsList() {
-    const contactsList = await this.matrixClient.fetchContactUserList();
+    // const contactsList = await this.matrixClient.fetchContactUserList();
+    const contactsList = [
+      ['2e94f749531f1fa2b6754dd0516ebd61061bae20b61b370a4fda277d580e3f21'],
+      ['2ca02292d8cd954cbc57a4f3544e13ee263cb740b29ce090344b64e59da9cea1'],
+    ];
+
     if (contactsList && contactsList.length > 0) {
       contactsList.forEach((contact) => {
         this.roomList.directs.add(contact[0]);

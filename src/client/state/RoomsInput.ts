@@ -270,7 +270,7 @@ class RoomsInput extends EventEmitter {
     return content;
   }
 
-  async sendInput(roomId, options) {
+  async sendInput(roomId, options, roomType) {
     const input = this.getInput(roomId);
     input.isSending = true;
     this.roomIdToInput.set(roomId, input);
@@ -281,7 +281,7 @@ class RoomsInput extends EventEmitter {
 
     if (this.getMessage(roomId).trim() !== '') {
       const content = this.getContent(roomId, options, input.message, input.replyTo);
-      this.matrixClient.sendMessage(roomId, content);
+      await this.matrixClient.sendMessage(roomId, content, roomType);
     }
 
     if (this.isSending(roomId)) this.roomIdToInput.delete(roomId);

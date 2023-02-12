@@ -1,3 +1,4 @@
+import { TRoomType } from '.';
 import initMatrix from '../src/client/InitMatrix';
 import RoomTimeline from '../src/client/state/RoomTimeline';
 import TEvent from './TEvent';
@@ -7,6 +8,7 @@ import TRoomMember from './TRoomMember';
 
 class TRoom {
   roomId: string;
+  type: string;
   name: string;
   avatarUrl: string;
   canonical_alias: string; //intro
@@ -18,12 +20,15 @@ class TRoom {
   // currentState: {
   //   getStateEvents: typeof getStateEvents;
   // };
-  constructor(roomId: string) {
+  constructor(roomId: string, type = 'single') {
     // this.currentState.getStateEvents = getStateEvents();
     this.currentState = new CurrentState();
     this.roomMembers = new Map();
     this.roomId = roomId;
     this.name = roomId;
+    if (type) {
+      this.type = type;
+    }
   }
   getMember(userId: string) {
     const user = this.roomMembers.get(userId);

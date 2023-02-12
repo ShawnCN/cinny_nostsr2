@@ -45,8 +45,9 @@ interface IPropsRoomViewInput {
   roomId: string;
   roomTimeline: RoomTimeline;
   viewEvent: EventEmitter;
+  roomType: string;
 }
-function RoomViewInput({ roomId, roomTimeline, viewEvent }: IPropsRoomViewInput) {
+function RoomViewInput({ roomId, roomTimeline, viewEvent, roomType }: IPropsRoomViewInput) {
   const [attachment, setAttachment] = useState(null);
   const [replyTo, setReplyTo] = useState(null);
 
@@ -193,20 +194,19 @@ function RoomViewInput({ roomId, roomTimeline, viewEvent }: IPropsRoomViewInput)
     };
   }, [roomId]);
 
-  const sendBody = async (body, options?: { msgType: 'm.text'; autoMarkdown: true }) => {
+  const sendBody = async (body, roomType, options?: { msgType: 'm.text'; autoMarkdown: true }) => {
     const opt = options ?? ({} as { msgType: string; autoMarkdown: boolean });
     if (!opt.msgType) opt.msgType = 'm.text';
     if (typeof opt.autoMarkdown !== 'boolean') opt.autoMarkdown = true;
     if (roomsInput.isSending(roomId)) return;
     sendIsTyping(false);
-    console.log('setMessage', body);
     roomsInput.setMessage(roomId, body);
     if (attachment !== null) {
       roomsInput.setAttachment(roomId, attachment);
     }
     textAreaRef.current.disabled = true;
     textAreaRef.current.style.cursor = 'not-allowed';
-    await roomsInput.sendInput(roomId, opt);
+    await roomsInput.sendInput(roomId, opt, roomType);
     textAreaRef.current.disabled = false;
     textAreaRef.current.style.cursor = 'unset';
     focusInput();
@@ -241,7 +241,7 @@ function RoomViewInput({ roomId, roomTimeline, viewEvent }: IPropsRoomViewInput)
       return;
     }
     if (msgBody === '' && attachment === null) return;
-    sendBody(msgBody);
+    sendBody(msgBody, roomType);
   };
 
   const handleSendSticker = async (data) => {

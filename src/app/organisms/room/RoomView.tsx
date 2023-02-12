@@ -24,7 +24,7 @@ interface IPropsRoomView {
 function RoomView({ roomTimeline, eventId = null as unknown as string }: IPropsRoomView) {
   const roomViewRef = useRef(null);
   // eslint-disable-next-line react/prop-types
-  const { roomId } = roomTimeline;
+  const { roomId, room } = roomTimeline;
 
   useEffect(() => {
     const settingsToggle = (isVisible: boolean) => {
@@ -54,7 +54,12 @@ function RoomView({ roomTimeline, eventId = null as unknown as string }: IPropsR
           <RoomViewFloating roomId={roomId} roomTimeline={roomTimeline} />
         </div>
         <div className="room-view__sticky">
-          <RoomViewInput roomId={roomId} roomTimeline={roomTimeline} viewEvent={viewEvent} />
+          <RoomViewInput
+            roomId={roomId}
+            roomTimeline={roomTimeline}
+            viewEvent={viewEvent}
+            roomType={room.type}
+          />
           <RoomViewCmdBar roomId={roomId} roomTimeline={roomTimeline} viewEvent={viewEvent} />
         </div>
       </div>

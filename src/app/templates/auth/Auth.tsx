@@ -530,15 +530,6 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
       };
       let privatekey = '';
       let pubkey = '';
-      // @ts-ignore
-      // if (window.nostr) {
-      // @ts-ignore
-      // pubkey = await window.nostr.getPublicKey();
-      // // @ts-ignore
-      // const relays = await window.nostr.getRelays();
-      // data2.user_id = pubkey;
-      // data2.name = pubkey.slice(0, 8);
-      // localStorage.setItem('pub_key', pubkey);
       let identifier = {} as any;
       const username = initialValues.username;
       if (username) {
@@ -548,7 +539,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
         data2.name = username.slice(username.length - 4, username.length);
       } else throw new Error('Bad Input');
       localStorage.setItem(cons.secretKey.USER_ID, username);
-      localStorage.setItem(cons.secretKey.ACCESS_TOKEN, username);
+      localStorage.setItem(cons.secretKey.ACCESS_TOKEN, initialValues.password);
       if (localStorage['my-meta-info']) {
         const myMetaInfo = JSON.parse(localStorage['my-meta-info']);
         data2.profile_img = myMetaInfo?.picture;
@@ -557,9 +548,6 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
         localStorage['my-meta-info'] = JSON.stringify(data2);
       }
       data2 = { ...data2, pubkey, privatekey };
-      // dispatch(setLogin(data2));
-      // swal('Success', 'Login successful', 'success');
-
       actions.setSubmitting(true);
       window.location.reload();
       // } else {
@@ -589,7 +577,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
     return [f.username.value, f.password.value, f?.email?.value];
   };
   useEffect(() => {
-    const privatekey = generatePrivateKey();
+    const privkey = generatePrivateKey();
     let data2 = {
       user_id: '1',
       name: 'name',
@@ -598,12 +586,12 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
       pubkey: '',
       privatekey: '',
     };
-    const pubkey = getPublicKey(privatekey);
+    const pubkey = getPublicKey(privkey);
     const pubkeyNpub = nip19.npubEncode(pubkey);
-    const privkeyNsec = nip19.nsecEncode(privatekey);
+    const privkeyNsec = nip19.nsecEncode(privkey);
     setInitialValues({
-      username: pubkeyNpub,
-      password: privkeyNsec,
+      username: pubkey,
+      password: privkey,
       confirmPassword: '',
       email: '',
       other: '',

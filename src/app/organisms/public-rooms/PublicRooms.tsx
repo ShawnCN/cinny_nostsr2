@@ -191,9 +191,85 @@ function PublicRooms({ isOpen, searchTerm = undefined, onRequestClose }: IPropsP
       updateIsViewMore(false);
     }
   }
+  async function searchNostrRooms(viewMore = false) {
+    let inputRoomName = roomNameRef?.current?.value || searchTerm;
+    let isInputAlias = false;
+    if (typeof inputRoomName === 'string') {
+      isInputAlias = inputRoomName[0] === '#' && inputRoomName.indexOf(':') > 1;
+    }
+    const hsFromAlias = isInputAlias ? inputRoomName.slice(inputRoomName.indexOf(':') + 1) : null;
+    let inputHs = hsFromAlias || hsRef?.current?.value;
+
+    if (typeof inputHs !== 'string') inputHs = userId.slice(userId.indexOf(':') + 1);
+    if (typeof inputRoomName !== 'string') inputRoomName = '';
+
+    if (isSearching) return;
+    if (
+      viewMore !== true &&
+      inputRoomName === searchQuery.name &&
+      inputHs === searchQuery.homeserver
+    )
+      return;
+
+    updateSearchQuery({
+      name: inputRoomName,
+      homeserver: inputHs,
+    });
+    if (isViewMore !== viewMore) updateIsViewMore(viewMore);
+    updateIsSearching(true);
+
+    try {
+      const result = await initMatrix.matrixClient.publicRooms({
+        server: inputHs,
+        limit: SEARCH_LIMIT,
+        since: viewMore ? nextBatch : undefined,
+        include_all_networks: true,
+        filter: {
+          generic_search_term: inputRoomName,
+        },
+      });
+      console.log('result: ', JSON.stringify(result));
+      if (!result) {
+        updateSearchQuery({
+          error:
+            inputRoomName === ''
+              ? `No public rooms on ${inputHs}`
+              : `No result found for "${inputRoomName}" on ${inputHs}`,
+          alias: isInputAlias ? inputRoomName : null,
+        });
+      }
+      const totalRooms = viewMore ? publicRooms.concat(result!.chunk) : result!.chunk;
+      updatePublicRooms(totalRooms);
+      updateNextBatch(result.next_batch);
+      updateIsSearching(false);
+      updateIsViewMore(false);
+      if (totalRooms.length === 0) {
+        updateSearchQuery({
+          error:
+            inputRoomName === ''
+              ? `No public rooms on ${inputHs}`
+              : `No result found for "${inputRoomName}" on ${inputHs}`,
+          alias: isInputAlias ? inputRoomName : null,
+        });
+      }
+    } catch (e: any) {
+      updatePublicRooms([]);
+      let err = 'Something went wrong!';
+      if (e?.httpStatus >= 400 && e?.httpStatus < 500) {
+        err = e.message;
+      }
+      updateSearchQuery({
+        error: err,
+        alias: isInputAlias ? inputRoomName : null,
+      });
+      updateIsSearching(false);
+      updateNextBatch(undefined);
+      updateIsViewMore(false);
+    }
+  }
 
   useEffect(() => {
-    if (isOpen) searchRooms();
+    if (isOpen) searchNostrRooms();
   }, [isOpen]);
 
   function handleOnRoomAdded(roomId) {
@@ -212,8 +288,9 @@ function PublicRooms({ isOpen, searchTerm = undefined, onRequestClose }: IPropsP
 
   function handleViewRoom(roomId) {
     const room = initMatrix.matrixClient.getRoom(roomId);
-    if (room.isSpaceRoom()) selectTab(roomId);
-    else selectRoom(roomId);
+    // if (room?.isSpaceRoom()) selectTab(roomId);
+    // else selectRoom(roomId);
+    selectRoom(roomId);
     onRequestClose();
   }
 
@@ -279,7 +356,7 @@ function PublicRooms({ isOpen, searchTerm = undefined, onRequestClose }: IPropsP
           className="public-rooms__form"
           onSubmit={(e) => {
             e.preventDefault();
-            searchRooms();
+            searchNostrRooms();
           }}
         >
           <div className="public-rooms__input-wrapper">
@@ -332,7 +409,9 @@ function PublicRooms({ isOpen, searchTerm = undefined, onRequestClose }: IPropsP
         )}
         {publicRooms.length !== 0 && publicRooms.length % SEARCH_LIMIT === 0 && (
           <div className="public-rooms__view-more">
-            {isViewMore !== true && <Button onClick={() => searchRooms(true)}>View more</Button>}
+            {isViewMore !== true && (
+              <Button onClick={() => searchNostrRooms(true)}>View more</Button>
+            )}
             {isViewMore && <Spinner />}
           </div>
         )}

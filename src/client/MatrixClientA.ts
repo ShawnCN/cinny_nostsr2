@@ -1,21 +1,19 @@
-import { Relay, relayInit } from 'nostr-tools';
-import {
-  NostrEvent,
-  SearchResultUser,
-  TChannelmap,
-  TChannelmapObject,
-  TSubscribedChannel,
-} from '../../types';
+import { nip19, Relay, relayInit } from 'nostr-tools';
+import { NostrEvent, SearchResultUser, TChannelmapObject } from '../../types';
 import TDevice from '../../types/TDevice';
 import TEvent from '../../types/TEvent';
 import TRoom from '../../types/TRoom';
 import TRoomMember from '../../types/TRoomMember';
 import TUser from '../../types/TUser';
 import {
+  fetchChannelMetaFromRelay,
   fetchContacts,
   fetchUserMetaFromRelay,
+  formatChannelEvent,
   formatChannelMsg,
+  formatDMEvent,
   formatGlobalMsg,
+  formatRoomFromNostrEvent,
   formatRoomMemberFromNostrEvent,
 } from '../util/matrixUtil';
 import EventEmitter from './EventEmitter';
@@ -28,11 +26,13 @@ class MatrixClientA extends EventEmitter {
   crypto: string;
   publicRoomList: Map<string, TRoom>;
   relayInstance: Map<string, Relay>;
-  constructor(userId: string) {
+  constructor(userId: string, privkey?: string) {
     super();
     this.user = new TUser();
-    this.user.userId = userId + ':abc';
+    // this.user.userId = userId + ':abc';
+    this.user.userId = userId;
     this.user.displayName = userId.slice(0, 8);
+    this.user.privatekey = privkey!;
     if (localStorage['my-meta-info']) {
       const myMetaInfo = JSON.parse(localStorage['my-meta-info']);
       this.user.avatarUrl = myMetaInfo?.profile_img;
@@ -45,7 +45,7 @@ class MatrixClientA extends EventEmitter {
     // }
     const channels: TChannelmapObject = TChannelMapList;
     for (let k in channels) {
-      let room = new TRoom(channels[k].user_id);
+      let room = new TRoom(channels[k].user_id, 'groupChannel');
       room.roomId = channels[k].user_id;
       room.name = channels[k].name!;
       room.avatarUrl = channels[k].profile_img!;
@@ -158,23 +158,50 @@ class MatrixClientA extends EventEmitter {
   }
   // search user from relays
   async getProfileInfo(userId: string) {
-    const nostrEvent = await this.fetchUserMeta(userId);
-    let user = {} as { displayName: string; about: string; avatarUrl: string };
-    if (!nostrEvent) {
+    try {
+      const nostrEvent = await this.fetchUserMeta(userId);
+      let user = {} as { displayName: string; about: string; avatarUrl: string };
+      if (!nostrEvent) {
+        // maybe this user exists but didn't set any profile.
+        if (userId.substring(0, 4) == 'npub') {
+          let { type, data } = nip19.decode(userId);
+          if (type == 'npub') {
+            return {
+              displayName: userId,
+              about: null,
+              avatarUrl: null,
+            };
+          } else {
+            return null;
+          }
+        }
+
+        if (userId.length == 64) {
+          return {
+            displayName: userId,
+            about: null,
+            avatarUrl: null,
+          };
+        } else {
+          return null;
+        }
+      }
+      const { name, about, picture } = JSON.parse(nostrEvent.content);
+      if (name && name.length > 0) {
+        user.displayName = name;
+      }
+      if (about && about.length > 0) {
+        user.about = about;
+      }
+      if (picture && picture.length > 0) {
+        user.avatarUrl = picture;
+      }
+
+      return user;
+    } catch (e) {
+      console.log(e);
       return null;
     }
-    const { name, about, picture } = JSON.parse(nostrEvent.content);
-    if (name && name.length > 0) {
-      user.displayName = name;
-    }
-    if (about && about.length > 0) {
-      user.about = about;
-    }
-    if (picture && picture.length > 0) {
-      user.avatarUrl = picture;
-    }
-
-    return user;
   }
   async searchUserDirectory({ term: string, limit: number }) {
     return Promise.resolve(null);
@@ -208,21 +235,67 @@ class MatrixClientA extends EventEmitter {
   async setRoomName(roomId, newName) {}
   async setRoomTopic(roomId, newTopic) {}
   async sendStateEvent(roomId, arg1: string, arg2: any, arg3: string) {}
-  publicRooms({ server, limit, since, include_all_networks, filter }: TPublicRooms) {
-    // const channel = defaultChatroomList;
-    // const aroom = new TRoom();
-    // aroom.roomId = 'globalfeed';
-    // aroom.name = 'globalfeed';
-    // aroom.avatarUrl = 'https://randomuser.me/api/portraits/men/79.jpg';
-    // aroom.canonical_alias = 'aliasdddddddddddddddddd';
-    // this.publicRoomList.set(aroom.roomId, aroom);
-    console.log(this.publicRoomList);
+  async publicRooms({ server, limit, since, include_all_networks, filter }: TPublicRooms) {
+    let roomId = filter.generic_search_term;
+    if (roomId.trim().length == 0) {
+      return {
+        // chunk: ['room1', 'room2', 'room3'],
+        chunk: Array.from(this.publicRoomList.values()),
+        next_batch: '',
+      };
+    }
+    if (roomId.substring(0, 4) == 'note') {
+      let { type, data } = nip19.decode(roomId);
+      if (type != 'note') return null;
+      roomId = data as string;
+    }
+    const room1 = this.publicRoomList.get(roomId);
+    if (room1) {
+      return {
+        // chunk: ['room1', 'room2', 'room3'],
+        chunk: [room1],
+        next_batch: '',
+      };
+    }
+    for (let [key, relay] of this.relayInstance) {
+      if (!relay || relay.status != 1) {
+        console.log('not found', relay.url);
+        continue;
+      }
+      console.log('start searching', relay.url);
+      const a = await fetchChannelMetaFromRelay(roomId, relay);
+      if (!a || Object.keys(a).length == 0) {
+        console.log('not found', relay.url);
+        continue;
+      }
+      const room = formatRoomFromNostrEvent(roomId, a);
+      this.publicRoomList.set(roomId, room);
+      console.log('Found', relay.url, room);
+      return {
+        chunk: [room],
+        next_batch: '',
+      };
+    }
 
-    return {
-      // chunk: ['room1', 'room2', 'room3'],
-      chunk: Array.from(this.publicRoomList.values()),
-      next_batch: '',
-    };
+    if (roomId.substring(0, 4) == 'note') {
+      let { type, data } = nip19.decode(roomId);
+      if (type == 'note') return null;
+      roomId = data as string;
+      const room = new TRoom(roomId);
+      return {
+        chunk: [room],
+        next_batch: '',
+      };
+    }
+    if ((roomId.length = 64)) {
+      const room = new TRoom(roomId);
+      return {
+        chunk: [room],
+        next_batch: '',
+      };
+    }
+
+    return null;
   }
   async getLocalAliases(roomId: string) {
     return Promise.resolve('getLocalAliases');
@@ -304,9 +377,49 @@ class MatrixClientA extends EventEmitter {
       return Promise.resolve(a);
     }
   }
-  sendMessage(roomId, content) {
-    console.log('send message');
+  async sendMessage(roomId, content, type) {
+    console.log('send message', roomId, content, type);
+    const c = content.body;
+    console.log(c);
+    if (type === 'single') {
+      const nostEvent = await formatDMEvent(c, roomId, this.user);
+      this.sendMsgToSingle(nostEvent);
+    } else if (type === 'groupChannel') {
+      const nostrEvent = await formatChannelEvent(c, roomId, this.user);
+      this.sendMsgToGroupChannel(nostrEvent);
+    } else if ((type = 'groupRelay')) {
+    }
   }
+  sendMsgToGroupChannel(event: NostrEvent) {
+    for (let [k, relay] of this.relayInstance) {
+      if (!relay || relay.status != 1) continue;
+      const pub = relay.publish(event);
+      pub.on('ok', () => {
+        console.log(`${relay.url} has accepted our event`);
+      });
+      pub.on('seen', () => {
+        console.log(`we saw the event on ${relay.url}`);
+      });
+      pub.on('failed', (reason: any) => {
+        console.log(`failed to publish to ${relay.url}: ${reason}`);
+      });
+    }
+  }
+  sendMsgToSingle = (event: NostrEvent) => {
+    for (let [k, relay] of this.relayInstance) {
+      if (!relay || relay.status != 1) continue;
+      const pub = relay.publish(event);
+      pub.on('ok', () => {
+        console.log(`${relay.url} has accepted our event`);
+      });
+      pub.on('seen', () => {
+        console.log(`we saw the event on ${relay.url}`);
+      });
+      pub.on('failed', (reason: any) => {
+        console.log(`failed to publish to ${relay.url}: ${reason}`);
+      });
+    }
+  };
   getSyncState() {
     console.log('get sync state');
     return 'getSyncState';
@@ -424,7 +537,7 @@ class MatrixClientA extends EventEmitter {
       });
     }
   };
-  subOpenDmFromStranger = () => {
+  subDmFromStranger = () => {
     const pubkey = this.user.userId;
     for (let [k, relay] of this.relayInstance) {
       const filter = {
@@ -446,6 +559,11 @@ class MatrixClientA extends EventEmitter {
     }
   };
   async fetchUserMeta(user_id: string) {
+    if (user_id.substring(0, 4) == 'npub') {
+      let { type, data } = nip19.decode(user_id);
+      if (type != 'npub') return null;
+      user_id = data as string;
+    }
     for (let [key, relay] of this.relayInstance) {
       if (!relay || relay.status != 1) {
         console.log('not found', relay.url);
@@ -454,7 +572,7 @@ class MatrixClientA extends EventEmitter {
       console.log('start searching', relay.url);
       const a = await fetchUserMetaFromRelay(user_id, relay);
       if (a && Object.keys(a).length > 1) {
-        console.log('Found', relay.url);
+        console.log('Found', relay.url, a);
         return a;
       } else {
         console.log('not found', relay.url);

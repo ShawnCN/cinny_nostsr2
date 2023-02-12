@@ -62,3 +62,5 @@ export type SearchResultUser = {
   display_name: string;
   avatarUrl: string;
 };
+
+export type TRoomType = 'single' | 'groupChannels' | 'groupRelay';

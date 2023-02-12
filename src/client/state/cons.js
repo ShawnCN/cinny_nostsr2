@@ -157,9 +157,15 @@ const cons = {
 Object.freeze(cons);
 
 export const stage3relays = [
+  ' wss://nostr.orangepill.dev',
+  'wss://jiggytom.ddns.net',
+  'wss://eden.nostr.land',
+  'wss://nostr.fmt.wiz.biz',
+  'wss://relay.nostr.info',
+  'wss://offchain.pub',
   'wss://relay.nostr.ch',
-  'wss://nostr-pub.wellorder.net',
-  'wss://nostr.zebedee.cloud',
+  // 'wss://nostr-pub.wellorder.net',
+  // 'wss://nostr.zebedee.cloud',
   // 'wss://nostr-relay.lnmarkets.com',
   // 'wss://nostr.rdfriedl.com',
   // 'wss://no.str.cr',
@@ -192,6 +198,13 @@ export const defaultChatroomList = [
   },
   {
     user_id: '25e5c82273a271cb1a840d0060391a0bf4965cafeb029d5ab55350b418953fbb',
+    type: 'groupChannel',
+    unread: 0,
+    new_message: '',
+    new_message_created_at: 0,
+  },
+  {
+    user_id: '94296622149f6390fec39b7802edcff9d00b67e812409c236f6094580a5c3e2d',
     type: 'groupChannel',
     unread: 0,
     new_message: '',

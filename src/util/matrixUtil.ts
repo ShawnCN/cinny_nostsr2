@@ -9,7 +9,9 @@ import SpaceLockIC from '../../public/res/ic/outlined/space-lock.svg';
 import { NostrEvent } from '../../types';
 import { TContent, TEventFormat } from '../../types/TEvent';
 import TRoomMember from '../../types/TRoomMember';
-import { Relay } from 'nostr-tools';
+import { getEventHash, nip04, Relay, signEvent } from 'nostr-tools';
+import TRoom from '../../types/TRoom';
+import TUser from '../../types/TUser';
 
 const WELL_KNOWN_URI = '/.well-known/matrix/client';
 
@@ -433,5 +435,172 @@ export const fetchUserMetaFromRelay = async (pubkey: string, relay: Relay) => {
     return null;
   });
 
+  return event;
+};
+
+export const fetchChannelMetaFromRelay = async (channelId: string, relay: Relay) => {
+  if (!relay || relay.status != 1) return null;
+  const filter = {
+    ids: [channelId],
+    kinds: [40, 41],
+  };
+  const sub = relay.sub([filter]);
+  const channel = new Promise<NostrEvent>((resolve, reject) => {
+    let channel = {} as NostrEvent;
+    sub.on('event', (event: NostrEvent) => {
+      channel = event;
+      resolve(channel);
+    });
+    sub.on('eose', () => {
+      sub.unsub();
+      if (!channel || Object.keys(channel).length == 0) {
+        // reject('not found...');
+        console.log('not found...');
+        reject(null);
+      }
+    });
+    relay.on('error', () => {
+      console.log(`failed: ${relay.url}`);
+      reject(null);
+    });
+    relay.on('disconnect', () => {
+      console.log(`disconnected from ${relay.url}`);
+      reject(null);
+    });
+    relay.on('notice', (e: any) => {
+      console.log(`notice from ${relay.url}   ${JSON.stringify(e)} `);
+      reject(null);
+    });
+  }).catch((e) => {
+    console.error(e);
+    return null;
+  });
+
+  return channel;
+};
+
+export function formatRoomFromNostrEvent(channelId: string, event: NostrEvent) {
+  const room = new TRoom(channelId);
+  const { name, about, picture } = JSON.parse(event.content);
+  if (name && name != '') {
+    room.name = name;
+  }
+  if (about && about != '') {
+    room.canonical_alias = about;
+  }
+  if (picture && picture != '') {
+    room.avatarUrl = picture;
+  }
+  return room;
+}
+
+export const formatDMEvent = async (
+  inputMessage: string,
+  roomId: string,
+  // replyBox: TCitedMsg,
+  user: TUser
+) => {
+  const sk1 = user.privatekey;
+  let pk1 = user.userId;
+  // receiver
+  // let sk2 = generatePrivateKey()
+  let pk2 = roomId;
+  // on the sender side
+  let ciphertext = 'unknown...';
+  // @ts-ignore
+  if (window.nostr) {
+    // @ts-ignore
+    ciphertext = await window.nostr.nip04.encrypt(pk2, inputMessage);
+  } else if (sk1) {
+    ciphertext = await nip04.encrypt(sk1, pk2, inputMessage);
+  } else {
+    console.log('send dm failed');
+  }
+
+  let tags = [['p', pk2]] as string[][];
+  // if (replyBox.pubkey && replyBox.pubkey.length > 0) {
+  //   const replyTags = [
+  //     ['p', replyBox.pubkey.toString()],
+  //     ['e', replyBox.evtId.toString()],
+  //   ];
+  //   tags = [...tags, ...replyTags];
+  //   // "tags"       : [ [ 'p', pubkey ], [ 'e', id_of_post_being_replied_to ] ],
+  // }
+
+  let event = {
+    pubkey: pk1,
+    created_at: Math.floor(Date.now() / 1000),
+    kind: 4,
+    tags,
+    content: ciphertext,
+  } as NostrEvent;
+  console.log(event);
+  event = await getSignedEvent(event, user.privatekey);
+  console.log(event);
+  return event;
+};
+export const formatChannelEvent = async (
+  inputMessage: string,
+  roomId: string,
+  // replyBox: TCitedMsg,
+  user: TUser
+) => {
+  // const url = relayinst.url;
+  let tags = [
+    [
+      'e',
+      // '25e5c82273a271cb1a840d0060391a0bf4965cafeb029d5ab55350b418953fbb',
+      roomId,
+      // url.toString(),
+    ],
+  ] as string[][];
+  // if (replyBox.pubkey && replyBox.pubkey.length > 0) {
+  //   tags = [
+  //     [
+  //       'e',
+  //       // '25e5c82273a271cb1a840d0060391a0bf4965cafeb029d5ab55350b418953fbb',
+  //       roomId,
+  //       // url.toString(),
+  //     ],
+  //     [
+  //       'e',
+  //       replyBox.evtId.toString(),
+  //       // url.toString()
+  //     ],
+  //     ['p', replyBox.pubkey.toString()],
+  //   ];
+  // }
+  let event = {
+    kind: 42,
+    created_at: Math.floor(Date.now() / 1000),
+    // tags: [['e', '25e5c82273a271cb1a840d0060391a0bf4965cafeb029d5ab55350b418953fbb', url.toString()], ['e', 'dd526a59faa6d5291d3aa3a0e28e655a98fc371545936094ffc089097e608552', url.toString()], ['p', user.pubkey, url.toString()]],
+    tags,
+    content: inputMessage,
+    pubkey: user.userId,
+  } as NostrEvent;
+  console.log(event);
+  event = await getSignedEvent(event, user?.privatekey);
+  console.log(event);
+
+  return event;
+};
+
+export const getSignedEvent = async (event: NostrEvent, privateKey: string | undefined) => {
+  event.id = getEventHash(event);
+  console.log('2222', event);
+  // @ts-ignore
+  if (window.nostr) {
+    // @ts-ignore
+    const signedEvent = await window?.nostr.signEvent(event);
+    if (typeof signedEvent == 'string') {
+      event.sig = signedEvent;
+    } else {
+      event.sig = signedEvent.sig;
+    }
+  } else if (privateKey) {
+    event.sig = signEvent(event, privateKey);
+  } else {
+    console.log('something wrong');
+  }
   return event;
 };
