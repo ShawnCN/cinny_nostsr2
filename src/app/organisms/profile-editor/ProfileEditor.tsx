@@ -15,6 +15,7 @@ import PencilIC from '../../../../public/res/ic/outlined/pencil.svg';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 
 import './ProfileEditor.scss';
+import { toNostrBech32Address } from '../../../util/nostrUtil';
 
 function ProfileEditor({ userId }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -114,7 +115,7 @@ function ProfileEditor({ userId }) {
           onClick={() => setIsEditing(true)}
         />
       </div>
-      <Text variant="b2">{mx.getUserId()}</Text>
+      <Text variant="b2">{toNostrBech32Address(mx.getUserId()!, 'npub')!}</Text>
     </div>
   );
 

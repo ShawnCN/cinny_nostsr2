@@ -20,6 +20,7 @@ import PencilIC from '../../../../public/res/ic/outlined/pencil.svg';
 import { useStore } from '../../hooks/useStore';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
+import { toNostrBech32Address } from '../../../util/nostrUtil';
 
 function RoomProfile({ roomId }) {
   const isMountStore = useStore();
@@ -182,28 +183,35 @@ function RoomProfile({ roomId }) {
     </form>
   );
 
-  const renderNameAndTopic = () => (
-    <div
-      className="room-profile__display"
-      style={{ marginBottom: avatarSrc && canChangeAvatar ? '24px' : '0' }}
-    >
-      <div>
-        <Text variant="h2" weight="medium" primary>
-          {twemojify(roomName)}
-        </Text>
-        {(canChangeName || canChangeTopic) && (
-          <IconButton
-            src={PencilIC}
-            size="extra-small"
-            tooltip="Edit"
-            onClick={() => setIsEditing(true)}
-          />
-        )}
+  const renderNameAndTopic = () => {
+    const bech32Id =
+      room?.type == 'single'
+        ? toNostrBech32Address(room.roomId, 'npub')
+        : toNostrBech32Address(room!.roomId, 'note');
+
+    return (
+      <div
+        className="room-profile__display"
+        style={{ marginBottom: avatarSrc && canChangeAvatar ? '24px' : '0' }}
+      >
+        <div>
+          <Text variant="h2" weight="medium" primary>
+            {twemojify(roomName)}
+          </Text>
+          {(canChangeName || canChangeTopic) && (
+            <IconButton
+              src={PencilIC}
+              size="extra-small"
+              tooltip="Edit"
+              onClick={() => setIsEditing(true)}
+            />
+          )}
+        </div>
+        <Text variant="b3">{room.getCanonicalAlias() || bech32Id}</Text>
+        {roomTopic && <Text variant="b2">{twemojify(roomTopic, undefined, true)}</Text>}
       </div>
-      <Text variant="b3">{room.getCanonicalAlias() || room.roomId}</Text>
-      {roomTopic && <Text variant="b2">{twemojify(roomTopic, undefined, true)}</Text>}
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="room-profile">

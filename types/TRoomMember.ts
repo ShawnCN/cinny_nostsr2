@@ -1,5 +1,6 @@
 import initMatrix from '../src/client/InitMatrix';
 import { formatRoomMemberFromNostrEvent } from '../src/util/matrixUtil';
+import { defaultName, toNostrBech32Address } from '../src/util/nostrUtil';
 import TEvent from './TEvent';
 
 class TRoomMember {
@@ -16,7 +17,11 @@ class TRoomMember {
     this.userId = id;
     this.username = id;
     this.membership = 'join';
-    if (name) this.name = name;
+    if (name) {
+      this.name = name;
+    } else {
+      this.name = defaultName(id, 'npub')!;
+    }
     if (avatarSrc) this.avatarSrc = avatarSrc;
   }
 

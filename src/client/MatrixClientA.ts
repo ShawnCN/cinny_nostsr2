@@ -18,6 +18,7 @@ import {
   formatRoomMemberFromNostrEvent,
   getRelayStatus,
 } from '../util/matrixUtil';
+import { defaultName } from '../util/nostrUtil';
 import EventEmitter from './EventEmitter';
 import { aevent2, defaultChatroomList, stage3relays, TChannelMapList } from './state/cons';
 
@@ -36,7 +37,7 @@ class MatrixClientA extends EventEmitter {
     // this.user.userId = userId + ':abc';
 
     this.user.userId = userId;
-    this.user.displayName = userId.slice(0, 8);
+    this.user.displayName = defaultName(userId, 'npub')!;
     this.user.privatekey = privkey!;
     if (localStorage['my-meta-info']) {
       const myMetaInfo = JSON.parse(localStorage['my-meta-info']);
@@ -734,5 +735,4 @@ type TPublicRooms = {
     generic_search_term: any;
   };
 };
-
 export default MatrixClientA;

@@ -39,6 +39,7 @@ import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 import TRoom from '../../../../types/TRoom';
 import { TDevice } from '../../../../types';
+import { defaultName, toNostrBech32Address } from '../../../util/nostrUtil';
 
 function ModerationTools({ roomId, userId }) {
   const mx = initMatrix.matrixClient;
@@ -397,12 +398,17 @@ function ProfileViewer() {
     return (
       <div className="profile-viewer">
         <div className="profile-viewer__user">
-          <Avatar imageSrc={avatarUrl} text={username} bgColor={colorMXID(userId)} size="large" />
+          <Avatar
+            imageSrc={avatarUrl}
+            text={defaultName(userId, 'npub')}
+            bgColor={colorMXID(userId)}
+            size="large"
+          />
           <div className="profile-viewer__user__info">
             <Text variant="s1" weight="medium">
-              {twemojify(username)}
+              {twemojify(defaultName(userId, 'npub'))}
             </Text>
-            <Text variant="b2">{twemojify(userId)}</Text>
+            <Text variant="b2">{twemojify(toNostrBech32Address(userId!, 'npub')!)}</Text>
           </div>
           <div className="profile-viewer__user__role">
             <Text variant="b3">Role</Text>

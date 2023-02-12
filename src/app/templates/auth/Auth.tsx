@@ -26,6 +26,7 @@ import EyeBlindIC from '../../../../public/res/ic/outlined/eye-blind.svg';
 import CinnySvg from '../../../../public/res/svg/cinny.svg';
 import SSOButtons from '../../molecules/sso-buttons/SSOButtons';
 import { generatePrivateKey, getPublicKey, nip19 } from 'nostr-tools';
+import { defaultName, toNostrBech32Address } from '../../../util/nostrUtil';
 
 const LOCALPART_SIGNUP_REGEX = /^[a-z0-9_\-.=/]+$/;
 const BAD_LOCALPART_ERROR = "Username can only contain characters a-z, 0-9, or '=_-./'";
@@ -245,7 +246,7 @@ function Login({ loginFlow, baseUrl }: IPropsLogin) {
         // @ts-ignore
         const relays = await window.nostr.getRelays();
         data2.user_id = pubkey;
-        data2.name = pubkey.slice(0, 8);
+        data2.name = defaultName(pubkey, 'npub')!;
         localStorage.setItem('pub_key', pubkey);
         let identifier = {} as any;
         const username = pubkey;
@@ -535,7 +536,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
         identifier.type = 'm.id.user';
         identifier.user = username;
         data2.user_id = username;
-        data2.name = username.slice(0, 8);
+        data2.name = defaultName(username, 'npub')!;
       } else throw new Error('Bad Input');
       localStorage.setItem(cons.secretKey.USER_ID, username);
       localStorage.setItem(cons.secretKey.ACCESS_TOKEN, initialValues.password);
@@ -702,7 +703,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
               )}
               <form className="auth-form" ref={formRef} onSubmit={handleSubmit}>
                 <Input
-                  value={initialValues.username}
+                  value={toNostrBech32Address(initialValues.username, 'npub')}
                   name="username"
                   onChange={handleChange}
                   label="Username"
@@ -717,7 +718,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
                 )}
                 <div className="auth-form__pass-eye-wrapper">
                   <Input
-                    value={initialValues.password}
+                    value={toNostrBech32Address(initialValues.password, 'nsec')}
                     name="password"
                     onChange={handleChange}
                     label="Password"

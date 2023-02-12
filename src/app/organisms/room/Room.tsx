@@ -63,7 +63,7 @@ function Room() {
   return (
     <div className="room">
       <div className="room__content">
-        <RoomSettings roomId={roomTimeline.roomId} />
+        <RoomSettings roomId={roomTimeline.roomId} roomType={roomTimeline.room.type} />
         <RoomView roomTimeline={roomTimeline} eventId={eventId} />
       </div>
       {isDrawer && <PeopleDrawer roomId={roomTimeline.roomId} />}

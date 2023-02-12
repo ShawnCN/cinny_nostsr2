@@ -1,6 +1,7 @@
 import { TRoomType } from '.';
 import initMatrix from '../src/client/InitMatrix';
 import RoomTimeline from '../src/client/state/RoomTimeline';
+import { toNostrBech32Address } from '../src/util/nostrUtil';
 import TEvent from './TEvent';
 import TEventTimelineSet from './TEventTimelineSet';
 import TLiveTimeline from './TLiveTimeline';
@@ -25,9 +26,15 @@ class TRoom {
     this.currentState = new CurrentState();
     this.roomMembers = new Map();
     this.roomId = roomId;
-    this.name = roomId.slice(0, 4);
     if (type) {
       this.type = type;
+      if (type == 'single') {
+        this.name = toNostrBech32Address(roomId, 'npub')?.slice(5, 8) || roomId;
+      } else if (type == 'groupChannel') {
+        this.name = toNostrBech32Address(roomId, 'note')?.slice(5, 8) || roomId;
+      }
+    } else {
+      this.name = roomId;
     }
   }
   getMember(userId: string) {
@@ -76,6 +83,9 @@ class TRoom {
   }
   getUsersReadUpTo(arg0: TEvent) {
     return [0, 1];
+  }
+  getRoomType() {
+    return this.type;
   }
   getEventReadUpTo(userId: string) {
     return '1';
