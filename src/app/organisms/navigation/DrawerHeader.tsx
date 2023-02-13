@@ -33,7 +33,14 @@ import HashSearchIC from '../../../../public/res/ic/outlined/hash-search.svg';
 import SpacePlusIC from '../../../../public/res/ic/outlined/space-plus.svg';
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 
-export function HomeSpaceOptions({ spaceId, afterOptionSelect }) {
+interface IPropsHomeSpaceOptions {
+  spaceId?: string;
+  afterOptionSelect: () => void;
+}
+export function HomeSpaceOptions({
+  spaceId = null as unknown as string,
+  afterOptionSelect,
+}: IPropsHomeSpaceOptions) {
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(spaceId);
   const canManage = room
@@ -42,8 +49,8 @@ export function HomeSpaceOptions({ spaceId, afterOptionSelect }) {
 
   return (
     <>
-      <MenuHeader>Add rooms or spaces</MenuHeader>
-      <MenuItem
+      <MenuHeader>Add rooms or friends</MenuHeader>
+      {/* <MenuItem
         iconSrc={SpacePlusIC}
         onClick={() => {
           afterOptionSelect();
@@ -52,7 +59,7 @@ export function HomeSpaceOptions({ spaceId, afterOptionSelect }) {
         disabled={!canManage}
       >
         Create new space
-      </MenuItem>
+      </MenuItem> */}
       <MenuItem
         iconSrc={HashPlusIC}
         onClick={() => {
@@ -76,6 +83,17 @@ export function HomeSpaceOptions({ spaceId, afterOptionSelect }) {
       )}
       {!spaceId && (
         <MenuItem
+          iconSrc={HashGlobeIC}
+          onClick={() => {
+            afterOptionSelect();
+            openInviteUser();
+          }}
+        >
+          Start DM
+        </MenuItem>
+      )}
+      {/* {!spaceId && (
+        <MenuItem
           iconSrc={PlusIC}
           onClick={() => {
             afterOptionSelect();
@@ -84,7 +102,7 @@ export function HomeSpaceOptions({ spaceId, afterOptionSelect }) {
         >
           Join with address
         </MenuItem>
-      )}
+      )} */}
       {spaceId && (
         <MenuItem
           iconSrc={PlusIC}
@@ -111,15 +129,13 @@ export function HomeSpaceOptions({ spaceId, afterOptionSelect }) {
     </>
   );
 }
-HomeSpaceOptions.defaultProps = {
-  spaceId: null,
-};
-HomeSpaceOptions.propTypes = {
-  spaceId: PropTypes.string,
-  afterOptionSelect: PropTypes.func.isRequired,
-};
 
-function DrawerHeader({ selectedTab, spaceId }) {
+interface IPropsDrawerHeader {
+  selectedTab: string;
+  spaceId?: string;
+}
+
+function DrawerHeader({ selectedTab, spaceId = null as unknown as string }: IPropsDrawerHeader) {
   const mx = initMatrix.matrixClient;
   const tabName = selectedTab !== cons.tabs.DIRECTS ? 'Home' : 'Direct messages';
 
@@ -165,7 +181,7 @@ function DrawerHeader({ selectedTab, spaceId }) {
         </TitleWrapper>
       )}
 
-      {isDMTab && (
+      {/* {isDMTab && (
         <IconButton onClick={() => openInviteUser()} tooltip="Start DM" src={PlusIC} size="small" />
       )}
       {!isDMTab && (
@@ -175,17 +191,15 @@ function DrawerHeader({ selectedTab, spaceId }) {
           src={PlusIC}
           size="small"
         />
-      )}
+      )} */}
+      <IconButton
+        onClick={openHomeSpaceOptions}
+        tooltip="Add rooms/spaces"
+        src={PlusIC}
+        size="small"
+      />
     </Header>
   );
 }
-
-DrawerHeader.defaultProps = {
-  spaceId: null,
-};
-DrawerHeader.propTypes = {
-  selectedTab: PropTypes.string.isRequired,
-  spaceId: PropTypes.string,
-};
 
 export default DrawerHeader;

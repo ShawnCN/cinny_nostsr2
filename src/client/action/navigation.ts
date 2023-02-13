@@ -73,14 +73,14 @@ export function openInviteList() {
   });
 }
 
-export function openPublicRooms(searchTerm) {
+export function openPublicRooms(searchTerm?: string) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_PUBLIC_ROOMS,
     searchTerm,
   });
 }
 
-export function openCreateRoom(isSpace = false, parentId = null) {
+export function openCreateRoom(isSpace = false, parentId = null as unknown as string) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_CREATE_ROOM,
     isSpace,
@@ -88,14 +88,14 @@ export function openCreateRoom(isSpace = false, parentId = null) {
   });
 }
 
-export function openJoinAlias(term) {
+export function openJoinAlias(term?: string) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_JOIN_ALIAS,
     term,
   });
 }
 
-export function openInviteUser(roomId, searchTerm) {
+export function openInviteUser(roomId?: string, searchTerm?: string) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_INVITE_USER,
     roomId,
