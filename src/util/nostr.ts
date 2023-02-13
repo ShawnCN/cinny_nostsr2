@@ -18,6 +18,7 @@ import localForage from 'localforage';
 import { route } from 'preact-router';
 
 import SortedLimitedEventSet from './SortedLimitedEventSet';
+import { toNostrHexAddress } from './nostrUtil';
 
 const startTime = Date.now() / 1000;
 
@@ -684,7 +685,7 @@ const Nostr = {
         for (const id of filter.ids) {
           if (!this.subscribedPosts.has(id)) {
             hasNewIds = true;
-            this.subscribedPosts.add(this.toNostrHexAddress(id));
+            this.subscribedPosts.add(toNostrHexAddress(id)!);
           }
         }
       }

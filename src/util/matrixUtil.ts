@@ -671,7 +671,6 @@ export const formatChannelEvent = async (
 
 export const getSignedEvent = async (event: NostrEvent, privateKey: string | undefined) => {
   event.id = getEventHash(event);
-  console.log('2222', event);
   // @ts-ignore
   if (window.nostr) {
     // @ts-ignore

@@ -28,12 +28,12 @@ class RoomList extends EventEmitter {
   matrixClient: MatrixClientA;
   mDirects: Set<string>; //用户的可以私聊的列表，相当于好友列表。
   roomIdToParents: Map<any, any>;
-  inviteDirects: Set<string>; // id
+  inviteDirects: Set<string>; // id 当前好友申请的窗口列表。
   inviteSpaces: Set<string>; // id
   inviteRooms: Set<string>; // id
   directs: Set<string>; // roomId set  当前私聊的窗口列表。
   spaces: Set<string>; // space id set
-  rooms: Set<string>;
+  rooms: Set<string>; //当前的群聊窗口列表
   processingRooms: Map<any, any>;
   constructor(matrixClient: MatrixClientA) {
     // constructor() {
@@ -52,6 +52,7 @@ class RoomList extends EventEmitter {
     this.directs = new Set();
     this.spaces = new Set();
     this.rooms = new Set();
+    this.mDirects = new Set();
 
     this.processingRooms = new Map();
 
@@ -215,6 +216,7 @@ class RoomList extends EventEmitter {
   }
 
   getMDirects() {
+    return this.mDirects;
     const mDirectsId = new Set<string>();
     const mDirect = this.matrixClient.getAccountData('m.direct')?.getContent();
     // const mDirect = {};

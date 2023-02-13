@@ -157,9 +157,11 @@ const cons = {
 Object.freeze(cons);
 
 export const stage3relays = [
+  'wss://nos.lol',
+  'wss://node01.nostress.cc',
   ' wss://nostr.orangepill.dev',
   'wss://jiggytom.ddns.net',
-  'wss://eden.nostr.land',
+  // 'wss://eden.nostr.land',
   'wss://nostr.fmt.wiz.biz',
   'wss://relay.nostr.info',
   'wss://offchain.pub',

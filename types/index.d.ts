@@ -1,6 +1,7 @@
 import { string } from 'prop-types';
 import React from 'react';
 
+import { Filter, Relay, relayInit, Sub, Event } from 'nostr-tools';
 // declare module '*.svg' {
 //   const content: React.FunctionComponent<React.SVGAttributes<SVGElement>>;
 //   export default content;
@@ -64,3 +65,8 @@ export type SearchResultUser = {
 };
 
 export type TRoomType = 'single' | 'groupChannels' | 'groupRelay';
+
+export type Subscription = {
+  filters: Filter[];
+  callback?: (event: Event) => void;
+};

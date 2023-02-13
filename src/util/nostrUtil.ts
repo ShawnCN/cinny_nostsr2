@@ -1,5 +1,7 @@
 import { Buffer } from 'buffer';
 import * as bech32 from 'bech32-buffer'; /* eslint-disable-line @typescript-eslint/no-var-requires */
+import { Debounce } from './common';
+import { sha256 } from '@noble/hashes/sha256';
 export const toNostrBech32Address = (address: string, prefix: string) => {
   if (!prefix) {
     throw new Error('prefix is required');
@@ -41,4 +43,8 @@ function arrayToHex(array: any) {
 
 export const defaultName = (address: string, prefix: string) => {
   return toNostrBech32Address(address, prefix)?.slice(5, 8);
+};
+
+export const getSubscriptionIdForName = (name: string) => {
+  return arrayToHex(sha256(name)).slice(0, 8);
 };

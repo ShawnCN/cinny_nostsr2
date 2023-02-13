@@ -3,7 +3,7 @@ import EventEmitter from './EventEmitter';
 // import * as sdk from 'matrix-js-sdk';
 // import Olm from '@matrix-org/olm';
 // import { logger } from 'matrix-js-sdk/lib/logger';
-
+import localForage from 'localforage';
 import { secret } from './state/auth';
 import RoomList from './state/RoomList';
 import AccountData from './state/AccountData';
@@ -29,9 +29,11 @@ class InitMatrix extends EventEmitter {
   accountData: AccountData;
   roomsInput: RoomsInput;
   notifications: Notifications;
+  localStorageLoaded: boolean;
   constructor() {
     super();
     navigation.initMatrix = this;
+    this.localStorageLoaded = false;
   }
 
   async init() {
@@ -48,11 +50,6 @@ class InitMatrix extends EventEmitter {
     // });
     // await indexedDBStore.startup();
 
-    this.roomList = {
-      spaces: new Set(),
-      rooms: new Set(),
-      directs: new Set(),
-    } as RoomList;
     this.matrixClient = new MatrixClientA(secret.userId!, secret.accessToken!);
     // this.matrixClient = sdk.createClient({
     //   baseUrl: secret.baseUrl,
@@ -65,11 +62,17 @@ class InitMatrix extends EventEmitter {
     //   cryptoCallbacks,
     //   verificationMethods: ['m.sas.v1'],
     // });
-    await this.matrixClient.initCrypto();
+    this.matrixClient.loadLocalStorageEvents();
     await this.matrixClient.startClient({
       lazyLoadMembers: true,
     });
     this.matrixClient.setGlobalErrorOnUnknownDevices(false);
+
+    // this.roomList.spaces = new Set();
+    // this.roomList.rooms = new Set();
+    // this.roomList.directs = new Set();
+    // this.roomList.mDirects = new Set();
+    // this.roomList.inviteDirects = new Set();
   }
 
   async setupSync() {
@@ -84,35 +87,43 @@ class InitMatrix extends EventEmitter {
         case 'PREPARED':
           console.log('PREPARED state');
           console.log('Previous state: ', prevState);
+          this.roomList = new RoomList(this.matrixClient);
+          await this.loadLocalStorageEvents();
           // TODO: remove global.initMatrix at end
           // global.initMatrix = this;
           if (prevState === null) {
-            this.roomList = new RoomList(this.matrixClient);
-
             let subscribed_channels = [] as TSubscribedChannel[];
             if (localStorage['subscribed_channels']) {
               const sc = localStorage['subscribed_channels'];
               subscribed_channels = JSON.parse(sc);
             } else {
               subscribed_channels = defaultChatroomList;
-              localStorage.setItem('subscribed_channels', JSON.stringify(subscribed_channels));
             }
-            for (let i = 0; i < subscribed_channels.length; i++) {
-              if (subscribed_channels[i].type == 'groupChannel') {
-                let room = new TRoom(subscribed_channels[i].user_id, 'groupChannel');
-                room.roomId = subscribed_channels[i].user_id;
-                this.roomList.rooms.add(room.roomId);
-                // this.matrixClient.subChannelMessage(room.roomId);
-              } else if (subscribed_channels[i].type == 'single') {
-                let room = new TRoom(subscribed_channels[i].user_id, 'single');
-                room.roomId = subscribed_channels[i].user_id;
-                this.roomList.directs.add(room.roomId);
-                // this.matrixClient.subdmMessages(subscribed_channels[i].user_id);
-              } else if (subscribed_channels[i].type == 'groupRelay') {
-                // this.matrixClient.subGlobalMessages();
+            let cs: any = [];
+            if (this.roomList.directs.size == 0) {
+              for (let i = 0; i < subscribed_channels.length; i++) {
+                if (subscribed_channels[i].type == 'single') {
+                  const roomId = subscribed_channels[i].user_id;
+                  this.roomList.directs.add(roomId);
+                }
               }
+              localForage.setItem('directs', Array.from(this.roomList.directs));
             }
-            this.matrixClient.subDmFromStranger();
+            if (this.roomList.rooms.size == 0) {
+              for (let i = 0; i < subscribed_channels.length; i++) {
+                if (subscribed_channels[i].type == 'groupChannel') {
+                  const roomId = subscribed_channels[i].user_id;
+                  this.roomList.rooms.add(roomId);
+                }
+              }
+              localForage.setItem('rooms', Array.from(this.roomList.directs));
+            }
+
+            // this.matrixClient.subChannelMessages(cs);
+            // this.matrixClient.fetchChannelsMeta(cs);
+
+            // this.matrixClient.subDmFromStranger();
+            // this.matrixClient.subDmFromStranger2();
 
             this.accountData = new AccountData(this.roomList);
             this.roomsInput = new RoomsInput(this.matrixClient, this.roomList);
@@ -193,6 +204,65 @@ class InitMatrix extends EventEmitter {
       window.location.reload();
     });
   }
+  loadLocalStorageEvents = async () => {
+    const latestMsgs = await localForage.getItem('latestMsgs');
+    const contactList = await localForage.getItem('contactList');
+    const rooms = await localForage.getItem('rooms');
+    const directs = await localForage.getItem('directs');
+    const inviteDirects = await localForage.getItem('inviteDirects');
+    const latestMsgsByEveryone = await localForage.getItem('latestMsgsByEveryone');
+    const followEvents = await localForage.getItem('followEvents');
+    const profileEvents = await localForage.getItem('profileEvents');
+    const notificationEvents = await localForage.getItem('notificationEvents');
+    const eventsById = await localForage.getItem('eventsById');
+    const dms = await localForage.getItem('dms');
+    const keyValueEvents = await localForage.getItem('keyValueEvents');
+    if (Array.isArray(contactList)) {
+      this.roomList.mDirects = new Set(contactList);
+    }
+    if (Array.isArray(rooms)) {
+      this.roomList.rooms = new Set(rooms);
+    }
+    if (Array.isArray(directs)) {
+      this.roomList.directs = new Set(directs);
+    }
+    if (Array.isArray(inviteDirects)) {
+      this.roomList.inviteDirects = new Set(inviteDirects);
+    }
+
+    this.localStorageLoaded = true;
+    if (Array.isArray(followEvents)) {
+      followEvents.forEach((e) => this.matrixClient.handleEvent(e));
+    }
+    if (Array.isArray(profileEvents)) {
+      profileEvents.forEach((e) => this.matrixClient.handleEvent(e));
+    }
+    if (Array.isArray(latestMsgs)) {
+      latestMsgs.forEach((msg) => {
+        this.matrixClient.handleEvent(msg);
+      });
+    }
+    if (Array.isArray(latestMsgsByEveryone)) {
+      latestMsgsByEveryone.forEach((msg) => {
+        this.matrixClient.handleEvent(msg);
+      });
+    }
+    if (Array.isArray(notificationEvents)) {
+      notificationEvents.forEach((msg) => {
+        this.matrixClient.handleEvent(msg);
+      });
+    }
+    if (Array.isArray(dms)) {
+      dms.forEach((msg) => {
+        this.matrixClient.handleEvent(msg);
+      });
+    }
+    if (Array.isArray(keyValueEvents)) {
+      keyValueEvents.forEach((msg) => {
+        this.matrixClient.handleEvent(msg);
+      });
+    }
+  };
 
   async logout() {
     this.matrixClient.stopClient();

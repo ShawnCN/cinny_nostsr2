@@ -28,7 +28,7 @@
     "src",
     "src/**/**/*.ts",
     "src/**/*.ts",
-    "types",
+    "types/*.ts",
     "types/index.d.ts",
     "src/app/client",
     "src/custom.d.ts"
