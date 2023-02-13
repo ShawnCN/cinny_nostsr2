@@ -76,6 +76,17 @@ function InviteUser({
     updateCreatedDM(getMapCopy(createdDM));
     updateRoomIdToUserId(getMapCopy(roomIdToUserId));
   }
+  function updateFoundProfileInfo(info: { displayName: string; about: string; avatarUrl: string }) {
+    console.log(info);
+    updateUsers([
+      {
+        user_id: usernameRef.current.value,
+        display_name: info.displayName,
+        avatarUrl: info.avatarUrl,
+      },
+    ]);
+    updateIsSearching(false);
+  }
 
   async function searchUser(username: string) {
     const inputUsername = username.trim();
@@ -123,19 +134,21 @@ function InviteUser({
     updateSearchQuery({ username: inputUsername });
 
     try {
-      const result = await mx.getProfileInfo(inputUsername);
-      if (result) {
-        updateUsers([
-          {
-            user_id: inputUsername,
-            display_name: result.displayName,
-            avatarUrl: result.avatarUrl,
-          },
-        ]);
-      } else {
-        updateSearchQuery({ error: `${inputUsername} not found!` });
-      }
-    } catch (e) {
+      await mx.getProfileInfo(inputUsername);
+      // const result = await mx.getProfileInfo(inputUsername);
+      // if (result) {
+      //   updateUsers([
+      //     {
+      //       user_id: inputUsername,
+      //       display_name: result.displayName,
+      //       avatarUrl: result.avatarUrl,
+      //     },
+      //   ]);
+      // } else {
+      //   updateSearchQuery({ error: `${inputUsername} not found!` });
+      // }
+    } catch (e: any) {
+      console.error(e.message);
       updateSearchQuery({ error: `${inputUsername} not found!` });
     }
     updateIsSearching(false);
@@ -287,6 +300,7 @@ function InviteUser({
 
   useEffect(() => {
     initMatrix.roomList.on(cons.events.roomList.ROOM_CREATED, onDMCreated);
+    mx.on('foundProfileInfo', updateFoundProfileInfo);
     return () => {
       initMatrix.roomList.removeListener(cons.events.roomList.ROOM_CREATED, onDMCreated);
     };
@@ -309,7 +323,7 @@ function InviteUser({
             searchNostrUser(usernameRef.current.value);
           }}
         >
-          <Input value={searchTerm} forwardRef={usernameRef} label="Name or userId" />
+          <Input value={searchTerm} forwardRef={usernameRef} label="npub..." />
           <Button disabled={isSearching} iconSrc={UserIC} variant="primary" type="submit">
             Search
           </Button>

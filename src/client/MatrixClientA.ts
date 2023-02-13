@@ -5,6 +5,7 @@ import TEvent from '../../types/TEvent';
 import TRoom from '../../types/TRoom';
 import TRoomMember from '../../types/TRoomMember';
 import TUser from '../../types/TUser';
+import * as bech32 from 'bech32-buffer';
 import {
   fetchChannelMetaFromRelay,
   fetchContacts,
@@ -18,7 +19,7 @@ import {
   formatRoomMemberFromNostrEvent,
   getRelayStatus,
 } from '../util/matrixUtil';
-import { defaultName } from '../util/nostrUtil';
+import { defaultName, toNostrHexAddress } from '../util/nostrUtil';
 import EventEmitter from './EventEmitter';
 import { aevent2, defaultChatroomList, stage3relays, TChannelMapList } from './state/cons';
 
@@ -175,50 +176,29 @@ class MatrixClientA extends EventEmitter {
   }
   // search user from relays
   async getProfileInfo(userId: string) {
-    try {
-      const nostrEvent = await this.fetchUserMeta(userId);
-      let user = {} as { displayName: string; about: string; avatarUrl: string };
-      if (!nostrEvent) {
-        // maybe this user exists but didn't set any profile.
-        if (userId.substring(0, 4) == 'npub') {
-          let { type, data } = nip19.decode(userId);
-          if (type == 'npub') {
-            return {
-              displayName: userId,
-              about: null,
-              avatarUrl: null,
-            };
-          } else {
-            return null;
-          }
-        }
-
-        if (userId.length == 64) {
-          return {
-            displayName: userId,
-            about: null,
-            avatarUrl: null,
-          };
-        } else {
-          return null;
-        }
-      }
-      const { name, about, picture } = JSON.parse(nostrEvent.content);
-      if (name && name.length > 0) {
-        user.displayName = name;
-      }
-      if (about && about.length > 0) {
-        user.about = about;
-      }
-      if (picture && picture.length > 0) {
-        user.avatarUrl = picture;
-      }
-
-      return user;
-    } catch (e) {
-      console.log(e);
-      return null;
+    let { type, data } = nip19.decode(userId);
+    if (type != 'npub') throw new Error('Invalid user ID');
+    const pubkeyHex = toNostrHexAddress(userId);
+    if (!pubkeyHex) throw new Error('Invalid user ID');
+    this.emit('foundProfileInfo', {
+      displayName: defaultName(userId, 'npub'),
+      about: null,
+      avatarUrl: null,
+    });
+    const nostrEvent = await this.fetchUserMeta(pubkeyHex);
+    let user = {} as { displayName: string; about: string; avatarUrl: string };
+    if (!nostrEvent) return null;
+    const { name, about, picture } = JSON.parse(nostrEvent.content);
+    if (name && name.length > 0) {
+      user.displayName = name;
     }
+    if (about && about.length > 0) {
+      user.about = about;
+    }
+    if (picture && picture.length > 0) {
+      user.avatarUrl = picture;
+    }
+    this.emit('foundProfileInfo', user);
   }
   async searchUserDirectory({ term: string, limit: number }) {
     return Promise.resolve(null);
