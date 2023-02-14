@@ -266,25 +266,9 @@ function InviteUser({
       );
     };
 
-    return users.map((user) => {
-      const userId = user.user_id;
-      let name = typeof user.display_name === 'string' ? user.display_name : userId;
-      return (
-        <RoomTile
-          key={userId}
-          avatarSrc={
-            typeof user.avatarUrl === 'string'
-              ? // ? mx.mxcUrlToHttp(user.avatarUrl, 42, 42, 'crop')
-                user.avatarUrl
-              : null
-          }
-          name={name}
-          id={userId}
-          options={renderOptions(userId, user)}
-          desc={renderError(userId)}
-        />
-      );
-    });
+    return users.map((user) => (
+      <RenderUserTile user={user} renderOptions={renderOptions} renderError={renderError} />
+    ));
   }
   useEffect(() => {
     if (isOpen && (typeof searchTerm != 'string' || searchTerm.length == 0)) {
@@ -364,6 +348,46 @@ function InviteUser({
         {users.length !== 0 && <div className="invite-user__content">{renderUserList()}</div>}
       </div>
     </PopupWindow>
+  );
+}
+
+interface IPropsRenderUserTile {
+  user: SearchResultUser;
+  renderOptions: (arg0: string, user: SearchResultUser) => void;
+  renderError: (arg0: string) => void;
+}
+
+function RenderUserTile({ user, renderOptions, renderError }: IPropsRenderUserTile) {
+  const userId = user.user_id;
+  let name = typeof user.display_name === 'string' ? user.display_name : userId;
+  const [display, setDisplay] = useState<SearchResultUser>(user);
+  useEffect(() => {
+    initMatrix.matrixClient.getUserWithCB(user.user_id, (profile) => {
+      if (profile) {
+        setDisplay({
+          user_id: user.user_id,
+          avatarUrl: profile.picture,
+          display_name: profile.name,
+        });
+      }
+    });
+  }, []);
+
+  return (
+    <RoomTile
+      key={userId}
+      avatarSrc={
+        typeof display?.avatarUrl === 'string'
+          ? // ? mx.mxcUrlToHttp(user.avatarUrl, 42, 42, 'crop')
+            display.avatarUrl
+          : null
+      }
+      name={display?.display_name}
+      id={userId}
+      options={renderOptions(userId, user)}
+      desc={renderError(userId)}
+      type="single"
+    />
   );
 }
 

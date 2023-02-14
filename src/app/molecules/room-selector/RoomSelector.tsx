@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import './RoomSelector.scss';
 
@@ -72,6 +72,15 @@ function RoomSelector({
   onContextMenu,
 }) {
   const room = initMatrix.matrixClient.getRoom(roomId);
+  const [display, setDisplay] = useState({ name, imageSrc });
+  useEffect(() => {
+    initMatrix.matrixClient.getChannelInfoWithCB(roomId, (profile) => {
+      console.log('==============', profile);
+      if (profile) {
+        setDisplay({ name: profile.name, imageSrc: profile.picture });
+      }
+    });
+  }, []);
   return (
     <RoomSelectorWrapper
       isSelected={isSelected}

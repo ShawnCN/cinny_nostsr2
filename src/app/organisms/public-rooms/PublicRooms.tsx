@@ -312,6 +312,7 @@ function PublicRooms({ isOpen, searchTerm = undefined, onRequestClose }: IPropsP
       return (
         <RoomTile
           key={room.roomId}
+          type={room.type}
           avatarSrc={
             typeof room.avatarUrl === 'string'
               ? // ? initMatrix.matrixClient.mxcUrlToHttp(room.avatarUrl, 42, 42, 'crop')

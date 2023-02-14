@@ -31,6 +31,7 @@ import EventEmitter from './EventEmitter';
 import { aevent2, defaultChatroomList, stage3relays, TChannelMapList } from './state/cons';
 import { Debounce } from '../util/common';
 import SortedLimitedEventSet from '../../types/SortedLimitedEventSet';
+import { savechannelProfileEventsToLocal, saveprofileEventsToLocal } from '../util/localForageUtil';
 const debounce = new Debounce();
 class MatrixClientA extends EventEmitter {
   store: { deleteAllData: () => Promise<any> };
@@ -43,7 +44,10 @@ class MatrixClientA extends EventEmitter {
   blockedUsers: Set<string>;
   profileEvents: Map<string, any>;
   profiles: Map<string, any>;
-  channelProfiles: Map<string, { name: string; about: string; picture: string; create_at: number }>;
+  channelProfiles: Map<
+    string,
+    { name: string; about: string; picture: string; created_at: number }
+  >;
 
   channelProfileEvents: Map<string, any>;
   contactList: Set<string>;
@@ -151,9 +155,6 @@ class MatrixClientA extends EventEmitter {
     relay.on('notice', (e: any) => {
       console.log(`notice from ${relay.url}   ${JSON.stringify(e)} `);
     });
-    // if (!relayInstance[action.payload.host]) {
-    //   relayInstance[action.payload.host] = relay;
-    // }
   }
   stopClient() {
     console.log('stopClient');
@@ -240,6 +241,24 @@ class MatrixClientA extends EventEmitter {
       profile.created_at = nostrEvent.created_at;
       this.profiles.set(userId, profile);
       this.profileEvents.set(userId, nostrEvent);
+      saveprofileEventsToLocal(this.profileEvents);
+      cb(profile);
+    }
+  }
+
+  async getChannelInfoWithCB(channelId: string, cb: (profile: any) => void) {
+    const profile = this.channelProfiles.get(channelId);
+    if (profile) {
+      cb(profile);
+      return;
+    }
+    const nostrEvent = await this.fetchChannelMeta(channelId);
+    if (nostrEvent) {
+      const profile = JSON.parse(nostrEvent.content);
+      profile.created_at = nostrEvent.created_at;
+      this.channelProfiles.set(channelId, profile);
+      this.channelProfileEvents.set(channelId, nostrEvent);
+      savechannelProfileEventsToLocal(this.channelProfileEvents);
       cb(profile);
     }
   }
@@ -352,9 +371,11 @@ class MatrixClientA extends EventEmitter {
   async publicRooms({ server, limit, since, include_all_networks, filter }: TPublicRooms) {
     let roomId = filter.generic_search_term;
     if (roomId.trim().length == 0) {
+      let rooms = Array.from(this.publicRoomList.values());
+      rooms = rooms.filter((room) => room.type == 'groupChannel');
       return {
         // chunk: ['room1', 'room2', 'room3'],
-        chunk: Array.from(this.publicRoomList.values()),
+        chunk: rooms,
         next_batch: '',
       };
     }
@@ -604,7 +625,7 @@ class MatrixClientA extends EventEmitter {
         }
       }
     }
-    hasNewSubscribedChannels && this.subChannelMessages();
+    hasNewSubscribedChannels && this.subChannelMessage();
     hasNewUsers && this.subscribeToProfiles(); // TODO subscribe to old stuff from new authors, don't resubscribe to all
     hasNewChannelProfiles && this.fetchChannelsMeta();
   };
@@ -617,40 +638,63 @@ class MatrixClientA extends EventEmitter {
     return 'actions';
   }
   subGlobalMessages = () => {
-    console.log('subGlobalMessages', this.relayInstance);
-    for (let [k, relay] of this.relayInstance) {
-      const filter = {
-        kinds: [1],
-        limit: 20,
-      };
-      if (!relay) return;
-      const sub = relay.sub([filter]);
-      const subDetail = {
-        roomId: 'globalfeed',
-        type: 'groupRelay',
-        relayUrl: relay.url,
-        sub: sub,
-      };
+    // for (let [k, relay] of this.relayInstance) {
+    const filter = {
+      kinds: [1],
+      limit: 20,
+    };
+    //   if (!relay) return;
+    //   const sub = relay.sub([filter]);
+    //   sub.on('event', async (event: NostrEvent) => {
+    //     this.handleEvent(event);
+    //   });
+    // }
 
-      sub.on('event', async (event: NostrEvent) => {
-        this.handleEvent(event);
-      });
-    }
+    this.sendSubToRelays([filter], 'subGlobalMessages');
   };
   subChannelMessage = (channelId: string[]) => {
-    for (let [k, relay] of this.relayInstance) {
-      const filter = {
-        kinds: [42],
-        '#e': channelId,
-        limit: 13,
-      };
-      if (!relay || relay.status != 1) continue;
-      const sub = relay.sub([filter]);
-      sub.on('event', (event: NostrEvent) => {
-        console.log(event);
-        this.handleEvent(event);
-      });
-    }
+    // for (let [k, relay] of this.relayInstance) {
+    const filter = {
+      kinds: [42],
+      '#e': channelId,
+      limit: 13,
+    };
+    //   if (!relay || relay.status != 1) continue;
+    //   const sub = relay.sub([filter]);
+    //   sub.on('event', (event: NostrEvent) => {
+    //     console.log(event);
+    //     this.handleEvent(event);
+    //   });
+    // }
+    this.sendSubToRelays([filter], 'subChannelMessage');
+  };
+  subDmFromStranger = () => {
+    const pubkey = this.user.userId;
+    // for (let [k, relay] of this.relayInstance) {
+    //   const filter = {
+    //     kinds: [4],
+    //     '#p': [pubkey],
+    //     limit: 30,
+    //   };
+
+    //   if (!relay || relay.status != 1) continue;
+    //   // updateUsermap(store, pubkey);
+    //   const sub = relay.sub([filter]);
+    //   sub.on('event', async (event: NostrEvent) => {
+    //     this.handleEvent(event);
+    //   });
+    //   sub.on('eose', () => {
+    //     // sub.unsub();
+    //     // console.log('sub dm from stanger eose')
+    //   });
+    // }
+
+    const filter = {
+      kinds: [4],
+      '#p': [pubkey],
+      limit: 30,
+    };
+    this.sendSubToRelays([filter], 'subDmFromStranger');
   };
 
   fetchChannelsMeta = debounce._((channels: string[]) => {
@@ -703,59 +747,8 @@ class MatrixClientA extends EventEmitter {
 
     return channel;
   };
-  subdmMessages = (friendPubkey: string) => {
-    const userPubkey = this.user.userId;
-    for (let [k, relay] of this.relayInstance) {
-      if (!relay || getRelayStatus(relay) != 1) continue;
-      // updateUsermap(store, friendPubkey);
-      let time_for_since = 0;
-      const filter = {
-        authors: [userPubkey, friendPubkey],
-        kinds: [4],
-        '#p': [userPubkey, friendPubkey],
-        since: time_for_since,
-        limit: 13,
-      };
-      const sub = relay.sub([filter]);
-      const subDetail = {
-        roomId: friendPubkey,
-        type: 'single',
-        relayUrl: relay.url,
-        sub: sub,
-      };
-      sub.on('event', (event: NostrEvent) => {
-        console.log(event, event.content);
-      });
-      sub.on('eose', () => {
-        // sub.unsub();
-        // console.log('sub dm messages eose')
-      });
-    }
-  };
-  subDmFromStranger = () => {
-    const pubkey = this.user.userId;
-    for (let [k, relay] of this.relayInstance) {
-      const filter = {
-        kinds: [4],
-        '#p': [pubkey],
-        limit: 30,
-      };
-      if (!relay || relay.status != 1) continue;
-      // updateUsermap(store, pubkey);
-      const sub = relay.sub([filter]);
-      sub.on('event', async (event: NostrEvent) => {
-        this.handleEvent(event);
-      });
-      sub.on('eose', () => {
-        // sub.unsub();
-        // console.log('sub dm from stanger eose')
-      });
-    }
-  };
 
   sendSubToRelays = (filters: Filter[], id: string, once = false, unsubscribeTimeout = 0) => {
-    // if subs with same id already exists, remove them
-
     if (id) {
       const subs = this.subscriptionsByName.get(id);
       if (subs) {
@@ -797,6 +790,9 @@ class MatrixClientA extends EventEmitter {
         }, unsubscribeTimeout);
       }
     }
+
+    console.log(this.subscriptionsByName);
+    console.log(this.subscribedFiltersByName);
   };
   subscribeToProfiles = debounce._(() => {
     const now = Math.floor(Date.now() / 1000);
@@ -863,7 +859,7 @@ class MatrixClientA extends EventEmitter {
       user_id = data as string;
     }
     for (let [key, relay] of this.relayInstance) {
-      if (!relay || getRelayStatus(relay) != 1) {
+      if (!relay || relay.status != 1) {
         console.log('not found', relay.url);
         continue;
       }
@@ -932,10 +928,9 @@ class MatrixClientA extends EventEmitter {
     // this.handledMsgsPerSecond++;
 
     // this.subscribedPosts.delete(event.id);
-
     switch (event.kind) {
       case 0:
-        if (this.handleMetadata(event) === false) {
+        if (this.handleMetaEvent(event) === false) {
           return;
         }
         break;
@@ -1048,7 +1043,7 @@ class MatrixClientA extends EventEmitter {
       this.emit('Room.myMembership', room, membership, prevMembership);
     }
   };
-  handleMetadata(event: Event) {
+  handleMetaEvent(event: Event) {
     try {
       const existing = this.profiles.get(event.pubkey);
 
@@ -1065,7 +1060,6 @@ class MatrixClientA extends EventEmitter {
         this.profileEvents.set(event.pubkey, event);
         this.localStorageLoaded && this.saveLocalStorageProfilesAndContact(this);
       }
-      //}
     } catch (e) {
       console.log('error parsing nostr profile', e, event);
     }
@@ -1073,8 +1067,8 @@ class MatrixClientA extends EventEmitter {
   handleChannelMetaEvent = (event: NostrEvent) => {
     console.log('handleChannelMetaEvent', event.content);
     try {
-      const existing = this.channelProfileEvents.get(event.pubkey);
-      if (existing?.created_at >= event.created_at) {
+      const existing = this.channelProfiles.get(event.pubkey);
+      if (!existing?.created_at || existing?.created_at >= event.created_at) {
         return false;
       }
       const profile = JSON.parse(event.content);
@@ -1084,8 +1078,7 @@ class MatrixClientA extends EventEmitter {
       const existingEvent = this.channelProfileEvents.get(event.pubkey);
       if (!existingEvent || existingEvent.created_at < event.created_at) {
         this.channelProfileEvents.set(event.pubkey, event);
-        const channelProfileEvents = Array.from(this.channelProfileEvents.values());
-        localForage.setItem('channelProfileEvents', channelProfileEvents);
+        savechannelProfileEventsToLocal(this.channelProfileEvents);
       }
     } catch (e) {
       console.log('error parsing nostr profile', e, event);

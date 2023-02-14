@@ -52,7 +52,7 @@ function Selector({ roomId, isDM, drawerPostie, onClick }) {
   return (
     <RoomSelector
       key={roomId}
-      name={room?.name}
+      name={room?.name ? room.name : null}
       roomId={roomId}
       imageSrc={isDM ? imageSrc : null}
       iconSrc={isDM ? null : joinRuleToIconSrc(room?.getJoinRule(), room.isSpaceRoom())}

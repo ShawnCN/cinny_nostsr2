@@ -113,7 +113,7 @@ class InitMatrix extends EventEmitter {
                 // this.matrixClient.subChannelMessage(roomId);
               }
             }
-            // this.matrixClient.subChannelMessage(Array.from(this.roomList.rooms));
+            this.matrixClient.subChannelMessage(Array.from(this.roomList.rooms));
             localForage.setItem('rooms', Array.from(this.roomList.directs));
 
             this.matrixClient.fetchChannelsMeta(cs);
@@ -292,6 +292,7 @@ class InitMatrix extends EventEmitter {
 
     if (contactsList && contactsList.length > 0) {
       contactsList.forEach((contact) => {
+        // this.roomList.directs.add(contact[0]);
         this.roomList.mDirects.add(contact[0]);
         if (!this.matrixClient.publicRoomList.get(contact[0])) {
           let aroom = new TRoom(contact[0], 'single');

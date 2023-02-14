@@ -45,13 +45,12 @@ class RoomList extends EventEmitter {
 
     // Contains roomId to parent spaces roomId mapping of all spaces children.
     // No matter if you have joined those children rooms or not.
+    this.spaces = new Set();
     this.roomIdToParents = new Map();
     this.inviteDirects = new Set();
     this.inviteSpaces = new Set();
     this.inviteRooms = new Set();
-
     this.directs = new Set();
-    this.spaces = new Set();
     this.rooms = new Set();
     this.mDirects = new Set();
 

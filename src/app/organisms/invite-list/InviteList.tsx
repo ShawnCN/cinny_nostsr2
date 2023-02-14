@@ -68,6 +68,7 @@ function InviteList({ isOpen, onRequestClose }: IPropsInviteList) {
     return (
       <RoomTile
         key={myRoom.roomId}
+        type={myRoom.type}
         name={roomName}
         avatarSrc={initMatrix.matrixClient
           .getRoom(roomId)!
@@ -112,6 +113,7 @@ function InviteList({ isOpen, onRequestClose }: IPropsInviteList) {
           return (
             <RoomTile
               key={myRoom.roomId}
+              type={myRoom.type}
               name={roomName}
               id={myRoom.getDMInviter() || roomId}
               options={

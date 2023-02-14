@@ -362,4 +362,6 @@ export const aevent4 = {
   room_id: '!AGeUOyHpLMMrLYAkXW:matrix.org',
 };
 
+export const log = console.log.bind(console);
+
 export default cons;

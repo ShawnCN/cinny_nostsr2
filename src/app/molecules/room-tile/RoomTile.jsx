@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import './RoomTile.scss';
 
@@ -8,12 +8,23 @@ import colorMXID from '../../../util/colorMXID';
 
 import Text from '../../atoms/text/Text';
 import Avatar from '../../atoms/avatar/Avatar';
+import { toNostrBech32Address } from '../../../util/nostrUtil';
 
-function RoomTile({ avatarSrc, name, id, inviterName, memberCount, desc, options }) {
+function RoomTile({ avatarSrc, name, id, inviterName, memberCount, desc, options, type }) {
+  const [displayId, setDisplayId] = useState(id);
+  useEffect(() => {
+    if (type == 'single') {
+      const id2 = toNostrBech32Address(id, 'npub');
+      setDisplayId(id2);
+    } else {
+      const id2 = toNostrBech32Address(id, 'note');
+      setDisplayId(id2);
+    }
+  }, []);
   return (
     <div className="room-tile">
       <div className="room-tile__avatar">
-        <Avatar imageSrc={avatarSrc} bgColor={colorMXID(id)} text={name} id={id} />
+        <Avatar imageSrc={avatarSrc} bgColor={colorMXID(id)} text={name} id={id} type={type} />
       </div>
       <div className="room-tile__content">
         <Text variant="s1">{twemojify(name)}</Text>
@@ -22,7 +33,7 @@ function RoomTile({ avatarSrc, name, id, inviterName, memberCount, desc, options
             ? `Invited by ${inviterName} to ${id}${
                 memberCount === null ? '' : ` • ${memberCount} members`
               }`
-            : id + (memberCount === null ? '' : ` • ${memberCount} members`)}
+            : displayId + (memberCount === null ? '' : ` • ${memberCount} members`)}
         </Text>
         {desc !== null && typeof desc === 'string' ? (
           <Text className="room-tile__content__desc" variant="b2">
