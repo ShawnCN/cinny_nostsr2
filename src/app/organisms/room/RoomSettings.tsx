@@ -39,6 +39,7 @@ import ChevronTopIC from '../../../../public/res/ic/outlined/chevron-top.svg';
 
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
+import TRoom from '../../../../types/TRoom';
 
 const tabText = {
   GENERAL: 'General',
@@ -84,7 +85,7 @@ const tabItems = [
 
 function GeneralSettings({ roomId }) {
   const mx = initMatrix.matrixClient;
-  const room = mx.getRoom(roomId);
+  const room = mx.getRoom(roomId) as TRoom;
   const canInvite = room.canInvite(mx.getUserId());
 
   return (
@@ -149,10 +150,15 @@ SecuritySettings.propTypes = {
   roomId: PropTypes.string.isRequired,
 };
 
-function RoomSettings({ roomId }) {
+interface IPropsRoomSettings {
+  roomId: string;
+  roomType: string;
+}
+
+function RoomSettings({ roomId, roomType }: IPropsRoomSettings) {
   const [, forceUpdate] = useForceUpdate();
   const [selectedTab, setSelectedTab] = useState(tabItems[0]);
-  const room = initMatrix.matrixClient.getRoom(roomId);
+  const room = initMatrix.matrixClient.getRoom(roomId) as TRoom;
 
   const handleTabChange = (tabItem) => {
     setSelectedTab(tabItem);
@@ -160,7 +166,7 @@ function RoomSettings({ roomId }) {
 
   useEffect(() => {
     let mounted = true;
-    const settingsToggle = (isVisible, tab) => {
+    const settingsToggle = (isVisible: boolean, tab: string) => {
       if (!mounted) return;
       if (isVisible) {
         const tabItem = tabItems.find((item) => item.text === tab);
@@ -186,7 +192,7 @@ function RoomSettings({ roomId }) {
               className="room-settings__header-btn"
               onClick={() => toggleRoomSettings()}
               type="button"
-              onMouseUp={(e) => blurOnBubbling(e, '.room-settings__header-btn')}
+              onMouseUp={(e: any) => blurOnBubbling(e, '.room-settings__header-btn')}
             >
               <TitleWrapper>
                 <Text variant="s1" weight="medium" primary>
@@ -217,9 +223,9 @@ function RoomSettings({ roomId }) {
   );
 }
 
-RoomSettings.propTypes = {
-  roomId: PropTypes.string.isRequired,
-};
+// RoomSettings.propTypes = {
+//   roomId: PropTypes.string.isRequired,
+// };
 
 export default RoomSettings;
 export { tabText };

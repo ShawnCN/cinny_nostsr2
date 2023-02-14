@@ -175,23 +175,23 @@ class MatrixClientA extends EventEmitter {
     console.log('setGlobalErrorOnUnknownDevices');
   }
   getRoom(roomId: string): TRoom | null {
-    // if (!roomId) {
-    //   return null;
-    // }
+    if (!roomId) {
+      return null;
+    }
     const room = this.publicRoomList.get(roomId);
     if (room) return room;
-    if (roomId.substring(0, 4) == 'npub') {
-      const aroom = new TRoom(roomId, 'single');
-
-      aroom.init();
-      this.publicRoomList.set(roomId, aroom);
-      return aroom;
-    } else {
-      const aroom = new TRoom(roomId, 'groupChannel');
-      aroom.init();
-      this.publicRoomList.set(roomId, aroom);
-      return aroom;
-    }
+    return null;
+    // if (roomId.substring(0, 4) == 'npub') {
+    //   const aroom = new TRoom(roomId, 'single');
+    //   aroom.init();
+    //   this.publicRoomList.set(roomId, aroom);
+    //   return aroom;
+    // } else {
+    //   const aroom = new TRoom(roomId, 'single');
+    //   aroom.init();
+    //   this.publicRoomList.set(roomId, aroom);
+    //   return aroom;
+    // }
   }
   getAccountData(eventType: 'm.direct' | string) {
     if (eventType === 'm.direct') {
@@ -410,14 +410,14 @@ class MatrixClientA extends EventEmitter {
     }
     for (let [key, relay] of this.relayInstance) {
       if (!relay || getRelayStatus(relay) != 1) {
-        console.log('not found', relay.url);
+        // console.log('not found', relay.url);
         continue;
       }
       console.log('start searching', relay.url);
       const a = await fetchChannelMetaFromRelay(roomId, relay);
 
       if (!a || Object.keys(a).length == 0) {
-        console.log('not found', relay.url);
+        // console.log('not found', relay.url);
         continue;
       }
       this.handleChannelMetaEvent(a);
@@ -892,7 +892,7 @@ class MatrixClientA extends EventEmitter {
     }
     for (let [key, relay] of this.relayInstance) {
       if (!relay || getRelayStatus(relay) != 1) {
-        console.log('not found', relay.url);
+        // console.log('not found', relay.url);
         continue;
       }
       console.log('start searching', relay.url);
@@ -900,7 +900,7 @@ class MatrixClientA extends EventEmitter {
       if (a && Object.keys(a).length > 1) {
         return a;
       } else {
-        console.log('not found', relay.url);
+        // console.log('not found', relay.url);
       }
     }
   }
@@ -912,7 +912,7 @@ class MatrixClientA extends EventEmitter {
     }
     for (let [key, relay] of this.relayInstance) {
       if (!relay || relay.status != 1) {
-        console.log('not found', relay.url);
+        // console.log('not found', relay.url);
         continue;
       }
       console.log('start searching', relay.url);
@@ -920,7 +920,7 @@ class MatrixClientA extends EventEmitter {
       if (a && Object.keys(a).length > 1) {
         return a;
       } else {
-        console.log('not found', relay.url);
+        // console.log('not found', relay.url);
       }
     }
   }

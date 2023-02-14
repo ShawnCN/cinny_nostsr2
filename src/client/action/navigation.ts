@@ -54,7 +54,7 @@ export function openSpaceAddExisting(roomId) {
   });
 }
 
-export function toggleRoomSettings(tabText) {
+export function toggleRoomSettings(tabText?: string) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.TOGGLE_ROOM_SETTINGS,
     tabText,

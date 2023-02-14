@@ -208,6 +208,10 @@ function RoomProfile({ roomId }) {
           )}
         </div>
         <Text variant="b3">{room.getCanonicalAlias() || bech32Id}</Text>
+        <Text variant="b3">
+          {roomId}
+          {room.type}
+        </Text>
         {roomTopic && <Text variant="b2">{twemojify(roomTopic, undefined, true)}</Text>}
       </div>
     );

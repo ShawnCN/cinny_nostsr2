@@ -724,3 +724,24 @@ export function invertColor(hex, bw) {
   // pad each with zeros and return
   return '#' + padZero(r) + padZero(g) + padZero(b);
 }
+export const initialDMroom = (userId: string, me: TUser) => {
+  let aroom = new TRoom(userId, 'single');
+  aroom.init();
+  const member = new TRoomMember(userId);
+  member.init();
+  aroom.addMember(member);
+  let me2 = new TRoomMember(me.userId);
+  me2.name = me.displayName;
+  me2.avatarSrc = me.avatarUrl;
+  aroom.addMember(me2);
+  return aroom;
+};
+export const initialChannelroom = (roomId: string, me: TUser) => {
+  let aroom = new TRoom(roomId, 'groupChannel');
+  aroom.init();
+  let me2 = new TRoomMember(me.userId);
+  me2.name = me.displayName;
+  me2.avatarSrc = me.avatarUrl;
+  aroom.addMember(me2);
+  return aroom;
+};
