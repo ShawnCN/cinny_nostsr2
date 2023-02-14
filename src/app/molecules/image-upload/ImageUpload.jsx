@@ -11,7 +11,7 @@ import RawIcon from '../../atoms/system-icons/RawIcon';
 
 import PlusIC from '../../../../public/res/ic/outlined/plus.svg';
 
-function ImageUpload({ text, bgColor, imageSrc, onUpload, onRequestRemove, size }) {
+function ImageUpload({ text, bgColor, imageSrc, onUpload, onRequestRemove, size, id, roomType }) {
   const [uploadPromise, setUploadPromise] = useState(null);
   const uploadImageRef = useRef(null);
 
@@ -47,7 +47,14 @@ function ImageUpload({ text, bgColor, imageSrc, onUpload, onRequestRemove, size 
           uploadImageRef.current.click();
         }}
       >
-        <Avatar imageSrc={imageSrc} text={text} bgColor={bgColor} size={size} />
+        <Avatar
+          imageSrc={imageSrc}
+          text={text}
+          bgColor={bgColor}
+          size={size}
+          type={roomType}
+          id={id}
+        />
         <div
           className={`img-upload__process ${
             uploadPromise === null ? ' img-upload__process--stopped' : ''

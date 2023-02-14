@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import './DrawerHeader.scss';
 
@@ -32,6 +32,7 @@ import HashGlobeIC from '../../../../public/res/ic/outlined/hash-globe.svg';
 import HashSearchIC from '../../../../public/res/ic/outlined/hash-search.svg';
 import SpacePlusIC from '../../../../public/res/ic/outlined/space-plus.svg';
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
+import Icons from '../../../Icons';
 
 interface IPropsHomeSpaceOptions {
   spaceId?: string;
@@ -156,6 +157,15 @@ function DrawerHeader({ selectedTab, spaceId = null as unknown as string }: IPro
       <HomeSpaceOptions spaceId={spaceId} afterOptionSelect={closeMenu} />
     ));
   };
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(
+      () => setCount(initMatrix.matrixClient.getConnectedRelayCount()),
+      2000
+    );
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <Header>
@@ -192,6 +202,15 @@ function DrawerHeader({ selectedTab, spaceId = null as unknown as string }: IPro
           size="small"
         />
       )} */}
+
+      <div className="flex">
+        {' '}
+        <small>
+          <span className={`icon`}>{Icons.network}</span>
+          <span>{count}</span>
+        </small>
+      </div>
+
       <IconButton
         onClick={openHomeSpaceOptions}
         tooltip="Add rooms/spaces"

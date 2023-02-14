@@ -185,7 +185,7 @@ function useTimeline(roomTimeline: RoomTimeline, eventId, readUptoEvtStore, even
 
   useEffect(() => {
     const limit = eventLimitRef.current;
-    const initTimeline = (eId) => {
+    const initTimeline = (eId: string) => {
       // NOTICE: eId can be id of readUpto, reply or specific event.
       // readUpTo: when user click jump to unread message button.
       // reply: when user click reply from timeline.

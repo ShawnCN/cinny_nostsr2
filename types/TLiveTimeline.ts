@@ -4,7 +4,16 @@ import TEvent from './TEvent';
 class TLiveTimeline {
   nextTimeline: any;
   prevTimeline: any;
+  events: TEvent[];
+  constructor(events: TEvent[]) {
+    if (events) {
+      this.events = events;
+    } else {
+      this.events = [];
+    }
+  }
   getEvents() {
+    return this.events;
     // console.log('nexttimeline', this.nextTimeline);
     // const e1 = new TEvent(aevent1);
     // const e2 = new TEvent(aevent2);

@@ -4,7 +4,7 @@ import TRoom from '../../../types/TRoom';
 import EventEmitter from '../EventEmitter';
 import initMatrix from '../InitMatrix';
 import MatrixClientA from '../MatrixClientA';
-import cons, { aevent2 } from './cons';
+import cons, { aevent2, log } from './cons';
 
 import settings from './settings';
 
@@ -90,6 +90,7 @@ class RoomTimeline extends EventEmitter {
   matrixClient: MatrixClientA;
   roomId: string;
   room: TRoom;
+  roomType: string;
   isOngoingPagination: boolean;
   ongoingDecryptionCount: number;
   initialized: boolean;
@@ -117,6 +118,7 @@ class RoomTimeline extends EventEmitter {
     this.matrixClient = initMatrix.matrixClient;
     this.roomId = roomId;
     this.room = this.matrixClient.getRoom(roomId)!;
+    this.roomType = this.room.type;
 
     this.liveTimeline = this.room.getLiveTimeline();
     this.activeTimeline = this.liveTimeline;
@@ -197,12 +199,12 @@ class RoomTimeline extends EventEmitter {
   async loadLiveTimeline() {
     this.activeTimeline = this.liveTimeline;
     await this._reset();
-    console.log('9999999999');
     this.emit(cons.events.roomTimeline.READY, null);
     return true;
   }
 
   async loadEventTimeline(eventId: string) {
+    log('load event timeline-----------------');
     // we use first unfiltered EventTimelineSet for room pagination.
     const timelineSet = this.getUnfilteredTimelineSet();
     try {
@@ -234,8 +236,11 @@ class RoomTimeline extends EventEmitter {
 
     const oldSize = this.timeline.length;
     try {
-      await this.matrixClient.paginateEventTimeline(timelineToPaginate, { backwards, limit });
-
+      const tl = await this.matrixClient.paginateEventTimeline(this.room, timelineToPaginate, {
+        backwards,
+        limit,
+      });
+      this.activeTimeline = new TLiveTimeline(tl);
       if (this.isEncrypted()) await this.decryptAllEventsOfTimeline(this.activeTimeline);
       this._populateTimelines();
 

@@ -29,10 +29,12 @@ import {
   getSubscriptionIdForName,
 } from '../util/nostrUtil';
 import EventEmitter from './EventEmitter';
-import { aevent2, defaultChatroomList, stage3relays, TChannelMapList } from './state/cons';
+import { aevent2, defaultChatroomList, log, stage3relays, TChannelMapList } from './state/cons';
 import { Debounce } from '../util/common';
 import SortedLimitedEventSet from '../../types/SortedLimitedEventSet';
 import { savechannelProfileEventsToLocal, saveprofileEventsToLocal } from '../util/localForageUtil';
+import TEventTimelineSet from '../../types/TEventTimelineSet';
+import { EventTimeline } from 'matrix-js-sdk';
 const debounce = new Debounce();
 class MatrixClientA extends EventEmitter {
   store: { deleteAllData: () => Promise<any> };
@@ -72,6 +74,7 @@ class MatrixClientA extends EventEmitter {
     this.blockedUsers = new Set<string>();
     this.profileEvents = new Map<string, any>();
     this.channelProfileEvents = new Map<string, any>();
+    this.channelProfiles = new Map<string, any>();
     this.profiles = new Map<string, any>();
     this.user.userId = userId;
     this.user.displayName = defaultName(userId, 'npub')!;
@@ -240,11 +243,7 @@ class MatrixClientA extends EventEmitter {
     }
     const nostrEvent = await this.fetchUserMeta(userId);
     if (nostrEvent) {
-      const profile = JSON.parse(nostrEvent.content);
-      profile.created_at = nostrEvent.created_at;
-      this.profiles.set(userId, profile);
-      this.profileEvents.set(userId, nostrEvent);
-      saveprofileEventsToLocal(this.profileEvents);
+      this.handleEvent(nostrEvent);
       cb(profile);
     }
   }
@@ -260,6 +259,9 @@ class MatrixClientA extends EventEmitter {
       const profile = JSON.parse(nostrEvent.content);
       profile.created_at = nostrEvent.created_at;
       this.channelProfiles.set(channelId, profile);
+      this.setRoomName(channelId, profile.name);
+      this.setRoomAvatar(channelId, profile.picture);
+
       this.channelProfileEvents.set(channelId, nostrEvent);
       savechannelProfileEventsToLocal(this.channelProfileEvents);
       cb(profile);
@@ -368,7 +370,18 @@ class MatrixClientA extends EventEmitter {
   setDisplayName(name: string) {
     this.user.displayName = name;
   }
-  async setRoomName(roomId, newName) {}
+  async setRoomName(roomId, newName) {
+    let room = this.publicRoomList.get(roomId);
+    if (room) {
+      room.name = newName;
+    }
+  }
+  async setRoomAvatar(roomId, avatar) {
+    let room = this.publicRoomList.get(roomId);
+    if (room) {
+      room.avatarUrl = avatar;
+    }
+  }
   async setRoomTopic(roomId, newTopic) {}
   async sendStateEvent(roomId, arg1: string, arg2: any, arg3: string) {}
   async publicRooms({ server, limit, since, include_all_networks, filter }: TPublicRooms) {
@@ -451,13 +464,42 @@ class MatrixClientA extends EventEmitter {
   isRoomEncrypted(roomId: string) {
     return true;
   }
-  async paginateEventTimeline(timelineToPaginate: any, { backwards, limit }) {
+  async paginateEventTimeline(
+    room: TRoom,
+    timelineToPaginate: EventTimeline,
+    { backwards, limit }: { backwards: boolean; limit: number }
+  ) {
+    let tl = [] as TEvent[];
+    let eventIds: string[] = [];
+    if (room.type == 'single') {
+      eventIds = this.directMessagesByUser.get(room.roomId)!.eventIds;
+    }
+    if (room.type == 'groupChannel') {
+      eventIds = this.channelMessagesByChannelId.get(room.roomId)!.eventIds;
+    }
+
+    for (let [k, v] of this.eventsById) {
+      if (eventIds.includes(k)) {
+        const mevent = formatChannelMsg(v);
+        const mc = new TEvent(mevent);
+        tl.push(mc);
+      }
+    }
+    log(timelineToPaginate);
+    return tl.reverse();
     console.log(`paginateEventTimeline`);
     console.log(timelineToPaginate);
     console.log(backwards, limit);
   }
-  getEventTimeline(timelineSet, eventId: string) {
-    return;
+  getEventTimeline(timelineSet: Set<TEvent>, eventId: string) {
+    const event = this.eventsById.get(eventId);
+    if (!event) return Promise.resolve(Array.from(timelineSet));
+    const mevent = formatChannelMsg(event);
+    const mc = new TEvent(mevent);
+    timelineSet.add(mc);
+    const a = Array.from(timelineSet);
+
+    return Promise.resolve(a);
   }
   async joinRoom(roomIdOrAlias: string, arg1: { viaServers: string[] }) {
     console.log(`joinRoom`);
@@ -672,14 +714,14 @@ class MatrixClientA extends EventEmitter {
 
     this.sendSubToRelays([filter], 'subGlobalMessages');
   };
-  subChannelMessage = (channelId: string[]) => {
+  subChannelMessage = (channelId: string) => {
     // for (let [k, relay] of this.relayInstance) {
     const filter = {
       kinds: [42],
-      '#e': channelId,
+      '#e': [channelId],
       limit: 200,
     };
-    this.sendSubToRelays([filter], 'subChannelMessage');
+    this.sendSubToRelays([filter], `'subChannelMessage'${channelId}`);
   };
   subDmFromStranger = () => {
     const pubkey = this.user.userId;
@@ -877,7 +919,6 @@ class MatrixClientA extends EventEmitter {
       console.log('start searching', relay.url);
       const a = await fetchChannelMetaFromRelay(user_id, relay);
       if (a && Object.keys(a).length > 1) {
-        console.log('Found', relay.url, a);
         return a;
       } else {
         console.log('not found', relay.url);
@@ -1002,7 +1043,6 @@ class MatrixClientA extends EventEmitter {
       this.channelMessagesByChannelId.set(channelId, new SortedLimitedEventSet(500));
     }
     this.channelMessagesByChannelId.get(channelId)?.add(event);
-    console.log(this.channelMessagesByChannelId);
   }
   handlePublicNostrEvent(event: NostrEvent) {
     this.eventsById.set(event.id, event);
@@ -1206,6 +1246,15 @@ class MatrixClientA extends EventEmitter {
     } as NostrEvent;
     const event2 = await getSignedEvent(event, this.user?.privatekey);
     this.publishEvent(event2);
+  };
+  getConnectedRelayCount = () => {
+    let count = 0;
+    for (const relay of this.relayInstance.values()) {
+      if (getRelayStatus(relay) === 1) {
+        count++;
+      }
+    }
+    return count;
   };
 }
 

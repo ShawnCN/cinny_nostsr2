@@ -19,7 +19,7 @@ interface IPropsAvatar {
   imageSrc?: string | null;
   size: 'large' | 'normal' | 'small' | 'extra-small';
   id?: string | null;
-  type: 'single' | 'groupChannel';
+  type: string;
 }
 
 const Avatar = React.forwardRef(

@@ -28,8 +28,9 @@ class TRoomMember {
   async init() {
     const nostrEvent = await initMatrix.matrixClient.fetchUserMeta(this.userId);
     // console.log('2666666666', nostrEvent?.content);
-    initMatrix.matrixClient.handleMetadata(nostrEvent);
+
     if (nostrEvent) {
+      initMatrix.matrixClient.handleMetaEvent(nostrEvent);
       const { name, about, picture } = JSON.parse(nostrEvent.content);
       // let member = new TRoomMember(userIdNpub);
       if (name && name != '') {

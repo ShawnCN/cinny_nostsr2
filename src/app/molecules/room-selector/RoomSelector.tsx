@@ -75,7 +75,6 @@ function RoomSelector({
   const [display, setDisplay] = useState({ name, imageSrc });
   useEffect(() => {
     initMatrix.matrixClient.getChannelInfoWithCB(roomId, (profile) => {
-      console.log('==============', profile);
       if (profile) {
         setDisplay({ name: profile.name, imageSrc: profile.picture });
       }
@@ -89,17 +88,17 @@ function RoomSelector({
       content={
         <>
           <Avatar
-            text={name}
+            text={display.name}
             bgColor={colorMXID(roomId)}
-            imageSrc={imageSrc}
+            imageSrc={display.imageSrc}
             iconColor="var(--ic-surface-low)"
             iconSrc={iconSrc}
             size="extra-small"
             id={roomId}
-            type={room.type}
+            type={room!.type}
           />
           <Text variant="b1" weight={isUnread ? 'medium' : 'normal'}>
-            {twemojify(name)}
+            {twemojify(display.name)}
             {parentName && (
               <Text variant="b3" span>
                 {' — '}

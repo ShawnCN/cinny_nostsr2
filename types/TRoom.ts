@@ -136,7 +136,6 @@ class TRoom {
   }
   // 一对一聊天室，选择对方用户。
   getAvatarFallbackMember() {
-    console.log(this.roomMembers);
     for (let [k, v] of this.roomMembers) {
       if (k != initMatrix.matrixClient.user.avatarUrl) {
         return v;

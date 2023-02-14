@@ -222,7 +222,7 @@ function RoomProfile({ roomId }) {
             text={roomName}
             bgColor={colorMXID(roomId)}
             id={roomId}
-            type={room?.type}
+            type={room!.type}
             size="large"
           />
         )}
@@ -233,6 +233,8 @@ function RoomProfile({ roomId }) {
             imageSrc={avatarSrc}
             onUpload={handleAvatarUpload}
             onRequestRemove={() => handleAvatarUpload(null)}
+            roomType={room!.type}
+            id={roomId}
           />
         )}
         {!isEditing && renderNameAndTopic()}

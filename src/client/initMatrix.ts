@@ -1,6 +1,6 @@
 /* eslint-disable lines-between-class-members */
 import EventEmitter from './EventEmitter';
-// import * as sdk from 'matrix-js-sdk';
+import * as sdk from 'matrix-js-sdk';
 // import Olm from '@matrix-org/olm';
 // import { logger } from 'matrix-js-sdk/lib/logger';
 import localForage from 'localforage';
@@ -66,10 +66,10 @@ class InitMatrix extends EventEmitter {
     //   verificationMethods: ['m.sas.v1'],
     // });
     this.matrixClient.loadLocalStorageEvents();
-    await this.matrixClient.startClient({
-      lazyLoadMembers: true,
-    });
-    this.matrixClient.setGlobalErrorOnUnknownDevices(false);
+    // await this.matrixClient.startClient({
+    //   lazyLoadMembers: true,
+    // });
+    // this.matrixClient.setGlobalErrorOnUnknownDevices(false);
   }
 
   async setupSync() {
@@ -105,20 +105,23 @@ class InitMatrix extends EventEmitter {
                 }
               }
             }
-            // if (this.roomList.rooms.size == 0) {
-            for (let i = 0; i < subscribed_channels.length; i++) {
-              if (subscribed_channels[i].type == 'groupChannel') {
-                const roomId = subscribed_channels[i].user_id;
-                this.roomList.rooms.add(roomId);
-                // this.matrixClient.subChannelMessage(roomId);
+            if (this.roomList.rooms.size == 0) {
+              for (let i = 0; i < subscribed_channels.length; i++) {
+                if (subscribed_channels[i].type == 'groupChannel') {
+                  const roomId = subscribed_channels[i].user_id;
+                  this.roomList.rooms.add(roomId);
+                }
               }
             }
-            this.matrixClient.subChannelMessage(Array.from(this.roomList.rooms));
-            localForage.setItem('rooms', Array.from(this.roomList.directs));
+            localForage.setItem('rooms', Array.from(this.roomList.rooms));
+            // if (this.roomList.rooms.size == 0) {
+            // for (const roomId of this.roomList.rooms) {
+            //   // this.matrixClient.subChannelMessage(Array.from(this.roomList.rooms));
+            //   this.matrixClient.subChannelMessage(roomId);
+            // }
 
-            this.matrixClient.fetchChannelsMeta(cs);
-
-            this.matrixClient.subDmFromStranger();
+            // this.matrixClient.fetchChannelsMeta(cs);
+            // this.matrixClient.subDmFromStranger();
 
             this.accountData = new AccountData(this.roomList);
             this.roomsInput = new RoomsInput(this.matrixClient, this.roomList);
@@ -130,6 +133,18 @@ class InitMatrix extends EventEmitter {
             this.notifications?._initNoti();
           }
 
+          await this.matrixClient.startClient({
+            lazyLoadMembers: true,
+          });
+          this.matrixClient.setGlobalErrorOnUnknownDevices(false);
+
+          for (const roomId of this.roomList.rooms) {
+            // this.matrixClient.subChannelMessage(Array.from(this.roomList.rooms));
+            this.matrixClient.subChannelMessage(roomId);
+          }
+
+          // this.matrixClient.fetchChannelsMeta(cs);
+          this.matrixClient.subDmFromStranger();
           await this.getContactsList();
 
           break;

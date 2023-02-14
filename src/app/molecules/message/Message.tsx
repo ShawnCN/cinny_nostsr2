@@ -52,6 +52,7 @@ import { getBlobSafeMimeType } from '../../../util/mimetypes';
 import { html, plain } from '../../../util/markdown';
 import RoomTimeline from '../../../client/state/RoomTimeline';
 import TEvent from '../../../../types/TEvent';
+import { toNostrBech32Address } from '../../../util/nostrUtil';
 
 function PlaceholderMessage() {
   return (
@@ -82,7 +83,13 @@ interface IPropsMessageAvatar {
 const MessageAvatar = React.memo(({ roomId, avatarSrc, userId, username }: IPropsMessageAvatar) => (
   <div className="message__avatar-container">
     <button type="button" onClick={() => openProfileViewer(userId, roomId)}>
-      <Avatar imageSrc={avatarSrc} text={username} bgColor={colorMXID(userId)} size="small" />
+      <Avatar
+        imageSrc={avatarSrc}
+        text={username}
+        bgColor={colorMXID(userId)}
+        size="small"
+        type="single"
+      />
     </button>
   </div>
 ));
@@ -105,7 +112,7 @@ const MessageHeader = React.memo(
         span
       >
         <span>{twemojify(username)}</span>
-        <span>{twemojify(userId)}</span>
+        <span>{twemojify(toNostrBech32Address(userId, 'npub'))}</span>
       </Text>
       <div className="message__time">
         <Text variant="b3">
@@ -846,6 +853,18 @@ function Message({
   }
 
   if (typeof body !== 'string') body = '';
+  const [display, setDisplay] = useState({ username, avatarSrc });
+  useEffect(() => {
+    initMatrix.matrixClient.getUserWithCB(senderId, (profile) => {
+      console.log('66666666666666666666', senderId, profile);
+      if (profile) {
+        setDisplay({
+          avatarSrc: profile.picture,
+          username: profile.name,
+        });
+      }
+    });
+  }, [senderId]);
 
   return (
     <div className={className.join(' ')}>
@@ -854,9 +873,9 @@ function Message({
       ) : (
         <MessageAvatar
           roomId={roomId}
-          avatarSrc={avatarSrc}
+          avatarSrc={display.avatarSrc}
           userId={senderId}
-          username={username}
+          username={display.username}
         />
       )}
       <div className="message__main-container">
