@@ -502,7 +502,6 @@ class MatrixClientA extends EventEmitter {
     return Promise.resolve(a);
   }
   async joinRoom(roomIdOrAlias: string, arg1: { viaServers: string[] }) {
-    console.log(`joinRoom`);
     const a = this.publicRoomList.get(roomIdOrAlias.split(':')[0]);
     let me = a?.getMember(this.user.userId);
     if (me?.membership != 'join') {

@@ -12,7 +12,7 @@ interface IPropsSidebarAvatar {
   className?: string;
   tooltip: string;
   active?: boolean;
-  onClick?: () => void;
+  onClick?: (arg0: string) => void;
   onContextMenu?: () => void;
   avatar: ReactNode;
   notificationBadge?: ReactNode;

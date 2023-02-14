@@ -96,8 +96,10 @@ function ProfileAvatarMenu() {
           bgColor={colorMXID(mx.getUserId())}
           size="normal"
           imageSrc={
-            profile.avatarUrl !== null ? mx.mxcUrlToHttp(profile.avatarUrl, 42, 42, 'crop') : null
+            // profile.avatarUrl !== null ? mx.mxcUrlToHttp(profile.avatarUrl, 42, 42, 'crop') : null
+            profile.avatarUrl !== null ? profile.avatarUrl : null
           }
+          type="single"
         />
       }
     />
@@ -388,7 +390,7 @@ function SideBar() {
             <SidebarAvatar
               tooltip="Invites"
               onClick={() => openInviteList()}
-              avatar={<Avatar iconSrc={InviteIC} size="normal" />}
+              avatar={<Avatar iconSrc={InviteIC} size="normal" type="single" />}
               notificationBadge={<NotificationBadge alert content={totalInvites} />}
             />
           )}

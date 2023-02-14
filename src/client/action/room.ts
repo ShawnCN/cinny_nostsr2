@@ -12,7 +12,7 @@ import { SearchResultUser } from '../../../types';
  * @param {string} userId User id to which dm || undefined to remove
  * @returns {Promise} A promise
  */
-function addRoomToMDirect(roomId, userId) {
+function addRoomToMDirect(roomId: string, userId: string) {
   const mx = initMatrix.matrixClient;
   const mDirectsEvent = mx.getAccountData('m.direct');
   let userIdToRoomIds = {};
@@ -115,7 +115,7 @@ async function join(roomIdOrAlias: string, isDM = false, via = undefined) {
     if (isDM) {
       // to do. Need to added user to my contacts list and store on relays.
       // const targetUserId = guessDMRoomTargetId(mx.getRoom(resultRoom!.roomId)!, mx.getUserId());
-      const targetUserId = resultRoom?.roomId;
+      const targetUserId = resultRoom!.roomId;
       await addRoomToMDirect(resultRoom!.roomId, targetUserId);
     }
     appDispatcher.dispatch({
