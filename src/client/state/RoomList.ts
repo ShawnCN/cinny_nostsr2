@@ -5,6 +5,7 @@ import TRoom from '../../../types/TRoom';
 import MatrixClientA from '../MatrixClientA';
 import localforage from 'localforage';
 import { saveDirectsToLocal } from '../../util/localForageUtil';
+import initMatrix from '../InitMatrix';
 
 function isMEventSpaceChild(mEvent) {
   return mEvent.getType() === 'm.space.child' && Object.keys(mEvent.getContent()).length > 0;
@@ -174,7 +175,6 @@ class RoomList extends EventEmitter {
 
       if (isDM) {
         this.directs.add(roomId);
-        console.log('yyyyyyyyyyyyyy');
         saveDirectsToLocal(this.directs);
       } else if (myRoom.isSpaceRoom()) this.addToSpaces(roomId);
       else this.rooms.add(roomId);
@@ -182,10 +182,8 @@ class RoomList extends EventEmitter {
     };
     const actions = {
       [cons.actions.room.JOIN]: () => {
-        console.log('1777777', action.roomId, action.isDM);
         if (addRoom(action.roomId, action.isDM)) {
           setTimeout(() => {
-            console.log('2777777', action.roomId, action.isDM);
             this.emit(cons.events.roomList.ROOM_JOINED, action.roomId);
             // @ts-ignore
             this.emit(cons.events.roomList.ROOMLIST_UPDATED);
@@ -219,15 +217,21 @@ class RoomList extends EventEmitter {
   }
 
   getMDirects() {
-    return this.mDirects;
     const mDirectsId = new Set<string>();
-    const mDirect = this.matrixClient.getAccountData('m.direct')?.getContent();
-    // const mDirect = {};
-    if (typeof mDirect === 'undefined') return mDirectsId;
+    // const mDirect = this.matrixClient.getAccountData('m.direct')?.getContent();
 
-    Object.keys(mDirect).forEach((direct) => {
-      // mDirect[direct].forEach((directId) => mDirectsId.add(directId));
-    });
+    // if (typeof mDirect === 'undefined') return mDirectsId;
+
+    // Object.keys(mDirect).forEach((direct) => {
+    //   mDirect[direct].forEach((directId) => mDirectsId.add(directId));
+    // });
+
+    const contactsList = this.matrixClient.contactEvents.get(this.matrixClient.getUserId());
+    if (contactsList) {
+      contactsList.forEach((contact) => {
+        mDirectsId.add(contact[0]);
+      });
+    }
 
     return mDirectsId;
   }
@@ -266,7 +270,7 @@ class RoomList extends EventEmitter {
     });
   }
 
-  _isDMInvite(room) {
+  _isDMInvite(room: TRoom) {
     if (this.mDirects.has(room.roomId)) return true;
     const me = room.getMember(this.matrixClient.getUserId());
     const myEventContent = me?.events.member.getContent();

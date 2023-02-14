@@ -538,7 +538,7 @@ export const fetchChannelMetaFromRelay = async (channelId: string, relay: Relay)
       sub.unsub();
       if (!channel || Object.keys(channel).length == 0) {
         // reject('not found...');
-        console.log('not found...');
+        // console.log('not found...');
         reject(null);
       }
     });

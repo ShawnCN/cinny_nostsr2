@@ -175,9 +175,9 @@ class MatrixClientA extends EventEmitter {
     console.log('setGlobalErrorOnUnknownDevices');
   }
   getRoom(roomId: string): TRoom | null {
-    if (!roomId) {
-      return null;
-    }
+    // if (!roomId) {
+    //   return null;
+    // }
     const room = this.publicRoomList.get(roomId);
     if (room) return room;
     if (roomId.substring(0, 4) == 'npub') {
@@ -778,7 +778,7 @@ class MatrixClientA extends EventEmitter {
         sub.unsub();
         if (!channel || Object.keys(channel).length == 0) {
           // reject('not found...');
-          console.log('not found...');
+          // console.log('not found...');
           reject(null);
         }
       });
@@ -1146,6 +1146,7 @@ class MatrixClientA extends EventEmitter {
       console.log('error parsing nostr profile', e, event);
     }
   };
+
   handleContactEvents = (event: NostrEvent) => {
     const existing = this.contactEvents.get(event.pubkey);
     if (existing && existing.created_at >= event.created_at) {
@@ -1245,6 +1246,36 @@ class MatrixClientA extends EventEmitter {
     } as NostrEvent;
     const event2 = await getSignedEvent(event, this.user?.privatekey);
     this.publishEvent(event2);
+  };
+  addUserToContact = async (userId) => {
+    const existing = this.contactEvents.get(this.user.userId);
+    let event = {} as NostrEvent;
+    if (!existing) {
+      event = {
+        pubkey: this.user.userId,
+        kind: 3,
+        created_at: Math.floor(Date.now() / 1000),
+        content: '',
+        tags: [['p', userId]],
+      } as NostrEvent;
+      const event2 = await getSignedEvent(event, this.user?.privatekey);
+      this.publishEvent(event2);
+    } else {
+      this.contactList.add(userId);
+      let tags: string[][] = [];
+      for (const a of this.contactList) {
+        tags.push(['p', a]);
+      }
+      event = {
+        pubkey: this.user.userId,
+        kind: 3,
+        created_at: Math.floor(Date.now() / 1000),
+        content: '',
+        tags: [['p', userId]],
+      } as NostrEvent;
+      const event2 = await getSignedEvent(event, this.user?.privatekey);
+      this.publishEvent(event2);
+    }
   };
   getConnectedRelayCount = () => {
     let count = 0;

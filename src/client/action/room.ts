@@ -40,7 +40,7 @@ function addRoomToMDirect(roomId: string, userId: string) {
     }
     userIdToRoomIds[userId] = roomIds;
   }
-
+  initMatrix.matrixClient.addUserToContact(userId);
   return mx.setAccountData('m.direct', userIdToRoomIds);
 }
 

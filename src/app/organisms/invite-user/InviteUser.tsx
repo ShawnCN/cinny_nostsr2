@@ -34,7 +34,6 @@ function InviteUser({
   searchTerm = undefined,
   onRequestClose,
 }: IPropsInviteUser) {
-  console.log('-----------------');
   const [isSearching, updateIsSearching] = useState(false);
   const [searchQuery, updateSearchQuery] = useState<{ username?: string; error?: string }>({});
   const [users, updateUsers] = useState<SearchResultUser[]>([]);

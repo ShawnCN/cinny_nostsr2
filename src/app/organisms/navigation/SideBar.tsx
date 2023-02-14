@@ -166,7 +166,7 @@ function FeaturedTab() {
         tooltip="Home"
         active={selectedTab === cons.tabs.HOME}
         onClick={() => selectTab(cons.tabs.HOME)}
-        avatar={<Avatar iconSrc={HomeIC} size="normal" />}
+        avatar={<Avatar iconSrc={HomeIC} size="normal" type="groupChannel" />}
         notificationBadge={
           homeNoti ? (
             <NotificationBadge
@@ -180,7 +180,7 @@ function FeaturedTab() {
         tooltip="People"
         active={selectedTab === cons.tabs.DIRECTS}
         onClick={() => selectTab(cons.tabs.DIRECTS)}
-        avatar={<Avatar iconSrc={UserIC} size="normal" />}
+        avatar={<Avatar iconSrc={UserIC} size="normal" type="single" />}
         notificationBadge={
           dmsNoti ? (
             <NotificationBadge
@@ -271,6 +271,7 @@ function DraggableSpaceShortcut({ isActive, spaceId, index, moveShortcut, onDrop
           bgColor={colorMXID(room.roomId)}
           size="normal"
           imageSrc={room.getAvatarUrl(initMatrix.matrixClient.baseUrl, 42, 42, 'crop') || null}
+          type={room.type}
         />
       }
       notificationBadge={

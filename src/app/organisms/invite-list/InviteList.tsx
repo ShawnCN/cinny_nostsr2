@@ -26,6 +26,7 @@ function InviteList({ isOpen, onRequestClose }: IPropsInviteList) {
   function acceptInvite(roomId: string, isDM: boolean) {
     procInvite.add(roomId);
     changeProcInvite(new Set(Array.from(procInvite)));
+    console.log('6666666666666666', roomId, isDM);
     roomActions.join(roomId, isDM);
   }
   function rejectInvite(roomId: string, isDM: boolean) {
