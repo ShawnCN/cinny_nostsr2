@@ -13,6 +13,7 @@ import {
   fetchUserMetaFromRelay,
   formatChannelEvent,
   formatChannelMsg,
+  FormatCitedEventsAndCitedPubkeys,
   formatDMEvent,
   formatDmMsgFromOthersOrMe,
   formatGlobalMsg,
@@ -55,6 +56,7 @@ class MatrixClientA extends EventEmitter {
 
   localStorageLoaded: boolean;
   directMessagesByUser: Map<string, SortedLimitedEventSet>;
+  channelMessagesByChannelId: Map<string, SortedLimitedEventSet>;
   subscriptionsByName: Map<string, Set<Sub>>;
   subscribedFiltersByName: Map<string, Filter[]>;
   subscriptions: Map<number, Subscription>;
@@ -80,6 +82,7 @@ class MatrixClientA extends EventEmitter {
     this.contactEvents = new Map();
 
     this.directMessagesByUser = new Map<string, SortedLimitedEventSet>();
+    this.channelMessagesByChannelId = new Map<string, SortedLimitedEventSet>();
     this.subscriptionsByName = new Map<string, Set<Sub>>();
     this.subscribedFiltersByName = new Map<string, Filter[]>();
     this.subscriptions = new Map<number, Subscription>();
@@ -453,7 +456,7 @@ class MatrixClientA extends EventEmitter {
     console.log(timelineToPaginate);
     console.log(backwards, limit);
   }
-  getEventTimeline(timelineSet, eventId) {
+  getEventTimeline(timelineSet, eventId: string) {
     return;
   }
   async joinRoom(roomIdOrAlias: string, arg1: { viaServers: string[] }) {
@@ -629,6 +632,23 @@ class MatrixClientA extends EventEmitter {
     hasNewUsers && this.subscribeToProfiles(); // TODO subscribe to old stuff from new authors, don't resubscribe to all
     hasNewChannelProfiles && this.fetchChannelsMeta();
   };
+  getDirectMessages(cb?: (dms: Map<string, SortedLimitedEventSet>) => void) {
+    const callback = () => {
+      cb?.(this.directMessagesByUser);
+    };
+    callback();
+    this.subscribe([{ kinds: [4] }], callback);
+  }
+
+  getDirectMessagesByUser(address: string, cb?: (messageIds: string[]) => void) {
+    // this.knownUsers.add(address);
+    const callback = () => {
+      cb?.(this.directMessagesByUser.get(address)!.eventIds);
+    };
+    this.directMessagesByUser.has(address) && callback();
+    const myPub = this.user.userId;
+    this.subscribe([{ kinds: [4], '#p': [address, myPub] }], callback);
+  }
 
   getSyncState() {
     console.log('get sync state');
@@ -657,15 +677,8 @@ class MatrixClientA extends EventEmitter {
     const filter = {
       kinds: [42],
       '#e': channelId,
-      limit: 13,
+      limit: 200,
     };
-    //   if (!relay || relay.status != 1) continue;
-    //   const sub = relay.sub([filter]);
-    //   sub.on('event', (event: NostrEvent) => {
-    //     console.log(event);
-    //     this.handleEvent(event);
-    //   });
-    // }
     this.sendSubToRelays([filter], 'subChannelMessage');
   };
   subDmFromStranger = () => {
@@ -774,7 +787,6 @@ class MatrixClientA extends EventEmitter {
       const subId = getSubscriptionIdForName(id);
       const sub = relay.sub(filters, { id: subId });
       // TODO update relay lastSeen
-      console.log('111', relay.url);
       sub.on('event', (event) => this.handleEvent(event));
       if (once) {
         sub.on('eose', () => sub.unsub());
@@ -790,9 +802,8 @@ class MatrixClientA extends EventEmitter {
         }, unsubscribeTimeout);
       }
     }
-
-    console.log(this.subscriptionsByName);
-    console.log(this.subscribedFiltersByName);
+    // console.log(this.subscriptionsByName);
+    // console.log(this.subscribedFiltersByName);
   };
   subscribeToProfiles = debounce._(() => {
     const now = Math.floor(Date.now() / 1000);
@@ -980,6 +991,18 @@ class MatrixClientA extends EventEmitter {
     const mevent = formatChannelMsg(event);
     const mc = new TEvent(mevent);
     this.emit('Event.decrypted', mc);
+    this.eventsById.set(event.id, event);
+    const { events_replied_to } = FormatCitedEventsAndCitedPubkeys(event);
+    let channelId = '';
+    if (!events_replied_to[0]) return;
+
+    channelId = events_replied_to[0]; // root event.id
+
+    if (!this.channelMessagesByChannelId.has(channelId)) {
+      this.channelMessagesByChannelId.set(channelId, new SortedLimitedEventSet(500));
+    }
+    this.channelMessagesByChannelId.get(channelId)?.add(event);
+    console.log(this.channelMessagesByChannelId);
   }
   handlePublicNostrEvent(event: NostrEvent) {
     this.eventsById.set(event.id, event);

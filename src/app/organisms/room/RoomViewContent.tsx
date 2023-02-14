@@ -42,7 +42,7 @@ const PLACEHOLDER_COUNT = 2;
 const PLACEHOLDERS_HEIGHT = 96 * PLACEHOLDER_COUNT;
 const SCROLL_TRIGGER_POS = PLACEHOLDERS_HEIGHT * 4;
 
-function loadingMsgPlaceholders(key, count = 2) {
+function loadingMsgPlaceholders(key: number, count = 2) {
   const pl: any = [];
   const genPlaceholders = () => {
     for (let i = 0; i < count; i += 1) {
@@ -54,7 +54,12 @@ function loadingMsgPlaceholders(key, count = 2) {
   return <React.Fragment key={`placeholder-container${key}`}>{genPlaceholders()}</React.Fragment>;
 }
 
-function RoomIntroContainer({ event, timeline }) {
+interface IPropsRoomIntroContainer {
+  event: any;
+  timeline: RoomTimeline;
+}
+
+function RoomIntroContainer({ event, timeline }: IPropsRoomIntroContainer) {
   const [, nameForceUpdate] = useForceUpdate();
   const mx = initMatrix.matrixClient;
   const { roomList } = initMatrix;
@@ -62,6 +67,7 @@ function RoomIntroContainer({ event, timeline }) {
   const roomTopic = room.currentState.getStateEvents('m.room.topic')[0]?.getContent().topic;
   const isDM = roomList.directs.has(timeline.roomId);
   let avatarSrc = room.getAvatarUrl(mx.baseUrl, 80, 80, 'crop');
+  // @ts-ignore
   avatarSrc = isDM
     ? room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 80, 80, 'crop')
     : avatarSrc;
@@ -120,7 +126,15 @@ function handleOnClickCapture(e) {
   }
 }
 
-function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus, isEdit, setEdit, cancelEdit) {
+function renderEvent(
+  roomTimeline: RoomTimeline,
+  mEvent: TEvent,
+  prevMEvent: TEvent,
+  isFocus: boolean,
+  isEdit,
+  setEdit,
+  cancelEdit: () => void
+) {
   const isBodyOnly =
     prevMEvent !== null &&
     prevMEvent.getSender() === mEvent.getSender() &&
@@ -159,7 +173,7 @@ function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus, isEdit, setEdit,
 function useTimeline(roomTimeline: RoomTimeline, eventId, readUptoEvtStore, eventLimitRef) {
   const [timelineInfo, setTimelineInfo] = useState<{ focusEventId: string } | null>(null);
 
-  const setEventTimeline = async (eId) => {
+  const setEventTimeline = async (eId: string) => {
     if (typeof eId === 'string') {
       const isLoaded = await roomTimeline.loadEventTimeline(eId);
       if (isLoaded) return;
@@ -215,10 +229,18 @@ function usePaginate(
   timelineScrollRef,
   eventLimitRef
 ) {
-  const [info, setInfo] = useState(null);
+  const [info, setInfo] = useState<{
+    backwards: boolean;
+    loaded: number;
+  }>(
+    null as unknown as {
+      backwards: boolean;
+      loaded: number;
+    }
+  );
 
   useEffect(() => {
-    const handlePaginatedFromServer = (backwards, loaded) => {
+    const handlePaginatedFromServer = (backwards: boolean, loaded: number) => {
       const limit = eventLimitRef.current;
       if (loaded === 0) return;
       if (!readUptoEvtStore.getItem()) {
@@ -241,7 +263,7 @@ function usePaginate(
 
   const autoPaginate = useCallback(async () => {
     const timelineScroll = timelineScrollRef.current;
-    const limit = eventLimitRef.current;
+    const limit: EventLimit = eventLimitRef.current;
     if (roomTimeline.isOngoingPagination) return;
     const tLength = roomTimeline.timeline.length;
 
@@ -392,7 +414,10 @@ interface IPropsRoomViewContent {
   eventId?: string;
 }
 
-function RoomViewContent({ eventId, roomTimeline }: IPropsRoomViewContent) {
+function RoomViewContent({
+  eventId = null as unknown as string,
+  roomTimeline,
+}: IPropsRoomViewContent) {
   const [throttle] = useState(new Throttle());
 
   const timelineSVRef = useRef(null);

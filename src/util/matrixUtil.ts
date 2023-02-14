@@ -430,7 +430,7 @@ export const decryptContent = async (user: TUser, event: NostrEvent) => {
   }
 };
 
-const FormatCitedEventsAndCitedPubkeys = (event: NostrEvent) => {
+export const FormatCitedEventsAndCitedPubkeys = (event: NostrEvent) => {
   let events_replied_to = [] as string[];
   let pubkeys_replied_to = [] as string[];
   for (let i = 0; i < event.tags.length; i++) {

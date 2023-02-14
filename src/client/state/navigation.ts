@@ -54,7 +54,7 @@ class Navigation extends EventEmitter {
     this.selectedSpacePath.push(roomId);
   }
 
-  _mapRoomToSpace(roomId) {
+  _mapRoomToSpace(roomId: string) {
     const { roomList, accountData } = this.initMatrix;
     console.log('_mapRoomToSpace', roomId, roomList.directs);
     // home按钮
@@ -98,7 +98,6 @@ class Navigation extends EventEmitter {
   }
 
   _selectRoom(roomId: string, eventId?: string): void {
-    console.log('_selectroom', roomId, eventId);
     const prevSelectedRoomId = this.selectedRoomId;
     this.selectedRoomId = roomId;
     if (prevSelectedRoomId !== roomId) this._mapRoomToSpace(roomId);
@@ -205,7 +204,7 @@ class Navigation extends EventEmitter {
     return roomId;
   }
 
-  _selectTab(tabId: string, selectRoom = true) {
+  _selectTab(tabId: string, selectRoom = false) {
     this.selectedTab = tabId;
     if (selectRoom) this._selectRoomWithTab(this.selectedTab);
     this.emit(cons.events.navigation.TAB_SELECTED, this.selectedTab);

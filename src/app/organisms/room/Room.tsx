@@ -23,10 +23,9 @@ function Room() {
   const mx = initMatrix.matrixClient;
 
   useEffect(() => {
-    const handleRoomSelected = (rId, pRoomId, eId) => {
+    const handleRoomSelected = (rId: string, pRoomId: string, eId: string) => {
       roomInfo.roomTimeline?.removeInternalListeners();
       if (mx.getRoom(rId)) {
-        console.log('Room selected111111111111111', rId);
         setRoomInfo({
           roomTimeline: new RoomTimeline(rId),
           eventId: eId ?? null,

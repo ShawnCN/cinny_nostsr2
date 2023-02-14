@@ -104,7 +104,7 @@ class RoomTimeline extends EventEmitter {
   _listenRedaction: (mEvent: TEvent, room: TRoom) => void;
   _listenTypingEvent: (event: TEvent, member: any) => void;
   _listenReciptEvent: (event: TEvent, room: TRoom) => void;
-  constructor(roomId) {
+  constructor(roomId: string) {
     super();
     // These are local timelines
     // this.timeline = [aevent as unknown as TEvent];
@@ -116,7 +116,7 @@ class RoomTimeline extends EventEmitter {
 
     this.matrixClient = initMatrix.matrixClient;
     this.roomId = roomId;
-    this.room = this.matrixClient.getRoom(roomId);
+    this.room = this.matrixClient.getRoom(roomId)!;
 
     this.liveTimeline = this.room.getLiveTimeline();
     this.activeTimeline = this.liveTimeline;
@@ -202,7 +202,7 @@ class RoomTimeline extends EventEmitter {
     return true;
   }
 
-  async loadEventTimeline(eventId) {
+  async loadEventTimeline(eventId: string) {
     // we use first unfiltered EventTimelineSet for room pagination.
     const timelineSet = this.getUnfilteredTimelineSet();
     try {
@@ -260,7 +260,7 @@ class RoomTimeline extends EventEmitter {
     return Promise.allSettled(decryptionPromises);
   }
 
-  hasEventInTimeline(eventId, timeline = this.activeTimeline) {
+  hasEventInTimeline(eventId: string, timeline = this.activeTimeline) {
     const timelineSet = this.getUnfilteredTimelineSet();
     const eventTimeline = timelineSet.getTimelineForEvent(eventId);
     if (!eventTimeline) return false;
@@ -271,7 +271,7 @@ class RoomTimeline extends EventEmitter {
     return this.room.getUnfilteredTimelineSet();
   }
 
-  getEventReaders(mEvent) {
+  getEventReaders(mEvent: TEvent) {
     const liveEvents = this.liveTimeline.getEvents();
     const readers = [] as any;
     if (!mEvent) return [];
@@ -288,7 +288,7 @@ class RoomTimeline extends EventEmitter {
     const liveEvents = this.liveTimeline.getEvents();
     const getLatestVisibleEvent = () => {
       for (let i = liveEvents.length - 1; i >= 0; i -= 1) {
-        const mEvent = liveEvents[i];
+        const mEvent: TEvent = liveEvents[i];
         if (mEvent.getType() === 'm.room.member' && hideMemberEvents(mEvent)) {
           // eslint-disable-next-line no-continue
           continue;
@@ -307,7 +307,7 @@ class RoomTimeline extends EventEmitter {
     return this.getEventReaders(getLatestVisibleEvent());
   }
 
-  getUnreadEventIndex(readUpToEventId) {
+  getUnreadEventIndex(readUpToEventId: string) {
     if (!this.hasEventInTimeline(readUpToEventId)) return -1;
 
     const readUpToEvent = this.findEventByIdInTimelineSet(readUpToEventId);
@@ -327,19 +327,19 @@ class RoomTimeline extends EventEmitter {
     return this.room.getEventReadUpTo(this.matrixClient.getUserId());
   }
 
-  getEventIndex(eventId) {
+  getEventIndex(eventId: string) {
     return this.timeline.findIndex((mEvent) => mEvent.getId() === eventId);
   }
 
-  findEventByIdInTimelineSet(eventId, eventTimelineSet = this.getUnfilteredTimelineSet()) {
+  findEventByIdInTimelineSet(eventId: string, eventTimelineSet = this.getUnfilteredTimelineSet()) {
     return eventTimelineSet.findEventById(eventId);
   }
 
-  findEventById(eventId) {
+  findEventById(eventId: string) {
     return this.timeline[this.getEventIndex(eventId)] ?? null;
   }
 
-  deleteFromTimeline(eventId) {
+  deleteFromTimeline(eventId: string) {
     const i = this.getEventIndex(eventId);
     if (i === -1) return undefined;
     return this.timeline.splice(i, 1)[0];

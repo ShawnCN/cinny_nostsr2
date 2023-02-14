@@ -371,7 +371,7 @@ function RenderUserTile({ user, renderOptions, renderError }: IPropsRenderUserTi
         });
       }
     });
-  }, []);
+  }, [user.user_id]);
 
   return (
     <RoomTile
