@@ -15,7 +15,6 @@ export const toNostrBech32Address = (address: string, prefix: string) => {
   } catch (e) {
     // not a bech32 address
   }
-
   if (address.match(/^[0-9a-fA-F]{64}$/)) {
     const words = Buffer.from(address, 'hex');
     return bech32.encode(prefix, words);

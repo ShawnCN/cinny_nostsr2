@@ -70,8 +70,15 @@ function ProfileAvatarMenu() {
     const onAvatarChange = (event, myUser) => {
       setNewProfile(myUser.avatarUrl, myUser.displayName);
     };
-    mx.getProfileInfo(mx.getUserId()).then((info) => {
-      setNewProfile(info.avatarUrl, info.displayName);
+    // mx.getProfileInfo(mx.getUserId()).then((info) => {
+    //   if (info) {
+    //     setNewProfile(info.avatarUrl, info.displayName);
+    //   }
+    // });
+    mx.getProfile(mx.getUserId(), (profile) => {
+      if (profile) {
+        setNewProfile(profile.picture, profile.name);
+      }
     });
     user.on('User.avatarUrl', onAvatarChange);
     return () => {

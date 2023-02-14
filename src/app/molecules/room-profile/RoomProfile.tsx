@@ -38,7 +38,7 @@ function RoomProfile({ roomId }) {
   const isDM = initMatrix.roomList.directs.has(roomId);
   let avatarSrc = mx.getRoom(roomId).getAvatarUrl(mx.baseUrl, 36, 36, 'crop');
   avatarSrc = isDM
-    ? mx.getRoom(roomId)?.getAvatarFallbackMember()!.getAvatarUrl(mx.baseUrl, 36, 36, 'crop')
+    ? mx.getRoom(roomId)?.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop')
     : avatarSrc;
   const room = mx.getRoom(roomId);
   const { currentState } = room;
@@ -217,7 +217,14 @@ function RoomProfile({ roomId }) {
     <div className="room-profile">
       <div className="room-profile__content">
         {!canChangeAvatar && (
-          <Avatar imageSrc={avatarSrc} text={roomName} bgColor={colorMXID(roomId)} size="large" />
+          <Avatar
+            imageSrc={avatarSrc}
+            text={roomName}
+            bgColor={colorMXID(roomId)}
+            id={roomId}
+            type={room?.type}
+            size="large"
+          />
         )}
         {canChangeAvatar && (
           <ImageUpload

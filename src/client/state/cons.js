@@ -212,6 +212,20 @@ export const defaultChatroomList = [
     new_message: '',
     new_message_created_at: 0,
   },
+  {
+    user_id: 'c1c8dd309cdd75033fea7c284822d6b2721ad82ff18dfd5f454ec9c7c1d7a4ec',
+    type: 'groupChannel',
+    unread: 0,
+    new_message: '',
+    new_message_created_at: 0,
+  },
+  {
+    user_id: '8cad0528c52c538d344a1b44955169e008956d8b4e3a4a51d670954f9c026e5c',
+    type: 'groupChannel',
+    unread: 0,
+    new_message: '',
+    new_message_created_at: 0,
+  },
 ];
 
 export const TChannelMapList = {

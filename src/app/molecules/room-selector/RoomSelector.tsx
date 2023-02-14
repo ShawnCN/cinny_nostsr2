@@ -10,6 +10,7 @@ import Avatar from '../../atoms/avatar/Avatar';
 import NotificationBadge from '../../atoms/badge/NotificationBadge';
 import { blurOnBubbling } from '../../atoms/button/script';
 import { toNostrBech32Address } from '../../../util/nostrUtil';
+import initMatrix from '../../../client/InitMatrix';
 
 function RoomSelectorWrapper({
   isSelected,
@@ -70,6 +71,7 @@ function RoomSelector({
   onClick,
   onContextMenu,
 }) {
+  const room = initMatrix.matrixClient.getRoom(roomId);
   return (
     <RoomSelectorWrapper
       isSelected={isSelected}
@@ -84,6 +86,8 @@ function RoomSelector({
             iconColor="var(--ic-surface-low)"
             iconSrc={iconSrc}
             size="extra-small"
+            id={roomId}
+            type={room.type}
           />
           <Text variant="b1" weight={isUnread ? 'medium' : 'normal'}>
             {twemojify(name)}

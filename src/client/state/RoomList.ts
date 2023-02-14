@@ -3,6 +3,8 @@ import appDispatcher from '../dispatcher';
 import cons from './cons';
 import TRoom from '../../../types/TRoom';
 import MatrixClientA from '../MatrixClientA';
+import localforage from 'localforage';
+import { saveDirectsToLocal } from '../../util/localForageUtil';
 
 function isMEventSpaceChild(mEvent) {
   return mEvent.getType() === 'm.space.child' && Object.keys(mEvent.getContent()).length > 0;
@@ -44,7 +46,6 @@ class RoomList extends EventEmitter {
     // Contains roomId to parent spaces roomId mapping of all spaces children.
     // No matter if you have joined those children rooms or not.
     this.roomIdToParents = new Map();
-
     this.inviteDirects = new Set();
     this.inviteSpaces = new Set();
     this.inviteRooms = new Set();
@@ -172,8 +173,11 @@ class RoomList extends EventEmitter {
       const myRoom = this.matrixClient.getRoom(roomId);
       if (myRoom === null) return false;
 
-      if (isDM) this.directs.add(roomId);
-      else if (myRoom.isSpaceRoom()) this.addToSpaces(roomId);
+      if (isDM) {
+        this.directs.add(roomId);
+        console.log('yyyyyyyyyyyyyy');
+        saveDirectsToLocal(this.directs);
+      } else if (myRoom.isSpaceRoom()) this.addToSpaces(roomId);
       else this.rooms.add(roomId);
       return true;
     };
@@ -255,8 +259,10 @@ class RoomList extends EventEmitter {
 
       if (room.getMyMembership() !== 'join') return;
 
-      if (this.mDirects.has(roomId)) this.directs.add(roomId);
-      else if (room.isSpaceRoom()) this.addToSpaces(roomId);
+      if (this.mDirects.has(roomId)) {
+        this.directs.add(roomId);
+        saveDirectsToLocal(this.directs);
+      } else if (room.isSpaceRoom()) this.addToSpaces(roomId);
       else this.rooms.add(roomId);
     });
   }
@@ -283,6 +289,7 @@ class RoomList extends EventEmitter {
         if (myRoom === null) return;
         if (myRoom!.getMyMembership() === 'join') {
           this.directs.add(directId);
+          saveDirectsToLocal(this.directs);
           this.rooms.delete(directId);
           // @ts-ignore
           this.emit(cons.events.roomList.ROOMLIST_UPDATED);
@@ -391,8 +398,10 @@ class RoomList extends EventEmitter {
         if (membership === 'join' && this.processingRooms.has(roomId)) {
           const procRoomInfo = this.processingRooms.get(roomId);
 
-          if (procRoomInfo.isDM) this.directs.add(roomId);
-          else if (room.isSpaceRoom()) this.addToSpaces(roomId);
+          if (procRoomInfo.isDM) {
+            this.directs.add(roomId);
+            saveDirectsToLocal(this.directs);
+          } else if (room.isSpaceRoom()) this.addToSpaces(roomId);
           else this.rooms.add(roomId);
 
           if (procRoomInfo.task === 'CREATE') this.emit(cons.events.roomList.ROOM_CREATED, roomId);
@@ -406,6 +415,7 @@ class RoomList extends EventEmitter {
 
         if (this.mDirects.has(roomId) && membership === 'join') {
           this.directs.add(roomId);
+          saveDirectsToLocal(this.directs);
           this.emit(cons.events.roomList.ROOM_JOINED, roomId);
           // @ts-ignore
           this.emit(cons.events.roomList.ROOMLIST_UPDATED);

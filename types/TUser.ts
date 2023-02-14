@@ -6,8 +6,11 @@ class TUser extends EventEmitter {
   powerLevel: number;
   userId: string;
   privatekey: string;
-  constructor() {
+  constructor(userId?: string, displayName?: string, avatarUrl?: string) {
     super();
+    if (userId) this.userId = userId;
+    if (displayName) this.displayName = displayName;
+    if (avatarUrl) this.avatarUrl = avatarUrl;
   }
 }
 

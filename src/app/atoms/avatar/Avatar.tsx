@@ -9,6 +9,7 @@ import RawIcon from '../system-icons/RawIcon';
 
 import ImageBrokenSVG from '../../../../public/res/svg/image-broken.svg';
 import { avatarInitials } from '../../../util/common';
+import CanvasPic from '../avatar-channel/CanvasPic';
 
 interface IPropsAvatar {
   text?: string;
@@ -17,6 +18,8 @@ interface IPropsAvatar {
   iconColor?: string;
   imageSrc?: string | null;
   size: 'large' | 'normal' | 'small' | 'extra-small';
+  id?: string | null;
+  type: 'single' | 'groupChannel';
 }
 
 const Avatar = React.forwardRef(
@@ -28,6 +31,8 @@ const Avatar = React.forwardRef(
       iconColor = null as unknown as string,
       imageSrc = null as unknown as string,
       size = 'normal',
+      id = null,
+      type = 'single',
     }: IPropsAvatar,
     ref: any
   ) => {
@@ -35,39 +40,74 @@ const Avatar = React.forwardRef(
     if (size === 'large') textSize = 'h1';
     if (size === 'small') textSize = 'b1';
     if (size === 'extra-small') textSize = 'b3';
-
-    return (
-      <div ref={ref} className={`avatar-container avatar-container__${size} noselect`}>
-        {imageSrc !== null ? (
-          <img
-            draggable="false"
-            src={imageSrc}
-            onLoad={(e: any) => {
-              e.target.style.backgroundColor = 'transparent';
-            }}
-            onError={(e: any) => {
-              e.target.src = ImageBrokenSVG;
-            }}
-            alt=""
-          />
-        ) : (
-          <span
-            style={{ backgroundColor: iconSrc === null ? bgColor : 'transparent' }}
-            className={`avatar__border${iconSrc !== null ? '--active' : ''}`}
-          >
-            {iconSrc !== null ? (
-              <RawIcon size={size} src={iconSrc} color={iconColor} />
-            ) : (
-              text !== null && (
-                <Text variant={textSize} primary>
-                  {twemojify(avatarInitials(text))}
-                </Text>
-              )
-            )}
-          </span>
-        )}
-      </div>
-    );
+    if (type == 'single') {
+      return (
+        <div ref={ref} className={`avatar-container avatar-container__${size} noselect`}>
+          {imageSrc !== null ? (
+            <img
+              draggable="false"
+              src={imageSrc}
+              onLoad={(e: any) => {
+                e.target.style.backgroundColor = 'transparent';
+              }}
+              onError={(e: any) => {
+                e.target.src = ImageBrokenSVG;
+              }}
+              alt=""
+            />
+          ) : (
+            <span
+              style={{ backgroundColor: iconSrc === null ? bgColor : 'transparent' }}
+              className={`avatar__border${iconSrc !== null ? '--active' : ''}`}
+            >
+              {iconSrc !== null ? (
+                <RawIcon size={size} src={iconSrc} color={iconColor} />
+              ) : (
+                text !== null && (
+                  <Text variant={textSize} primary>
+                    {twemojify(avatarInitials(text))}
+                  </Text>
+                )
+              )}
+            </span>
+          )}
+        </div>
+      );
+    } else {
+      return (
+        <div ref={ref} className={`avatar-container avatar-container__${size} noselect`}>
+          {imageSrc !== null ? (
+            <img
+              draggable="false"
+              src={imageSrc}
+              onLoad={(e: any) => {
+                e.target.style.backgroundColor = 'transparent';
+              }}
+              onError={(e: any) => {
+                e.target.src = ImageBrokenSVG;
+              }}
+              alt=""
+            />
+          ) : (
+            <span
+              style={{ backgroundColor: iconSrc === null ? bgColor : 'transparent' }}
+              className={`avatar__border${iconSrc !== null ? '--active' : ''}`}
+            >
+              {iconSrc !== null ? (
+                <RawIcon size={size} src={iconSrc} color={iconColor} />
+              ) : (
+                text !== null && (
+                  // <Text variant={textSize} primary>
+                  //   {twemojify(avatarInitials(text))}
+                  // </Text>
+                  <CanvasPic text={id as string} type="groupChannel" size={size} />
+                )
+              )}
+            </span>
+          )}
+        </div>
+      );
+    }
   }
 );
 

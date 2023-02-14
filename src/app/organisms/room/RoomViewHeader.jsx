@@ -90,7 +90,14 @@ function RoomViewHeader({ roomId }) {
         type="button"
         onMouseUp={(e) => blurOnBubbling(e, '.room-header__btn')}
       >
-        <Avatar imageSrc={avatarSrc} text={roomName} bgColor={colorMXID(roomId)} size="small" />
+        <Avatar
+          imageSrc={avatarSrc}
+          text={roomName}
+          bgColor={colorMXID(roomId)}
+          size="small"
+          id={roomId}
+          type={room.type}
+        />
         <TitleWrapper>
           <Text variant="h2" weight="medium" primary>
             {twemojify(roomName)}

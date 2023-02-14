@@ -37,8 +37,45 @@ class TRoom {
       this.name = roomId;
     }
   }
+
+  async init() {
+    if (this.type == 'single') {
+      const profile = initMatrix.matrixClient.profileEvents.get(this.roomId);
+      if (profile) {
+        this.name = profile.name;
+        this.avatarUrl = profile.pictureUrl;
+        this.canonical_alias = profile.about;
+      }
+      return;
+    }
+    const nostrEvent = await initMatrix.matrixClient?.fetchChannelMeta(this.roomId);
+    // console.log('2666666666', nostrEvent?.content);
+    initMatrix.matrixClient.handleEvent(nostrEvent);
+    if (nostrEvent) {
+      const { name, about, picture } = JSON.parse(nostrEvent.content);
+      // let member = new TRoomMember(userIdNpub);
+      if (name && name != '') {
+        this.name = name;
+      }
+      if (about && about != '') {
+        this.canonical_alias = about;
+      }
+      if (picture && picture != '') {
+        this.avatarUrl = picture;
+      }
+      // const asender = formatRoomMemberFromNostrEvent(nostrEvent);
+    }
+    //   room.addMember(asender);
+    //   this.publicRoomList.set(roomId, room);
+    // } else {
+    //   console.log('4666666666');
+    //   const member = new TRoomMember(senderId);
+    //   room.addMember(member);
+    // }
+  }
   getMember(userId: string) {
     const user = this.roomMembers.get(userId);
+    if (!user) return null;
     return user;
   }
   addMember(m: TRoomMember) {
@@ -79,7 +116,14 @@ class TRoom {
     return false;
   }
   getAvatarUrl(arg0: string, arg1: number, arg2: number, arg3: string) {
-    return this.avatarUrl;
+    if (this.avatarUrl) return this.avatarUrl;
+    const profile = initMatrix.matrixClient.channelProfileEvents.get(this.roomId);
+    if (profile && profile.picture) {
+      this.avatarUrl = profile.picture;
+      return this.avatarUrl;
+    } else {
+      return null;
+    }
   }
   getUsersReadUpTo(arg0: TEvent) {
     return [0, 1];
@@ -92,6 +136,7 @@ class TRoom {
   }
   // 一对一聊天室，选择对方用户。
   getAvatarFallbackMember() {
+    console.log(this.roomMembers);
     for (let [k, v] of this.roomMembers) {
       if (k != initMatrix.matrixClient.user.avatarUrl) {
         return v;

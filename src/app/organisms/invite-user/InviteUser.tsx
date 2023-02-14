@@ -19,6 +19,7 @@ import RoomTile from '../../molecules/room-tile/RoomTile';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
 import { SearchResultUser } from '../../../../types';
+import { toNostrHexAddress } from '../../../util/nostrUtil';
 
 interface IPropsInviteUser {
   isOpen: boolean;
@@ -33,6 +34,7 @@ function InviteUser({
   searchTerm = undefined,
   onRequestClose,
 }: IPropsInviteUser) {
+  console.log('-----------------');
   const [isSearching, updateIsSearching] = useState(false);
   const [searchQuery, updateSearchQuery] = useState<{ username?: string; error?: string }>({});
   const [users, updateUsers] = useState<SearchResultUser[]>([]);
@@ -155,6 +157,7 @@ function InviteUser({
   }
 
   async function createDM(userId, user: SearchResultUser) {
+    userId = toNostrHexAddress(userId);
     if (mx.getUserId() === userId) return;
     const dmRoomId = hasDMWith(userId);
     if (dmRoomId) {
@@ -265,7 +268,7 @@ function InviteUser({
 
     return users.map((user) => {
       const userId = user.user_id;
-      const name = typeof user.display_name === 'string' ? user.display_name : userId;
+      let name = typeof user.display_name === 'string' ? user.display_name : userId;
       return (
         <RoomTile
           key={userId}
@@ -283,6 +286,20 @@ function InviteUser({
       );
     });
   }
+  useEffect(() => {
+    if (isOpen && (typeof searchTerm != 'string' || searchTerm.length == 0)) {
+      let auserList: SearchResultUser[] = [];
+      initMatrix.roomList.mDirects.forEach((d) => {
+        const auser = mx.getUser(d);
+        auserList.push({
+          user_id: auser.userId,
+          display_name: auser.displayName,
+          avatarUrl: auser.avatarUrl,
+        });
+      });
+      if (auserList.length > 0) updateUsers(auserList);
+    }
+  }, [isOpen, searchTerm]);
 
   useEffect(() => {
     if (isOpen && typeof searchTerm === 'string') searchNostrUser(searchTerm);

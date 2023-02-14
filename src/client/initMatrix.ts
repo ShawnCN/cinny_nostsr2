@@ -13,10 +13,11 @@ import { cryptoCallbacks } from './state/secretStorageKeys';
 import navigation from './state/navigation';
 
 import MatrixClientA from './MatrixClientA';
-import { TChannelmapObject, TSubscribedChannel } from '../../types';
+import { NostrEvent, TChannelmapObject, TSubscribedChannel } from '../../types';
 import { defaultChatroomList } from './state/cons';
 import TRoom from '../../types/TRoom';
 import TRoomMember from '../../types/TRoomMember';
+import { saveDirectsToLocal, saveMDirectsToLocal } from '../util/localForageUtil';
 // const matrixClientA = new MatrixClientA();
 
 // global.Olm = Olm;
@@ -30,10 +31,12 @@ class InitMatrix extends EventEmitter {
   roomsInput: RoomsInput;
   notifications: Notifications;
   localStorageLoaded: boolean;
+  mDirectEvents: Set<string>;
   constructor() {
     super();
     navigation.initMatrix = this;
     this.localStorageLoaded = false;
+    this.mDirectEvents = new Set();
   }
 
   async init() {
@@ -67,12 +70,6 @@ class InitMatrix extends EventEmitter {
       lazyLoadMembers: true,
     });
     this.matrixClient.setGlobalErrorOnUnknownDevices(false);
-
-    // this.roomList.spaces = new Set();
-    // this.roomList.rooms = new Set();
-    // this.roomList.directs = new Set();
-    // this.roomList.mDirects = new Set();
-    // this.roomList.inviteDirects = new Set();
   }
 
   async setupSync() {
@@ -99,7 +96,7 @@ class InitMatrix extends EventEmitter {
             } else {
               subscribed_channels = defaultChatroomList;
             }
-            let cs: any = [];
+            let cs: string[] = [];
             if (this.roomList.directs.size == 0) {
               for (let i = 0; i < subscribed_channels.length; i++) {
                 if (subscribed_channels[i].type == 'single') {
@@ -107,23 +104,21 @@ class InitMatrix extends EventEmitter {
                   this.roomList.directs.add(roomId);
                 }
               }
-              localForage.setItem('directs', Array.from(this.roomList.directs));
             }
-            if (this.roomList.rooms.size == 0) {
-              for (let i = 0; i < subscribed_channels.length; i++) {
-                if (subscribed_channels[i].type == 'groupChannel') {
-                  const roomId = subscribed_channels[i].user_id;
-                  this.roomList.rooms.add(roomId);
-                }
+            // if (this.roomList.rooms.size == 0) {
+            for (let i = 0; i < subscribed_channels.length; i++) {
+              if (subscribed_channels[i].type == 'groupChannel') {
+                const roomId = subscribed_channels[i].user_id;
+                this.roomList.rooms.add(roomId);
+                // this.matrixClient.subChannelMessage(roomId);
               }
-              localForage.setItem('rooms', Array.from(this.roomList.directs));
             }
+            // this.matrixClient.subChannelMessage(Array.from(this.roomList.rooms));
+            localForage.setItem('rooms', Array.from(this.roomList.directs));
 
-            // this.matrixClient.subChannelMessages(cs);
-            // this.matrixClient.fetchChannelsMeta(cs);
+            this.matrixClient.fetchChannelsMeta(cs);
 
-            // this.matrixClient.subDmFromStranger();
-            // this.matrixClient.subDmFromStranger2();
+            this.matrixClient.subDmFromStranger();
 
             this.accountData = new AccountData(this.roomList);
             this.roomsInput = new RoomsInput(this.matrixClient, this.roomList);
@@ -209,10 +204,12 @@ class InitMatrix extends EventEmitter {
     const contactList = await localForage.getItem('contactList');
     const rooms = await localForage.getItem('rooms');
     const directs = await localForage.getItem('directs');
+    const mDirects = await localForage.getItem('mdirects');
     const inviteDirects = await localForage.getItem('inviteDirects');
     const latestMsgsByEveryone = await localForage.getItem('latestMsgsByEveryone');
     const followEvents = await localForage.getItem('followEvents');
     const profileEvents = await localForage.getItem('profileEvents');
+    const channelProfileEvents = await localForage.getItem('channelProfileEvents');
     const notificationEvents = await localForage.getItem('notificationEvents');
     const eventsById = await localForage.getItem('eventsById');
     const dms = await localForage.getItem('dms');
@@ -226,6 +223,9 @@ class InitMatrix extends EventEmitter {
     if (Array.isArray(directs)) {
       this.roomList.directs = new Set(directs);
     }
+    if (Array.isArray(mDirects)) {
+      this.roomList.mDirects = new Set(mDirects);
+    }
     if (Array.isArray(inviteDirects)) {
       this.roomList.inviteDirects = new Set(inviteDirects);
     }
@@ -236,6 +236,12 @@ class InitMatrix extends EventEmitter {
     }
     if (Array.isArray(profileEvents)) {
       profileEvents.forEach((e) => this.matrixClient.handleEvent(e));
+    }
+    if (Array.isArray(profileEvents)) {
+      profileEvents.forEach((e) => this.matrixClient.handleEvent(e));
+    }
+    if (Array.isArray(channelProfileEvents)) {
+      channelProfileEvents.forEach((e) => this.matrixClient.handleEvent(e));
     }
     if (Array.isArray(latestMsgs)) {
       latestMsgs.forEach((msg) => {
@@ -276,20 +282,20 @@ class InitMatrix extends EventEmitter {
     window.location.reload();
   }
   async getContactsList() {
-    // const contactsList = await this.matrixClient.fetchContactUserList();
-    const contactsList = [
-      ['2e94f749531f1fa2b6754dd0516ebd61061bae20b61b370a4fda277d580e3f21'],
-      ['2ca02292d8cd954cbc57a4f3544e13ee263cb740b29ce090344b64e59da9cea1'],
-      ['5a80ef3c6d8520bdc5fefe193255cc71d4e53c07bf43077317df0eb7e13a2534'],
-      ['3e81efdc94aae511eae0b0d2fc3db2db1b335301134aae2d825f56c9cbc1f856'],
-    ];
+    const contactsList = await this.matrixClient.fetchContactUserList();
+    // const contactsList = [
+    //   ['2e94f749531f1fa2b6754dd0516ebd61061bae20b61b370a4fda277d580e3f21'],
+    //   ['2ca02292d8cd954cbc57a4f3544e13ee263cb740b29ce090344b64e59da9cea1'],
+    //   ['5a80ef3c6d8520bdc5fefe193255cc71d4e53c07bf43077317df0eb7e13a2534'],
+    //   ['3e81efdc94aae511eae0b0d2fc3db2db1b335301134aae2d825f56c9cbc1f856'],
+    // ];
 
     if (contactsList && contactsList.length > 0) {
       contactsList.forEach((contact) => {
-        this.roomList.directs.add(contact[0]);
         this.roomList.mDirects.add(contact[0]);
         if (!this.matrixClient.publicRoomList.get(contact[0])) {
           let aroom = new TRoom(contact[0], 'single');
+          aroom.init();
           const member = new TRoomMember(contact[0]);
           member.init();
           aroom.addMember(member);
@@ -300,6 +306,7 @@ class InitMatrix extends EventEmitter {
           this.matrixClient.publicRoomList.set(contact[0], aroom);
         }
       });
+      saveMDirectsToLocal(this.roomList.mDirects);
     }
   }
 
