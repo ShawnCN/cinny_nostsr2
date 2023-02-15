@@ -104,7 +104,7 @@ class MatrixClientA extends EventEmitter {
 
   async initCrypto() {
     console.log('initCrypto');
-    await this.loadLocalStorageEvents();
+    // await this.loadLocalStorageEvents();
   }
   async startClient({ lazyLoadMembers: boolean }) {
     console.log('startClient');
