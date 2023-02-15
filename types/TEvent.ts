@@ -33,6 +33,9 @@ class TEvent {
   isSending() {
     return false;
   }
+  isRedaction() {
+    return false;
+  }
   getId() {
     return this.event.event_id;
   }
@@ -64,6 +67,7 @@ export type TEventFormat = {
   sender: string;
   event_id: string;
   room_id: string;
+  redacts?: any;
 };
 export type TContent = {
   body: string;

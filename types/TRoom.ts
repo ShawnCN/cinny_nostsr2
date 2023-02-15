@@ -111,7 +111,8 @@ class TRoom {
     return [user];
   }
   getUnreadNotificationCount(arg0: string) {
-    return 11;
+    // total, highlight
+    return 0;
   }
   getLastActiveTimestamp() {
     return Date.now();

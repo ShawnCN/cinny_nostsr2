@@ -14,8 +14,13 @@ import { html, plain } from '../../util/markdown';
 import TRoom from '../../../types/TRoom';
 import MatrixClientA from '../MatrixClientA';
 import RoomList from './RoomList';
+import TEvent from '../../../types/TEvent';
 
-function isNotifEvent(mEvent) {
+type TNoti = { total: number; highlight: number; from: string };
+
+function isNotifEvent(mEvent: TEvent) {
+  // 自定义
+  return false;
   const eType = mEvent.getType();
   if (!cons.supportEventTypes.includes(eType)) return false;
   if (eType === 'm.room.member') return false;
@@ -67,14 +72,14 @@ class Notifications extends EventEmitter {
     this.initialized = false;
     this.roomIdToNoti = new Map();
 
-    const addNoti = (roomId) => {
+    const addNoti = (roomId: string) => {
       const room = this.matrixClient.getRoom(roomId);
-      if (this.getNotiType(room?.roomId) === cons.notifs.MUTE) return;
-      if (this.doesRoomHaveUnread(room) === false) return;
+      if (this.getNotiType(room!.roomId) === cons.notifs.MUTE) return;
+      if (this.doesRoomHaveUnread(room!) === false) return;
 
       const total = room?.getUnreadNotificationCount('total');
       const highlight = room?.getUnreadNotificationCount('highlight');
-      this._setNoti(room?.roomId, total ?? 0, highlight ?? 0);
+      this._setNoti(room!.roomId, total ?? 0, highlight ?? 0);
     };
     [...this.roomList.rooms].forEach(addNoti);
     [...this.roomList.directs].forEach(addNoti);
@@ -100,7 +105,7 @@ class Notifications extends EventEmitter {
     return true;
   }
 
-  getNotiType(roomId) {
+  getNotiType(roomId: string) {
     const mx = this.matrixClient;
     let pushRule;
     try {
@@ -121,30 +126,30 @@ class Notifications extends EventEmitter {
     return cons.notifs.MENTIONS_AND_KEYWORDS;
   }
 
-  getNoti(roomId): { total: number; highlight: number; from: any } {
+  getNoti(roomId: string): { total: number; highlight: number; from: any } {
     return this.roomIdToNoti.get(roomId) || { total: 0, highlight: 0, from: null };
   }
 
-  getTotalNoti(roomId) {
+  getTotalNoti(roomId: string) {
     const { total } = this.getNoti(roomId);
     return total;
   }
 
-  getHighlightNoti(roomId) {
+  getHighlightNoti(roomId: string) {
     const { highlight } = this.getNoti(roomId);
     return highlight;
   }
 
-  getFromNoti(roomId) {
+  getFromNoti(roomId: string): string {
     const { from } = this.getNoti(roomId);
     return from;
   }
 
-  hasNoti(roomId) {
+  hasNoti(roomId: string) {
     return this.roomIdToNoti.has(roomId);
   }
 
-  deleteNoti(roomId) {
+  deleteNoti(roomId: string) {
     if (this.hasNoti(roomId)) {
       const noti = this.getNoti(roomId);
       this._deleteNoti(roomId, noti.total, noti.highlight);
@@ -175,8 +180,8 @@ class Notifications extends EventEmitter {
     setFavicon(this.favicon);
   }
 
-  _setNoti(roomId, total, highlight) {
-    const addNoti = (id, t, h, fromId) => {
+  _setNoti(roomId: string, total: number, highlight: number) {
+    const addNoti = (id: string, t: number, h: number, fromId: string) => {
       const prevTotal = this.roomIdToNoti.get(id)?.total ?? null;
       const noti = this.getNoti(id);
 
@@ -332,7 +337,7 @@ class Notifications extends EventEmitter {
   }
 
   _listenEvents() {
-    this.matrixClient.on('Room.timeline', (mEvent, room) => {
+    this.matrixClient.on('Room.timeline', (mEvent: TEvent, room: TRoom) => {
       if (mEvent.isRedaction()) this._deletePopupNoti(mEvent.event.redacts);
 
       if (room.isSpaceRoom()) return;
@@ -348,7 +353,7 @@ class Notifications extends EventEmitter {
       const highlight = room.getUnreadNotificationCount('highlight');
 
       if (this.getNotiType(room.roomId) === cons.notifs.MUTE) {
-        this.deleteNoti(room.roomId, total ?? 0, highlight ?? 0);
+        this._deleteNoti(room.roomId, total ?? 0, highlight ?? 0);
         return;
       }
 
@@ -388,10 +393,10 @@ class Notifications extends EventEmitter {
         unMutedRules.forEach((rule) => {
           this.emit(cons.events.notifications.MUTE_TOGGLED, rule.rule_id, false);
           const room = this.matrixClient.getRoom(rule.rule_id);
-          if (!this.doesRoomHaveUnread(room)) return;
-          const total = room.getUnreadNotificationCount('total');
-          const highlight = room.getUnreadNotificationCount('highlight');
-          this._setNoti(room.roomId, total ?? 0, highlight ?? 0);
+          if (!this.doesRoomHaveUnread(room!)) return;
+          const total = room!.getUnreadNotificationCount('total');
+          const highlight = room!.getUnreadNotificationCount('highlight');
+          this._setNoti(room!.roomId, total ?? 0, highlight ?? 0);
         });
       }
     });
