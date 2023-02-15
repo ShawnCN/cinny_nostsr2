@@ -28,6 +28,7 @@ import {
   toNostrBech32Address,
   toNostrHexAddress,
   getSubscriptionIdForName,
+  attachmentsChanged,
 } from '../util/nostrUtil';
 import EventEmitter from './EventEmitter';
 import { aevent2, defaultChatroomList, log, stage3relays, TChannelMapList } from './state/cons';
@@ -538,7 +539,7 @@ class MatrixClientA extends EventEmitter {
     console.log('redact event');
   }
   async sendEvent(roomId, arg1: string, content) {
-    console.log('send event');
+    console.log('send event', roomId, arg1, content);
   }
   async invite(roomId, userId, undefined, reason) {
     return true;
@@ -776,7 +777,7 @@ class MatrixClientA extends EventEmitter {
     const pubkey = this.user.userId;
     const filter = {
       authors: [pubkey],
-      kinds: [4],
+      // kinds: [4],
       limit: 1000,
     };
     this.sendSubToRelays([filter], 'subDmByMe');
@@ -1013,7 +1014,10 @@ class MatrixClientA extends EventEmitter {
       }
     }
   }
-  uploadContent(isEncryptedRoom: any, { includeFilename: any, progressHandler }) {}
+  uploadContent(file: any, { includeFilename: any, progressHandler }) {
+    console.log('8888888888888', file);
+    attachmentsChanged(file);
+  }
   getRoomPushRule(arg0: 'global', roomId: string) {
     return undefined;
   }
@@ -1280,7 +1284,6 @@ class MatrixClientA extends EventEmitter {
       return;
     }
 
-    console.log('handleChannelMetaEvent', parent, event.content);
     try {
       const existing = this.channelProfiles.get(parent);
       if (existing?.created_at && existing?.created_at >= event.created_at) {

@@ -856,7 +856,6 @@ function Message({
   const [display, setDisplay] = useState({ username, avatarSrc });
   useEffect(() => {
     initMatrix.matrixClient.getUserWithCB(senderId, (profile) => {
-      console.log('66666666666666666666', senderId, profile);
       if (profile) {
         setDisplay({
           avatarSrc: profile.picture,

@@ -386,7 +386,6 @@ class RoomTimeline extends EventEmitter {
     };
 
     this._listenDecryptEvent = (event: TEvent) => {
-      console.log('_listenDecryptEvent', event.getRoomId(), this.roomId);
       if (event.getRoomId() !== this.roomId) return;
       if (this.isOngoingPagination) return;
       console.log('0.1_listenDecryptEvent', this.ongoingDecryptionCount);
@@ -397,7 +396,6 @@ class RoomTimeline extends EventEmitter {
       //   this.ongoingDecryptionCount -= 1;
       // }
       this.addToTimeline(event);
-      console.log('2_listenDecryptEvent');
       this.emit(cons.events.roomTimeline.EVENT, event);
     };
 

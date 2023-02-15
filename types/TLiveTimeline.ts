@@ -22,8 +22,9 @@ class TLiveTimeline {
     // return [e1, e2, e3, e4];
     return [];
   }
-  getPaginationToken(arg0: string) {
+  getPaginationToken(arg0: 'b' | 'f') {
     return 'b';
+    // return null;
   }
 }
 

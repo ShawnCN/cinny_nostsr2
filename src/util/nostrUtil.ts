@@ -47,3 +47,67 @@ export const defaultName = (address: string, prefix: string) => {
 export const getSubscriptionIdForName = (name: string) => {
   return arrayToHex(sha256(name)).slice(0, 8);
 };
+
+const getBase64 = (file: Blob): Promise<string | ArrayBuffer | null> => {
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+  return new Promise((resolve, reject) => {
+    reader.onload = function () {
+      resolve(reader.result);
+    };
+    reader.onerror = function (error) {
+      reject(`Error: ${error}`);
+    };
+  });
+};
+
+export const attachmentsChanged = (file) => {
+  // let files = event.target.files || event.dataTransfer.files;
+  console.log(`Attachment`, file);
+  const files = [file];
+  if (files) {
+    for (let i = 0; i < files.length; i++) {
+      let formData = new FormData();
+      formData.append('fileToUpload', files[i]);
+
+      let a = [] as any[];
+      a[i] = a[i] || {
+        type: files[i].type,
+      };
+
+      getBase64(files[i]).then((base64) => {
+        a[i].data = base64;
+      });
+
+      const url = fetch('https://nostr.build/upload.php', {
+        method: 'POST',
+        body: formData,
+      })
+        .then(async (response) => {
+          const text = await response.text();
+          const url = text.match(
+            /https:\/\/nostr\.build\/(?:i|av)\/nostr\.build_[a-z0-9]{64}\.[a-z0-9]+/i
+          );
+          if (url) {
+            return url;
+            // a[i].url = url[0];
+            // this.setState({ attachments: a });
+            // const textEl = $(this.newMsgRef.current);
+            // const currentVal = textEl.val();
+            // if (currentVal) {
+            //   textEl.val(currentVal + '\n\n' + url[0]);
+            // } else {
+            //   textEl.val(url[0]);
+            // }
+          }
+        })
+        .catch((error) => {
+          console.error('upload error', error);
+          a[i].error = 'upload failed';
+          this.setState({ attachments: a });
+        });
+      console.log(url);
+      return url;
+    }
+  }
+};

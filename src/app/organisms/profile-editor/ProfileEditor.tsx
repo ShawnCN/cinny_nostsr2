@@ -47,6 +47,7 @@ function ProfileEditor({ userId = null as unknown as string }: IPropsProfileEdit
   }, [userId]);
 
   const handleAvatarUpload = async (url) => {
+    console.log('handleAvatarUpload', url);
     if (url === null) {
       const isConfirmed = await confirmDialog(
         'Remove avatar',

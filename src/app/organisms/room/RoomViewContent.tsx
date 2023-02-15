@@ -8,6 +8,7 @@ import React, {
   useCallback,
   useRef,
   ReactElement,
+  MutableRefObject,
 } from 'react';
 import PropTypes from 'prop-types';
 import './RoomViewContent.scss';
@@ -226,8 +227,8 @@ function usePaginate(
   roomTimeline: RoomTimeline,
   readUptoEvtStore,
   forceUpdateLimit,
-  timelineScrollRef,
-  eventLimitRef
+  timelineScrollRef: MutableRefObject<TimelineScroll>,
+  eventLimitRef: MutableRefObject<EventLimit>
 ) {
   const [info, setInfo] = useState<{
     backwards: boolean;
@@ -294,14 +295,15 @@ function usePaginate(
 }
 
 function useHandleScroll(
-  roomTimeline,
+  roomTimeline: RoomTimeline,
   autoPaginate,
   readUptoEvtStore,
   forceUpdateLimit,
-  timelineScrollRef,
-  eventLimitRef
+  timelineScrollRef: MutableRefObject<TimelineScroll>,
+  eventLimitRef: MutableRefObject<EventLimit>
 ) {
   const handleScroll = useCallback(() => {
+    console.log('useHandleScroll');
     const timelineScroll = timelineScrollRef.current;
     const limit = eventLimitRef.current;
     requestAnimationFrame(() => {
@@ -336,7 +338,12 @@ function useHandleScroll(
   return [handleScroll, handleScrollToLive];
 }
 
-function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, eventLimitRef) {
+function useEventArrive(
+  roomTimeline: RoomTimeline,
+  readUptoEvtStore,
+  timelineScrollRef: MutableRefObject<TimelineScroll>,
+  eventLimitRef: MutableRefObject<EventLimit>
+) {
   const myUserId = initMatrix.matrixClient.getUserId();
   const [newEvent, setEvent] = useState<TEvent>(null as unknown as TEvent);
 
@@ -349,6 +356,7 @@ function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, event
         return;
       }
       const readUpToEvent = readUptoEvtStore.getItem();
+      console.log('readUpToEvent', readUpToEvent);
       const readUpToId = roomTimeline.getReadUpToEventId();
       const isUnread = readUpToEvent ? readUpToEvent?.getId() === readUpToId : true;
 
@@ -552,7 +560,8 @@ function RoomViewContent({
   }, [listenKeyboard]);
 
   const handleTimelineScroll = (event) => {
-    const timelineScroll = timelineScrollRef.current;
+    console.log('handleTimelineScroll', event);
+    const timelineScroll: TimelineScroll = timelineScrollRef.current;
     if (!event.target) return;
 
     throttle._(() => {

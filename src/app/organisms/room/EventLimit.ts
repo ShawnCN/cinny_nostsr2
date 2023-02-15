@@ -25,7 +25,7 @@ class EventLimit {
     this._from = from < 0 ? 0 : from;
   }
 
-  paginate(backwards, limit, timelineLength) {
+  paginate(backwards: boolean, limit: number, timelineLength: number) {
     this._from = backwards ? this._from - limit : this._from + limit;
 
     if (!backwards && this.length > timelineLength) {
