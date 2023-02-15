@@ -52,6 +52,7 @@ function Selector({ roomId, isDM, drawerPostie, onClick }) {
   return (
     <RoomSelector
       key={roomId}
+      type={isDM ? 'single' : 'groupChannel'}
       name={room?.name ? room.name : null}
       roomId={roomId}
       imageSrc={isDM ? imageSrc : null}

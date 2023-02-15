@@ -192,6 +192,13 @@ export const defaultChatroomList = [
   //   new_message_created_at: 0,
   // },
   {
+    user_id: 'c8d3eb756902f5c99e47c370d4a252fcadbb3b7c0026f489b35ffcf93654e3b6',
+    type: 'groupChannel',
+    unread: 0,
+    new_message: '',
+    new_message_created_at: 0,
+  },
+  {
     user_id: 'aa82def2a4110b491eb1874138b7eb97514c53be43627babe25e5c15660aff3d',
     type: 'groupChannel',
     unread: 0,

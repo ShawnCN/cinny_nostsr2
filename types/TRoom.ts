@@ -117,12 +117,26 @@ class TRoom {
   }
   getAvatarUrl(arg0: string, arg1: number, arg2: number, arg3: string) {
     if (this.avatarUrl) return this.avatarUrl;
-    const profile = initMatrix.matrixClient.channelProfileEvents.get(this.roomId);
-    if (profile && profile.picture) {
-      this.avatarUrl = profile.picture;
-      return this.avatarUrl;
-    } else {
-      return null;
+    if (this.type == 'single') {
+      const profile = initMatrix.matrixClient.profiles.get(this.roomId);
+      if (profile) {
+        this.name = profile.name;
+        this.canonical_alias = profile.about;
+        return profile.picture;
+      } else {
+        return null;
+      }
+    }
+    if (this.type == 'groupChannel') {
+      const profile = initMatrix.matrixClient.channelProfileEvents.get(this.roomId);
+      if (profile) {
+        this.name = profile?.name;
+        this.canonical_alias = profile?.about;
+        this.avatarUrl = profile?.picture;
+        return this.avatarUrl;
+      } else {
+        return null;
+      }
     }
   }
   getUsersReadUpTo(arg0: TEvent) {

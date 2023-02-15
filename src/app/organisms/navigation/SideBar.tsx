@@ -75,7 +75,14 @@ function ProfileAvatarMenu() {
     //     setNewProfile(info.avatarUrl, info.displayName);
     //   }
     // });
-    mx.getProfile(mx.getUserId(), (profile) => {
+    // mx.getProfile(mx.getUserId(), (profile) => {
+    //   console.log('mx.getProfile');
+    //   if (profile) {
+    //     setNewProfile(profile.picture, profile.name);
+    //   }
+    // });
+    mx.getUserWithCB(mx.getUserId(), (profile) => {
+      console.log('mx.getProfile');
       if (profile) {
         setNewProfile(profile.picture, profile.name);
       }

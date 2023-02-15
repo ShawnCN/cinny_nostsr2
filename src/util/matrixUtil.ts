@@ -520,6 +520,30 @@ export const fetchUserMetaFromRelay = async (pubkey: string, relay: Relay) => {
 
   return event;
 };
+export const fetchUsersMetaFromRelay = async (pubkeys: string[], relay: Relay) => {
+  if (!relay || relay.status != 1) return null;
+  const filter = { authors: pubkeys, kinds: [0], limit: 200 };
+  const sub = relay.sub([filter]);
+  let aevent = {} as NostrEvent;
+  const event = new Promise<NostrEvent>((resolve, reject) => {
+    sub.on('event', (event: NostrEvent) => {
+      aevent = event;
+      initMatrix.matrixClient.handleEvent(event);
+      resolve(aevent);
+    });
+    sub.on('eose', () => {
+      sub.unsub();
+      if (!aevent || Object.keys(aevent).length == 0) {
+        reject(null);
+      }
+    });
+  }).catch((e) => {
+    console.error(e);
+    return null;
+  });
+
+  return event;
+};
 
 export const fetchChannelMetaFromRelay = async (channelId: string, relay: Relay) => {
   if (!relay || relay.status != 1) return null;

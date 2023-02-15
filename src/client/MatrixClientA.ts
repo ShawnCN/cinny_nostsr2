@@ -11,6 +11,7 @@ import {
   fetchChannelMetaFromRelay,
   fetchContacts,
   fetchUserMetaFromRelay,
+  fetchUsersMetaFromRelay,
   formatChannelEvent,
   formatChannelMsg,
   FormatCitedEventsAndCitedPubkeys,
@@ -34,7 +35,6 @@ import { Debounce } from '../util/common';
 import SortedLimitedEventSet from '../../types/SortedLimitedEventSet';
 import { savechannelProfileEventsToLocal, saveprofileEventsToLocal } from '../util/localForageUtil';
 import TEventTimelineSet from '../../types/TEventTimelineSet';
-import { EventTimeline } from 'matrix-js-sdk';
 const debounce = new Debounce();
 class MatrixClientA extends EventEmitter {
   store: { deleteAllData: () => Promise<any> };
@@ -94,7 +94,7 @@ class MatrixClientA extends EventEmitter {
     this.publicRoomList = new Map();
     this.relayInstance = new Map();
     this.subscribedChannels = new Set<string>();
-    this.subscribedChannelProfiles = new Map<string, any>();
+    this.subscribedChannelProfiles = new Set<string>();
     // this.store = {
     //   deleteAllData:()=>Promise<any>
     // }
@@ -236,7 +236,7 @@ class MatrixClientA extends EventEmitter {
     return auser;
   }
   async getUserWithCB(userId: string, cb: (profile: any) => void) {
-    const profile = this.profiles.get(userId);
+    const profile = this.profiles.get(toNostrHexAddress(userId)!);
     if (profile) {
       cb(profile);
       return;
@@ -290,6 +290,7 @@ class MatrixClientA extends EventEmitter {
       avatarUrl: null,
     });
     const nostrEvent = await this.fetchUserMeta(pubkeyHex);
+    this.handleEvent(nostrEvent);
     let user = {} as { displayName: string; about: string; avatarUrl: string };
     if (!nostrEvent) return null;
     const { name, about, picture } = JSON.parse(nostrEvent.content);
@@ -367,8 +368,34 @@ class MatrixClientA extends EventEmitter {
   setAvatarUrl(url: string) {
     this.user.avatarUrl = url;
   }
-  setDisplayName(name: string) {
+  async setDisplayName(name: string) {
     this.user.displayName = name;
+    let profile: any = {};
+    profile = this.profiles.get(this.user.userId);
+    if (profile) {
+      profile.name = name;
+    } else {
+      profile = {
+        name: name,
+        about: this.user.about,
+        picture: this.user.avatarUrl,
+      };
+    }
+
+    const note = JSON.stringify(profile);
+    const now = Math.floor(Date.now() / 1000);
+    let event = {
+      content: note,
+      created_at: now,
+      kind: 0,
+      tags: [],
+      pubkey: this.user.userId,
+    };
+
+    const event2 = await getSignedEvent(event, this.user?.privatekey);
+    this.handleEvent(event2);
+    console.log(event2);
+    this.publishEvent(event2);
   }
   async setRoomName(roomId, newName) {
     let room = this.publicRoomList.get(roomId);
@@ -904,6 +931,21 @@ class MatrixClientA extends EventEmitter {
       }
     }
   }
+  async fetchUsersMeta(user_ids: string[]) {
+    console.log('fetchUsersMeta', user_ids.length);
+    for (let [key, relay] of this.relayInstance) {
+      if (!relay || getRelayStatus(relay) != 1) {
+        continue;
+      }
+      console.log('start searching', relay.url);
+      const a = await fetchUsersMetaFromRelay(user_ids, relay);
+      if (a && Object.keys(a).length > 1) {
+        return a;
+      } else {
+        // console.log('not found', relay.url);
+      }
+    }
+  }
   async fetchChannelMeta(user_id: string) {
     if (user_id.substring(0, 4) == 'note') {
       let { type, data } = nip19.decode(user_id);
@@ -929,6 +971,7 @@ class MatrixClientA extends EventEmitter {
     const user_id = this.user.userId;
     for (let [key, relay] of this.relayInstance) {
       const event = await fetchContacts(relay, user_id);
+      this.handleEvent(event);
       if (event) {
         this.handleEvent(event);
         const tags = event.tags;
@@ -1064,52 +1107,13 @@ class MatrixClientA extends EventEmitter {
   }
   handleDirectMessage = async (event: NostrEvent) => {
     this.eventsById.set(event.id, event);
-    console.log('from stranger', event.pubkey, event.content);
-    const mevent = await formatDmMsgFromOthersOrMe(event, this.user);
-    const mc = new TEvent(mevent);
-    const roomId = mevent.room_id;
-    const senderId = mevent.sender;
-    const room = this.publicRoomList.get(roomId);
-    if (room) {
-      const me = room.getMember(this.user.userId);
-      if (me?.membership == 'invite') {
-        const membership = 'invite';
-        const prevMembership = 'invite';
-        this.emit('Room.myMembership', room, membership, prevMembership);
-      } else if (me?.membership == 'join') {
-        const sender = room.getMember(senderId);
-        if (sender) {
-          mc.sender = sender;
-        } else {
-          const asender = new TRoomMember(senderId);
-          asender.init();
-          room.addMember(asender);
-          mc.sender = asender;
-        }
-        this.emit('Event.decrypted', mc);
-      }
-      console.log(mc);
-    } else {
-      const room = new TRoom(senderId, 'single');
-      room.init();
-      const asender = new TRoomMember(senderId);
-      asender.init();
-      room.addMember(asender);
-      mc.sender = asender;
-      const me = new TRoomMember(this.user.userId, this.user.displayName, this.user.avatarUrl);
-      me.membership = 'invite';
-      room.addMember(me);
-      this.publicRoomList.set(senderId, room);
-      const membership = 'invite';
-      const prevMembership = null;
-      this.emit('Room.myMembership', room, membership, prevMembership);
-    }
+    this.emit('handleDirectMessage', event);
   };
   handleMetaEvent(event: Event) {
     try {
       const existing = this.profiles.get(event.pubkey);
 
-      if (!existing?.created_at || existing?.created_at >= event.created_at) {
+      if (existing?.created_at && existing?.created_at >= event.created_at) {
         return false;
       }
       const profile = JSON.parse(event.content);
@@ -1120,7 +1124,9 @@ class MatrixClientA extends EventEmitter {
       const existingEvent = this.profileEvents.get(event.pubkey);
       if (!existingEvent || existingEvent.created_at < event.created_at) {
         this.profileEvents.set(event.pubkey, event);
-        this.localStorageLoaded && this.saveLocalStorageProfilesAndContact(this);
+        if (this.localStorageLoaded) {
+          this.saveLocalStorageProfilesAndContact();
+        }
       }
     } catch (e) {
       console.log('error parsing nostr profile', e, event);
@@ -1148,20 +1154,25 @@ class MatrixClientA extends EventEmitter {
   };
 
   handleContactEvents = (event: NostrEvent) => {
+    if (event.pubkey != this.user.userId) return;
+    console.log('handleContactEvents', event);
     const existing = this.contactEvents.get(event.pubkey);
     if (existing && existing.created_at >= event.created_at) {
       return;
     }
-    if (event.pubkey === this.user.userId) {
-      this.localStorageLoaded && this.saveLocalStorageProfilesAndContact();
-    }
-    if (event.tags && event.pubkey === this.user.userId) {
+
+    if (event.tags) {
       this.contactList.clear();
       for (const tag of event.tags) {
         if (Array.isArray(tag) && tag[0] === 'p') {
           this.contactList.add(tag[1]);
         }
       }
+    }
+    console.log('2handleContactEvents', event);
+    if (this.localStorageLoaded) {
+      console.log('3handleContactEvents', event);
+      this.saveLocalStorageProfilesAndContact();
     }
   };
   loadLocalStorageEvents = async () => {
@@ -1208,12 +1219,9 @@ class MatrixClientA extends EventEmitter {
   };
 
   saveLocalStorageProfilesAndContact = debounce._(() => {
+    console.log('saveLocalStorageProfilesAndContact');
     const profileEvents = Array.from(this.profileEvents.values());
-    const contactEvents = Array.from(this.contactEvents.values()).filter((e: NostrEvent) => {
-      return (
-        e.pubkey === this.user.userId || this.contactEvents.get(this.user.userId)?.has(e.pubkey)
-      );
-    });
+    const contactEvents = Array.from(this.contactEvents.values());
     console.log('saving', profileEvents.length + contactEvents.length, 'events to local storage');
     localForage.setItem('profileEvents', profileEvents);
     localForage.setItem('contactEvents', contactEvents);

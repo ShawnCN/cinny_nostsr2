@@ -58,6 +58,7 @@ RoomSelectorWrapper.propTypes = {
 
 function RoomSelector({
   name,
+  type,
   parentName,
   roomId,
   imageSrc,
@@ -74,11 +75,20 @@ function RoomSelector({
   const room = initMatrix.matrixClient.getRoom(roomId);
   const [display, setDisplay] = useState({ name, imageSrc });
   useEffect(() => {
-    initMatrix.matrixClient.getChannelInfoWithCB(roomId, (profile) => {
-      if (profile) {
-        setDisplay({ name: profile.name, imageSrc: profile.picture });
-      }
-    });
+    if (type == 'groupChannel') {
+      initMatrix.matrixClient.getChannelInfoWithCB(roomId, (profile) => {
+        if (profile) {
+          setDisplay({ name: profile.name, imageSrc: profile.picture });
+        }
+      });
+    }
+    if (type == 'single') {
+      initMatrix.matrixClient.getUserWithCB(roomId, (profile) => {
+        if (profile) {
+          setDisplay({ name: profile.name, imageSrc: profile.picture });
+        }
+      });
+    }
   }, []);
   return (
     <RoomSelectorWrapper

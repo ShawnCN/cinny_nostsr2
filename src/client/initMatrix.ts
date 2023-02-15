@@ -1,6 +1,5 @@
 /* eslint-disable lines-between-class-members */
 import EventEmitter from './EventEmitter';
-import * as sdk from 'matrix-js-sdk';
 // import Olm from '@matrix-org/olm';
 // import { logger } from 'matrix-js-sdk/lib/logger';
 import localForage from 'localforage';
@@ -18,7 +17,8 @@ import { defaultChatroomList } from './state/cons';
 import TRoom from '../../types/TRoom';
 import TRoomMember from '../../types/TRoomMember';
 import { saveDirectsToLocal, saveMDirectsToLocal } from '../util/localForageUtil';
-import { initialChannelroom, initialDMroom } from '../util/matrixUtil';
+import { formatDmMsgFromOthersOrMe, initialChannelroom, initialDMroom } from '../util/matrixUtil';
+import TEvent from '../../types/TEvent';
 // const matrixClientA = new MatrixClientA();
 
 // global.Olm = Olm;
@@ -218,6 +218,7 @@ class InitMatrix extends EventEmitter {
       window.localStorage.clear();
       window.location.reload();
     });
+    this.on('handleDirectMessage', this.updateDirectMessageEvent);
   }
   loadLocalStorageEvents = async () => {
     const latestMsgs = await localForage.getItem('latestMsgs');
@@ -308,6 +309,53 @@ class InitMatrix extends EventEmitter {
     }
   };
 
+  async updateDirectMessageEvent(event: NostrEvent) {
+    console.log('from stranger', event.pubkey, event.content);
+    const mevent = await formatDmMsgFromOthersOrMe(event, this.matrixClient.user);
+    const mc = new TEvent(mevent);
+    const roomId = mevent.room_id;
+    const senderId = mevent.sender;
+    const room = this.matrixClient.publicRoomList.get(roomId);
+    if (!room) {
+      const room = new TRoom(senderId, 'single');
+      room.init();
+      const asender = new TRoomMember(senderId);
+      asender.init();
+      room.addMember(asender);
+      mc.sender = asender;
+      const me = new TRoomMember(
+        this.matrixClient.user.userId,
+        this.matrixClient.user.displayName,
+        this.matrixClient.user.avatarUrl
+      );
+      me.membership = 'invite';
+      room.addMember(me);
+      this.matrixClient.publicRoomList.set(senderId, room);
+      const membership = 'invite';
+      const prevMembership = null;
+      this.emit('Room.myMembership', room, membership, prevMembership);
+      return;
+    }
+
+    const me = room.getMember(this.matrixClient.user.userId);
+    if (me?.membership == 'invite') {
+      const membership = 'invite';
+      const prevMembership = 'invite';
+      this.emit('Room.myMembership', room, membership, prevMembership);
+    } else if (me?.membership == 'join') {
+      const sender = room.getMember(senderId);
+      if (sender) {
+        mc.sender = sender;
+      } else {
+        const asender = new TRoomMember(senderId);
+        asender.init();
+        room.addMember(asender);
+        mc.sender = asender;
+      }
+      this.emit('Event.decrypted', mc);
+    }
+  }
+
   async logout() {
     this.matrixClient.stopClient();
     try {
@@ -320,6 +368,9 @@ class InitMatrix extends EventEmitter {
     window.location.reload();
   }
   async getContactsList() {
+    let list = Array.from(this.roomList.mDirects);
+    list.push(this.matrixClient.getUserId());
+    this.matrixClient.fetchUsersMeta(list);
     const contactsList = await this.matrixClient.fetchContactUserList();
     // const contactsList = [
     //   ['2e94f749531f1fa2b6754dd0516ebd61061bae20b61b370a4fda277d580e3f21'],
@@ -347,6 +398,9 @@ class InitMatrix extends EventEmitter {
         }
       });
       saveMDirectsToLocal(this.roomList.mDirects);
+      let list = Array.from(this.roomList.mDirects);
+      list.push(this.matrixClient.getUserId());
+      this.matrixClient.fetchUsersMeta(list);
     }
   }
 

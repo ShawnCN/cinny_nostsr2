@@ -16,8 +16,11 @@ import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 
 import './ProfileEditor.scss';
 import { toNostrBech32Address } from '../../../util/nostrUtil';
+interface IPropsProfileEditor {
+  userId: string;
+}
 
-function ProfileEditor({ userId }) {
+function ProfileEditor({ userId = null as unknown as string }: IPropsProfileEditor) {
   const [isEditing, setIsEditing] = useState(false);
   const mx = initMatrix.matrixClient;
   const user = mx.getUser(mx.getUserId());
@@ -116,6 +119,7 @@ function ProfileEditor({ userId }) {
         />
       </div>
       <Text variant="b2">{toNostrBech32Address(mx.getUserId()!, 'npub')!}</Text>
+      <Text variant="b2">{mx.getUserId()}</Text>
     </div>
   );
 
@@ -133,12 +137,12 @@ function ProfileEditor({ userId }) {
   );
 }
 
-ProfileEditor.defaultProps = {
-  userId: null,
-};
+// ProfileEditor.defaultProps = {
+//   userId: null,
+// };
 
-ProfileEditor.propTypes = {
-  userId: PropTypes.string,
-};
+// ProfileEditor.propTypes = {
+//   userId: PropTypes.string,
+// };
 
 export default ProfileEditor;

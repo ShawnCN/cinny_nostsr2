@@ -19,7 +19,7 @@ import RoomTile from '../../molecules/room-tile/RoomTile';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
 import { SearchResultUser } from '../../../../types';
-import { toNostrHexAddress } from '../../../util/nostrUtil';
+import { defaultName, toNostrHexAddress } from '../../../util/nostrUtil';
 
 interface IPropsInviteUser {
   isOpen: boolean;
@@ -264,7 +264,6 @@ function InviteUser({
         </Text>
       );
     };
-
     return users.map((user) => (
       <RenderUserTile user={user} renderOptions={renderOptions} renderError={renderError} />
     ));
@@ -281,6 +280,7 @@ function InviteUser({
         });
       });
       if (auserList.length > 0) updateUsers(auserList);
+      // mx.fetchUsersMeta(Array.from(initMatrix.roomList.mDirects));
     }
   }, [isOpen, searchTerm]);
 
@@ -358,30 +358,19 @@ interface IPropsRenderUserTile {
 
 function RenderUserTile({ user, renderOptions, renderError }: IPropsRenderUserTile) {
   const userId = user.user_id;
-  let name = typeof user.display_name === 'string' ? user.display_name : userId;
-  const [display, setDisplay] = useState<SearchResultUser>(user);
-  useEffect(() => {
-    initMatrix.matrixClient.getUserWithCB(user.user_id, (profile) => {
-      if (profile) {
-        setDisplay({
-          user_id: user.user_id,
-          avatarUrl: profile.picture,
-          display_name: profile.name,
-        });
-      }
-    });
-  }, [user.user_id]);
+  let name =
+    typeof user.display_name === 'string' ? user.display_name : defaultName(userId, 'npub');
 
   return (
     <RoomTile
       key={userId}
       avatarSrc={
-        typeof display?.avatarUrl === 'string'
+        typeof user?.avatarUrl === 'string'
           ? // ? mx.mxcUrlToHttp(user.avatarUrl, 42, 42, 'crop')
-            display.avatarUrl
+            user.avatarUrl
           : null
       }
-      name={display?.display_name}
+      name={name}
       id={userId}
       options={renderOptions(userId, user)}
       desc={renderError(userId)}

@@ -39,9 +39,9 @@ function RoomViewHeader({ roomId }) {
   const isDM = initMatrix.roomList.directs.has(roomId);
   const room = mx.getRoom(roomId);
   let avatarSrc = room.getAvatarUrl(mx.baseUrl, 36, 36, 'crop');
-  avatarSrc = isDM
-    ? room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop')
-    : avatarSrc;
+  // avatarSrc = isDM
+  //   ? room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop')
+  //   : avatarSrc;
   const roomName = room.name;
 
   const roomHeaderBtnRef = useRef(null);
