@@ -881,7 +881,7 @@ function Message({
         {!isBodyOnly && (
           <MessageHeader
             userId={senderId}
-            username={username}
+            username={display?.username ? display.username : defaultName(senderId, 'npub')!}
             timestamp={mEvent.getTs()}
             fullTime={fullTime}
           />

@@ -45,12 +45,15 @@ function RoomViewHeader({ roomId }) {
   //   : avatarSrc;
   // const roomName = room.name;
 
-  const [roomName, setRoomName] = useState(() => room.name);
+  const [roomName, setRoomName] = useState(room!.name);
   const [roomTopic, setRoomTopic] = useState(room?.canonical_alias);
   const [avatarSrc, setAvatarSrc] = useState(room?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop'));
   const roomHeaderBtnRef = useRef(null);
 
   useEffect(() => {
+    setRoomName(room!.name);
+    setRoomTopic(room?.canonical_alias);
+    setAvatarSrc(room?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop'));
     if (type == 'groupChannel') {
       initMatrix.matrixClient.getChannelInfoWithCB(roomId, (profile) => {
         if (profile) {

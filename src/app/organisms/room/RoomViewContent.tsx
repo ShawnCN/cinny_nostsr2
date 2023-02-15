@@ -560,7 +560,6 @@ function RoomViewContent({
   }, [listenKeyboard]);
 
   const handleTimelineScroll = (event) => {
-    console.log('handleTimelineScroll', event);
     const timelineScroll: TimelineScroll = timelineScrollRef.current;
     if (!event.target) return;
 

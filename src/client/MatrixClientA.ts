@@ -826,11 +826,11 @@ class MatrixClientA extends EventEmitter {
       },
     ];
     this.sendSubToRelays(filters, 'subscribedChannels', true);
-  }, 500);
+  }, 500)();
   fetchChannelMetaFromRelay = async (channelId: string, relay: Relay) => {
     if (!relay || relay.status != 1) return null;
     const filter = {
-      ids: [channelId],
+      // ids: [channelId],
       kinds: [40, 41],
     };
     const sub = relay.sub([filter]);
@@ -1116,6 +1116,7 @@ class MatrixClientA extends EventEmitter {
         this.handleChannelMetaEvent(event);
         break;
       case 41:
+        console.log(event.kind, event.content, event.tags);
         break;
       case 42:
         this.handleChannelMessageEvent(event);
@@ -1289,10 +1290,6 @@ class MatrixClientA extends EventEmitter {
   // };
   handleMetaEvent(event: Event) {
     try {
-      if (event.pubkey == this.user.userId) {
-        console.log('event: ' + event.content, event.created_at);
-        console.log(this.user);
-      }
       const existing = this.profiles.get(event.pubkey);
       if (existing?.created_at && existing?.created_at >= event.created_at) {
         return false;
