@@ -129,7 +129,7 @@ function handleOnClickCapture(e) {
 function renderEvent(
   roomTimeline: RoomTimeline,
   mEvent: TEvent,
-  prevMEvent: TEvent,
+  prevMEvent: TEvent | null,
   isFocus: boolean,
   isEdit,
   setEdit,

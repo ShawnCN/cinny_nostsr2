@@ -10,11 +10,11 @@ class TEvent {
     this.sender = new TRoomMember(this.event.sender);
   }
   getTs() {
-    console.log(this.event.origin_server_ts);
-    return this.event.origin_server_ts;
+    console.log(this.event.origin_server_ts * 1000);
+    return this.event.origin_server_ts * 1000;
   }
   getDate() {
-    return new Date(this.event.origin_server_ts);
+    return new Date(this.event.origin_server_ts * 1000);
   }
   getType() {
     return this.event.type;

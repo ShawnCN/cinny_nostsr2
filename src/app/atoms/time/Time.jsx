@@ -5,7 +5,7 @@ import dateFormat from 'dateformat';
 import { isInSameDay } from '../../../util/common';
 
 function Time({ timestamp, fullTime }) {
-  const date = new Date(timestamp * 1000);
+  const date = new Date(timestamp);
 
   const formattedFullTime = dateFormat(date, 'dd mmmm yyyy, hh:MM TT');
   let formattedDate = formattedFullTime;

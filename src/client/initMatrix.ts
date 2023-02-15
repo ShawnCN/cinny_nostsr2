@@ -66,7 +66,7 @@ class InitMatrix extends EventEmitter {
     //   cryptoCallbacks,
     //   verificationMethods: ['m.sas.v1'],
     // });
-    this.matrixClient.loadLocalStorageEvents();
+
     // await this.matrixClient.startClient({
     //   lazyLoadMembers: true,
     // });
@@ -88,8 +88,6 @@ class InitMatrix extends EventEmitter {
           this.roomList = new RoomList(this.matrixClient);
           await this.loadLocalStorageEvents();
           this.roomList.rooms.forEach((roomId) => {
-            console.log('22222222222222222222222222222222222', this.matrixClient.cProfileEvents);
-            console.log(this.matrixClient.channelProfiles);
             if (!this.matrixClient.publicRoomList.has(roomId)) {
               const croom = initialChannelroom(roomId, this.matrixClient.user);
               this.matrixClient.publicRoomList.set(roomId, croom);
@@ -139,15 +137,6 @@ class InitMatrix extends EventEmitter {
               }
             }
             localForage.setItem('rooms', Array.from(this.roomList.rooms));
-            // if (this.roomList.rooms.size == 0) {
-            // for (const roomId of this.roomList.rooms) {
-            //   // this.matrixClient.subChannelMessage(Array.from(this.roomList.rooms));
-            //   this.matrixClient.subChannelMessage(roomId);
-            // }
-
-            // this.matrixClient.fetchChannelsMeta(cs);
-            // this.matrixClient.subDmFromStranger();
-
             this.accountData = new AccountData(this.roomList);
             this.roomsInput = new RoomsInput(this.matrixClient, this.roomList);
             this.notifications = new Notifications(this.roomList);
@@ -168,8 +157,8 @@ class InitMatrix extends EventEmitter {
           //   this.matrixClient.subChannelMessage(roomId);
           // }
 
-          // // this.matrixClient.fetchChannelsMeta(cs);
-          // this.matrixClient.subDmFromStranger();
+          this.matrixClient.subChannelMessage(Array.from(this.roomList.rooms));
+          this.matrixClient.subDmFromStranger();
           await this.getContactsList();
 
           break;

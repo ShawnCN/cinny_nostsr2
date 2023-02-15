@@ -218,6 +218,11 @@ class MatrixClientA extends EventEmitter {
   async getChannelInfoWithCB(channelId: string, cb: (profile: any) => void) {
     const profile = this.channelProfiles.get(channelId);
     if (profile) {
+      let room = this.publicRoomList.get(channelId);
+      room!.name = profile.name;
+      room!.canonical_alias = profile.about;
+      room!.avatarUrl = profile.picture;
+      this.publicRoomList.set(channelId, room!);
       cb(profile);
       return;
     }
@@ -225,6 +230,11 @@ class MatrixClientA extends EventEmitter {
     if (nostrEvent) {
       this.handleEvent(nostrEvent);
       const profile = JSON.parse(nostrEvent.content);
+      let room = this.publicRoomList.get(channelId);
+      room!.name = profile.name;
+      room!.canonical_alias = profile.about;
+      room!.avatarUrl = profile.picture;
+      this.publicRoomList.set(channelId, room!);
       cb(profile);
     }
   }
@@ -358,21 +368,30 @@ class MatrixClientA extends EventEmitter {
     let room = this.publicRoomList.get(roomId);
     if (room) {
       room.name = newName;
+      this.publicRoomList.set(roomId, room);
+      let p = this.channelProfiles.get(roomId);
+      p!.name = newName;
+      this.channelProfiles.set(roomId, p!);
     }
-    let p = this.channelProfiles.get(roomId);
-    p!.name = newName;
-    this.channelProfiles.set(roomId, p!);
   }
   async setRoomAvatar(roomId, avatar) {
     let room = this.publicRoomList.get(roomId);
     if (room) {
       room.avatarUrl = avatar;
+      this.publicRoomList.set(roomId, room);
+      let p = this.channelProfiles.get(roomId);
+      p!.picture = avatar;
+      this.channelProfiles.set(roomId, p!);
     }
   }
   async setRoomAbout(roomId, about) {
     let room = this.publicRoomList.get(roomId);
     if (room) {
       room.canonical_alias = about;
+      this.publicRoomList.set(roomId, room);
+      let p = this.channelProfiles.get(roomId);
+      p!.about = about;
+      this.channelProfiles.set(roomId, p!);
     }
   }
   async setRoomTopic(roomId, newTopic) {}
@@ -713,11 +732,11 @@ class MatrixClientA extends EventEmitter {
     };
     this.sendSubToRelays([filter], 'subGlobalMessages');
   };
-  subChannelMessage = (channelId: string) => {
+  subChannelMessage = (channelId: string[]) => {
     // for (let [k, relay] of this.relayInstance) {
     const filter = {
       kinds: [42],
-      '#e': [channelId],
+      '#e': channelId,
       limit: 200,
     };
     this.sendSubToRelays([filter], `'subChannelMessage'${channelId}`);
@@ -1155,48 +1174,6 @@ class MatrixClientA extends EventEmitter {
     if (this.localStorageLoaded) {
       console.log('3handleContactEvents', event);
       this.saveLocalStorageProfilesAndContact();
-    }
-  };
-  loadLocalStorageEvents = async () => {
-    const latestMsgs = await localForage.getItem('latestMsgs');
-    const latestMsgsByEveryone = await localForage.getItem('latestMsgsByEveryone');
-    const contactEvents = await localForage.getItem('contactEvents');
-    const profileEvents = await localForage.getItem('profileEvents');
-    const notificationEvents = await localForage.getItem('notificationEvents');
-    const eventsById = await localForage.getItem('eventsById');
-    const dms = await localForage.getItem('dms');
-    const keyValueEvents = await localForage.getItem('keyValueEvents');
-    this.localStorageLoaded = true;
-    if (Array.isArray(contactEvents)) {
-      contactEvents.forEach((e) => this.handleEvent(e));
-    }
-    if (Array.isArray(profileEvents)) {
-      profileEvents.forEach((e) => this.handleEvent(e));
-    }
-    if (Array.isArray(latestMsgs)) {
-      latestMsgs.forEach((msg) => {
-        this.handleEvent(msg);
-      });
-    }
-    if (Array.isArray(latestMsgsByEveryone)) {
-      latestMsgsByEveryone.forEach((msg) => {
-        this.handleEvent(msg);
-      });
-    }
-    if (Array.isArray(notificationEvents)) {
-      notificationEvents.forEach((msg) => {
-        this.handleEvent(msg);
-      });
-    }
-    if (Array.isArray(dms)) {
-      dms.forEach((msg) => {
-        this.handleEvent(msg);
-      });
-    }
-    if (Array.isArray(keyValueEvents)) {
-      keyValueEvents.forEach((msg) => {
-        this.handleEvent(msg);
-      });
     }
   };
 

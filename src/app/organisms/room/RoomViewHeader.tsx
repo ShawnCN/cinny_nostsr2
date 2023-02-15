@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import './RoomViewHeader.scss';
 
@@ -38,13 +38,38 @@ function RoomViewHeader({ roomId }) {
   const mx = initMatrix.matrixClient;
   const isDM = initMatrix.roomList.directs.has(roomId);
   const room = mx.getRoom(roomId);
+  const type = room.type;
   let avatarSrc = room.getAvatarUrl(mx.baseUrl, 36, 36, 'crop');
-  // avatarSrc = isDM
-  //   ? room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop')
-  //   : avatarSrc;
+  avatarSrc = isDM
+    ? room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop')
+    : avatarSrc;
   const roomName = room.name;
-
+  console.log(room.name);
+  // const [roomName, setRoomName] = useState(() => room.name);
+  // const [roomTopic, setRoomTopic] = useState(room?.canonical_alias);
+  // const [avatarSrc, setAvatarSrc] = useState(room?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop'));
   const roomHeaderBtnRef = useRef(null);
+
+  // useEffect(() => {
+  //   if (type == 'groupChannel') {
+  //     initMatrix.matrixClient.getChannelInfoWithCB(roomId, (profile) => {
+  //       if (profile) {
+  //         setRoomName(profile.name);
+  //         setRoomTopic(profile.about);
+  //         setAvatarSrc(profile.picture);
+  //       }
+  //     });
+  //   }
+  //   if (type == 'single') {
+  //     initMatrix.matrixClient.getUserWithCB(roomId, (profile) => {
+  //       if (profile) {
+  //         setRoomName(profile.name);
+  //         setRoomTopic(profile.about);
+  //         setAvatarSrc(profile.picture);
+  //       }
+  //     });
+  //   }
+  // }, [roomId, type]);
   useEffect(() => {
     const settingsToggle = (isVisibile) => {
       const rawIcon = roomHeaderBtnRef.current.lastElementChild;
