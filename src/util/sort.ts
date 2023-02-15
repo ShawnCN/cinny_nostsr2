@@ -9,7 +9,13 @@ export function roomIdByActivity(id1, id2) {
 
 export function roomIdByAtoZ(aId, bId) {
   let aName = initMatrix.matrixClient.getRoom(aId)!.name;
+  if (!aName) {
+    return 1;
+  }
   let bName = initMatrix.matrixClient.getRoom(bId)!.name;
+  if (!aName) {
+    return -1;
+  }
 
   // remove "#" from the room name
   // To ignore it in sorting

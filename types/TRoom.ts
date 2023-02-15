@@ -18,10 +18,11 @@ class TRoom {
   topic: string;
   currentState: CurrentState;
   roomMembers: Map<string, TRoomMember>;
+  founder: string;
   // currentState: {
   //   getStateEvents: typeof getStateEvents;
   // };
-  constructor(roomId: string, type) {
+  constructor(roomId: string, type: string, name?: string, about?: string, avatarUrl?: string) {
     // this.currentState.getStateEvents = getStateEvents();
     this.currentState = new CurrentState();
     this.roomMembers = new Map();
@@ -36,11 +37,23 @@ class TRoom {
     } else {
       this.name = roomId;
     }
+    if (name) this.name = name;
+    if (about) this.canonical_alias = about;
+    if (avatarUrl) this.avatarUrl = avatarUrl;
   }
 
   async init() {
     if (this.type == 'single') {
       const profile = initMatrix.matrixClient.profileEvents.get(this.roomId);
+      if (profile) {
+        this.name = profile.name;
+        this.avatarUrl = profile.pictureUrl;
+        this.canonical_alias = profile.about;
+      }
+      return;
+    }
+    if (this.type == 'groupChannel') {
+      const profile = initMatrix.matrixClient.cProfileEvents.get(this.roomId);
       if (profile) {
         this.name = profile.name;
         this.avatarUrl = profile.pictureUrl;
@@ -116,7 +129,7 @@ class TRoom {
     return false;
   }
   getAvatarUrl(arg0: string, arg1: number, arg2: number, arg3: string) {
-    if (this.avatarUrl) return this.avatarUrl;
+    if (this.avatarUrl && this.avatarUrl.length > 0) return this.avatarUrl;
     if (this.type == 'single') {
       const profile = initMatrix.matrixClient.profiles.get(this.roomId);
       if (profile) {

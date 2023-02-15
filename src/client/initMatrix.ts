@@ -87,6 +87,26 @@ class InitMatrix extends EventEmitter {
           console.log('Previous state: ', prevState);
           this.roomList = new RoomList(this.matrixClient);
           await this.loadLocalStorageEvents();
+          this.roomList.rooms.forEach((roomId) => {
+            console.log('22222222222222222222222222222222222', this.matrixClient.cProfileEvents);
+            console.log(this.matrixClient.channelProfiles);
+            if (!this.matrixClient.publicRoomList.has(roomId)) {
+              const croom = initialChannelroom(roomId, this.matrixClient.user);
+              this.matrixClient.publicRoomList.set(roomId, croom);
+            }
+          });
+          this.roomList.directs.forEach((direct) => {
+            if (!this.matrixClient.publicRoomList.has(direct)) {
+              const croom = initialDMroom(direct, this.matrixClient.user);
+              this.matrixClient.publicRoomList.set(direct, croom);
+            }
+          });
+          this.roomList.mDirects.forEach((direct) => {
+            if (!this.matrixClient.publicRoomList.has(direct)) {
+              const croom = initialDMroom(direct, this.matrixClient.user);
+              this.matrixClient.publicRoomList.set(direct, croom);
+            }
+          });
           // TODO: remove global.initMatrix at end
           // global.initMatrix = this;
           if (prevState === null) {
@@ -143,13 +163,13 @@ class InitMatrix extends EventEmitter {
           });
           this.matrixClient.setGlobalErrorOnUnknownDevices(false);
 
-          for (const roomId of this.roomList.rooms) {
-            // this.matrixClient.subChannelMessage(Array.from(this.roomList.rooms));
-            this.matrixClient.subChannelMessage(roomId);
-          }
+          // for (const roomId of this.roomList.rooms) {
+          //   // this.matrixClient.subChannelMessage(Array.from(this.roomList.rooms));
+          //   this.matrixClient.subChannelMessage(roomId);
+          // }
 
-          // this.matrixClient.fetchChannelsMeta(cs);
-          this.matrixClient.subDmFromStranger();
+          // // this.matrixClient.fetchChannelsMeta(cs);
+          // this.matrixClient.subDmFromStranger();
           await this.getContactsList();
 
           break;
@@ -222,7 +242,6 @@ class InitMatrix extends EventEmitter {
   }
   loadLocalStorageEvents = async () => {
     const latestMsgs = await localForage.getItem('latestMsgs');
-    const contactList = await localForage.getItem('contactList');
     const rooms = await localForage.getItem('rooms');
     const directs = await localForage.getItem('directs');
     const mDirects = await localForage.getItem('mdirects');
@@ -235,41 +254,18 @@ class InitMatrix extends EventEmitter {
     const eventsById = await localForage.getItem('eventsById');
     const dms = await localForage.getItem('dms');
     const keyValueEvents = await localForage.getItem('keyValueEvents');
-    if (Array.isArray(contactList)) {
-      this.roomList.mDirects = new Set(contactList);
-    }
     if (Array.isArray(rooms)) {
       this.roomList.rooms = new Set(rooms);
-      this.roomList.rooms.forEach((roomId) => {
-        if (!this.matrixClient.publicRoomList.has(roomId)) {
-          const croom = initialChannelroom(roomId, this.matrixClient.user);
-          this.matrixClient.publicRoomList.set(roomId, croom);
-        }
-      });
     }
     if (Array.isArray(directs)) {
       this.roomList.directs = new Set(directs);
-      this.roomList.directs.forEach((direct) => {
-        if (!this.matrixClient.publicRoomList.has(direct)) {
-          const croom = initialDMroom(direct, this.matrixClient.user);
-          this.matrixClient.publicRoomList.set(direct, croom);
-        }
-      });
     }
     if (Array.isArray(mDirects)) {
       this.roomList.mDirects = new Set(mDirects);
-      this.roomList.mDirects.forEach((direct) => {
-        if (!this.matrixClient.publicRoomList.has(direct)) {
-          const croom = initialDMroom(direct, this.matrixClient.user);
-          this.matrixClient.publicRoomList.set(direct, croom);
-        }
-      });
     }
     if (Array.isArray(inviteDirects)) {
       this.roomList.inviteDirects = new Set(inviteDirects);
     }
-
-    this.localStorageLoaded = true;
     if (Array.isArray(followEvents)) {
       followEvents.forEach((e) => this.matrixClient.handleEvent(e));
     }
@@ -307,6 +303,8 @@ class InitMatrix extends EventEmitter {
         this.matrixClient.handleEvent(msg);
       });
     }
+
+    this.localStorageLoaded = true;
   };
 
   async updateDirectMessageEvent(event: NostrEvent) {
@@ -372,27 +370,10 @@ class InitMatrix extends EventEmitter {
     list.push(this.matrixClient.getUserId());
     this.matrixClient.fetchUsersMeta(list);
     const contactsList = await this.matrixClient.fetchContactUserList();
-    // const contactsList = [
-    //   ['2e94f749531f1fa2b6754dd0516ebd61061bae20b61b370a4fda277d580e3f21'],
-    //   ['2ca02292d8cd954cbc57a4f3544e13ee263cb740b29ce090344b64e59da9cea1'],
-    //   ['5a80ef3c6d8520bdc5fefe193255cc71d4e53c07bf43077317df0eb7e13a2534'],
-    //   ['3e81efdc94aae511eae0b0d2fc3db2db1b335301134aae2d825f56c9cbc1f856'],
-    // ];
-
     if (contactsList && contactsList.length > 0) {
       contactsList.forEach((contact) => {
-        // this.roomList.directs.add(contact[0]);
         this.roomList.mDirects.add(contact[0]);
         if (!this.matrixClient.publicRoomList.get(contact[0])) {
-          // let aroom = new TRoom(contact[0], 'single');
-          // aroom.init();
-          // const member = new TRoomMember(contact[0]);
-          // member.init();
-          // aroom.addMember(member);
-          // let me = new TRoomMember(this.matrixClient.user.userId);
-          // me.name = this.matrixClient.user.displayName;
-          // me.avatarSrc = this.matrixClient.user.avatarUrl;
-          // aroom.addMember(me);
           const aroom = initialDMroom(contact[0], this.matrixClient.user);
           this.matrixClient.publicRoomList.set(contact[0], aroom);
         }

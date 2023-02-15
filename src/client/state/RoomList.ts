@@ -4,7 +4,7 @@ import cons from './cons';
 import TRoom from '../../../types/TRoom';
 import MatrixClientA from '../MatrixClientA';
 import localforage from 'localforage';
-import { saveDirectsToLocal } from '../../util/localForageUtil';
+import { saveDirectsToLocal, saveRoomsToLocal } from '../../util/localForageUtil';
 import initMatrix from '../InitMatrix';
 
 function isMEventSpaceChild(mEvent) {
@@ -177,7 +177,10 @@ class RoomList extends EventEmitter {
         this.directs.add(roomId);
         saveDirectsToLocal(this.directs);
       } else if (myRoom.isSpaceRoom()) this.addToSpaces(roomId);
-      else this.rooms.add(roomId);
+      else {
+        this.rooms.add(roomId);
+        saveRoomsToLocal(this.rooms);
+      }
       return true;
     };
     const actions = {

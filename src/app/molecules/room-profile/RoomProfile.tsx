@@ -36,20 +36,45 @@ function RoomProfile({ roomId }) {
 
   const mx = initMatrix.matrixClient;
   const isDM = initMatrix.roomList.directs.has(roomId);
-  let avatarSrc = mx.getRoom(roomId).getAvatarUrl(mx.baseUrl, 36, 36, 'crop');
+  // let avatarSrc = mx.getRoom(roomId).getAvatarUrl(mx.baseUrl, 36, 36, 'crop');
   // avatarSrc = isDM
   //   ? mx.getRoom(roomId)?.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop')
   //   : avatarSrc;
   const room = mx.getRoom(roomId);
+  const type = room.type;
   const { currentState } = room;
-  const roomName = room.name;
-  const roomTopic = currentState.getStateEvents('m.room.topic')[0]?.getContent().topic;
+  // const roomName = room.name;
+  const [roomName, setRoomName] = useState(room.name);
+  const [roomTopic, setRoomTopic] = useState(room?.canonical_alias);
+  const [avatarSrc, setAvatarSrc] = useState(room?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop'));
+  // const roomTopic = currentState.getStateEvents('m.room.topic')[0]?.getContent().topic;
 
   const userId = mx.getUserId();
 
   const canChangeAvatar = currentState.maySendStateEvent('m.room.avatar', userId);
   const canChangeName = currentState.maySendStateEvent('m.room.name', userId);
   const canChangeTopic = currentState.maySendStateEvent('m.room.topic', userId);
+
+  useEffect(() => {
+    if (type == 'groupChannel') {
+      initMatrix.matrixClient.getChannelInfoWithCB(roomId, (profile) => {
+        if (profile) {
+          setRoomName(profile.name);
+          setRoomTopic(profile.about);
+          setAvatarSrc(profile.picture);
+        }
+      });
+    }
+    if (type == 'single') {
+      initMatrix.matrixClient.getUserWithCB(roomId, (profile) => {
+        if (profile) {
+          setRoomName(profile.name);
+          setRoomTopic(profile.about);
+          setAvatarSrc(profile.picture);
+        }
+      });
+    }
+  }, []);
 
   useEffect(() => {
     isMountStore.setItem(true);
@@ -207,11 +232,9 @@ function RoomProfile({ roomId }) {
             />
           )}
         </div>
-        <Text variant="b3">{room.getCanonicalAlias() || bech32Id}</Text>
-        <Text variant="b3">
-          {roomId}
-          {room.type}
-        </Text>
+        <Text variant="b3">{room.getCanonicalAlias()}</Text>
+        <Text variant="b3">{bech32Id}</Text>
+        <Text variant="b3">{roomId}</Text>
         {roomTopic && <Text variant="b2">{twemojify(roomTopic, undefined, true)}</Text>}
       </div>
     );

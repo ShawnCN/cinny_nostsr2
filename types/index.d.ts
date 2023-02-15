@@ -70,3 +70,17 @@ export type Subscription = {
   filters: Filter[];
   callback?: (event: Event) => void;
 };
+export type TOptions = {
+  name: '范德萨发';
+  topic: '范德萨发撒的';
+  visibility: 'private';
+  initial_state: [
+    {
+      type: 'm.room.encryption';
+      state_key: '';
+      content: {
+        algorithm: 'm.megolm.v1.aes-sha2';
+      };
+    }
+  ];
+};

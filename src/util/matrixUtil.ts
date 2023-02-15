@@ -353,7 +353,6 @@ export const formatChannelMsg = (event: NostrEvent) => {
   let replyingTo = '';
   if (events_replied_to[0] && events_replied_to.length > 1) {
     replyingTo = events_replied_to[events_replied_to.length - 1];
-    // array_of_replies.push([event.id, replyingTo]);
   }
   if (events_replied_to[0] && event.kind == 42) {
     parent = events_replied_to[0]; // root event.id
@@ -446,6 +445,8 @@ export const FormatCitedEventsAndCitedPubkeys = (event: NostrEvent) => {
     pubkeys_replied_to,
   };
 };
+
+export const getChannelIdfromEvent = (event: NostrEvent) => {};
 
 export function formatRoomMemberFromNostrEvent(event: NostrEvent) {
   const { name, about, picture } = JSON.parse(event.content);

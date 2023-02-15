@@ -213,7 +213,7 @@ async function createRoom(opts) {
 
   const mx = initMatrix.matrixClient;
   const visibility = joinRule === 'public' ? 'public' : 'private';
-  const options = {
+  const options: any = {
     creation_content: undefined,
     name,
     topic,
