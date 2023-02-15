@@ -23,16 +23,16 @@ interface IPropsInviteList {
 function InviteList({ isOpen, onRequestClose }: IPropsInviteList) {
   const [procInvite, changeProcInvite] = useState(new Set());
 
-  function acceptInvite(roomId: string, isDM: boolean) {
+  const acceptInvite = async (roomId: string, isDM: boolean) => {
     procInvite.add(roomId);
     changeProcInvite(new Set(Array.from(procInvite)));
     console.log('6666666666666666', roomId, isDM);
-    roomActions.join(roomId, isDM);
-  }
+    await roomActions.join(roomId, isDM);
+  };
   function rejectInvite(roomId: string, isDM: boolean) {
     procInvite.add(roomId);
     changeProcInvite(new Set(Array.from(procInvite)));
-    roomActions.leave(roomId, isDM);
+    roomActions.leave(roomId);
   }
   function updateInviteList(roomId: string) {
     if (procInvite.has(roomId)) procInvite.delete(roomId);

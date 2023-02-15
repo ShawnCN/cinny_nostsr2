@@ -105,9 +105,12 @@ function convertToRoom(roomId) {
  * @param {string[]} via
  */
 async function join(roomIdOrAlias: string, isDM = false, via = undefined) {
+  console.log(roomIdOrAlias, isDM, via);
   const mx = initMatrix.matrixClient;
   const roomIdParts = roomIdOrAlias.split(':');
-  const viaServers = via || [roomIdParts[1]];
+  // const viaServers = via || [roomIdParts[1]];
+  // 自定义
+  const viaServers = [];
 
   try {
     const resultRoom = await mx.joinRoom(roomIdOrAlias, { viaServers });
@@ -116,7 +119,9 @@ async function join(roomIdOrAlias: string, isDM = false, via = undefined) {
       // to do. Need to added user to my contacts list and store on relays.
       // const targetUserId = guessDMRoomTargetId(mx.getRoom(resultRoom!.roomId)!, mx.getUserId());
       const targetUserId = resultRoom!.roomId;
-      await addRoomToMDirect(resultRoom!.roomId, targetUserId);
+      // 自定义
+      // await addRoomToMDirect(resultRoom!.roomId, targetUserId);
+      // await initMatrix.matrixClient.addUserToContact(roomIdOrAlias);
     }
     appDispatcher.dispatch({
       type: cons.actions.room.JOIN,

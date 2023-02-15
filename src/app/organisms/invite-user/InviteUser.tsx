@@ -77,8 +77,12 @@ function InviteUser({
     updateCreatedDM(getMapCopy(createdDM));
     updateRoomIdToUserId(getMapCopy(roomIdToUserId));
   }
-  function updateFoundProfileInfo(info: { displayName: string; about: string; avatarUrl: string }) {
-    console.log(info);
+  const updateFoundProfileInfo = (info: {
+    displayName: string;
+    about: string;
+    avatarUrl: string;
+  }) => {
+    if (!usernameRef.current.value || usernameRef.current.value.trim().length == 0) return;
     updateUsers([
       {
         user_id: usernameRef.current.value,
@@ -87,7 +91,7 @@ function InviteUser({
       },
     ]);
     updateIsSearching(false);
-  }
+  };
 
   async function searchUser(username: string) {
     const inputUsername = username.trim();
@@ -128,6 +132,7 @@ function InviteUser({
     updateIsSearching(false);
   }
   async function searchNostrUser(username: string) {
+    console.log(username);
     const inputUsername = username.trim();
     if (isSearching || inputUsername === '' || inputUsername === searchQuery.username) return;
     // const isInputUserId = inputUsername[0] === '@' && inputUsername.indexOf(':') > 1;

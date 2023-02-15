@@ -135,16 +135,21 @@ class RoomTimeline extends EventEmitter {
   }
 
   isServingLiveTimeline() {
-    return getLastLinkedTimeline(this.activeTimeline) === this.liveTimeline;
+    return true;
+    // return getLastLinkedTimeline(this.activeTimeline) === this.liveTimeline;
   }
 
   canPaginateBackward() {
+    // 自定义
+    // return false;
     if (this.timeline[0]?.getType() === 'm.room.create') return false;
     const tm = getFirstLinkedTimeline(this.activeTimeline);
     return tm.getPaginationToken('b') !== null;
   }
 
   canPaginateForward() {
+    // 自定义
+    // return false;
     return !this.isServingLiveTimeline();
   }
 

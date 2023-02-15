@@ -170,14 +170,17 @@ class RoomList extends EventEmitter {
 
   roomActions(action) {
     const addRoom = (roomId: string, isDM: boolean) => {
+      console.log('addRoom111111111111111', roomId, isDM);
       const myRoom = this.matrixClient.getRoom(roomId);
       if (myRoom === null) return false;
 
       if (isDM) {
         this.directs.add(roomId);
         saveDirectsToLocal(this.directs);
-      } else if (myRoom.isSpaceRoom()) this.addToSpaces(roomId);
-      else {
+        console.log('222addRoom111111111111111', roomId, isDM);
+      } else if (myRoom.isSpaceRoom()) {
+        this.addToSpaces(roomId);
+      } else {
         this.rooms.add(roomId);
         saveRoomsToLocal(this.rooms);
       }
@@ -185,6 +188,7 @@ class RoomList extends EventEmitter {
     };
     const actions = {
       [cons.actions.room.JOIN]: () => {
+        console.log('0000000000000001');
         if (addRoom(action.roomId, action.isDM)) {
           setTimeout(() => {
             this.emit(cons.events.roomList.ROOM_JOINED, action.roomId);

@@ -13,7 +13,7 @@ export function roomIdByAtoZ(aId, bId) {
     return 1;
   }
   let bName = initMatrix.matrixClient.getRoom(bId)!.name;
-  if (!aName) {
+  if (!bName) {
     return -1;
   }
 

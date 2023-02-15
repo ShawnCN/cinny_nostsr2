@@ -116,7 +116,7 @@ class Navigation extends EventEmitter {
     );
   }
 
-  _selectTabWithRoom(roomId) {
+  _selectTabWithRoom(roomId: string) {
     const { roomList, accountData } = this.initMatrix;
     console.log('accountData', accountData);
     const { categorizedSpaces } = accountData;

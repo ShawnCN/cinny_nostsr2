@@ -59,7 +59,7 @@ class MatrixClientA extends EventEmitter {
 
   localStorageLoaded: boolean;
   directMessagesByUser: Map<string, SortedLimitedEventSet>;
-  channelMessagesByChannelId: Map<string, SortedLimitedEventSet>;
+  cMsgsByCid: Map<string, SortedLimitedEventSet>;
   subscriptionsByName: Map<string, Set<Sub>>;
   subscribedFiltersByName: Map<string, Filter[]>;
   subscriptions: Map<number, Subscription>;
@@ -87,7 +87,7 @@ class MatrixClientA extends EventEmitter {
     this.contactEvents = new Map();
 
     this.directMessagesByUser = new Map<string, SortedLimitedEventSet>();
-    this.channelMessagesByChannelId = new Map<string, SortedLimitedEventSet>();
+    this.cMsgsByCid = new Map<string, SortedLimitedEventSet>();
     this.subscriptionsByName = new Map<string, Set<Sub>>();
     this.subscribedFiltersByName = new Map<string, Filter[]>();
     this.subscriptions = new Map<number, Subscription>();
@@ -475,7 +475,7 @@ class MatrixClientA extends EventEmitter {
   async sendReadReceipt(latestEvent) {}
   setAccountData(arg0: string, arg1: any) {}
   isRoomEncrypted(roomId: string) {
-    return true;
+    return false;
   }
   async paginateEventTimeline(
     room: TRoom,
@@ -484,21 +484,28 @@ class MatrixClientA extends EventEmitter {
   ) {
     let tl = [] as TEvent[];
     let eventIds: string[] = [];
+    console.log('---------------------');
     if (room.type == 'single') {
       eventIds = this.directMessagesByUser.get(room.roomId)!.eventIds;
-    }
-    if (room.type == 'groupChannel') {
-      eventIds = this.channelMessagesByChannelId.get(room.roomId)!.eventIds;
-    }
-
-    for (let [k, v] of this.eventsById) {
-      if (eventIds.includes(k)) {
-        const mevent = formatChannelMsg(v);
-        const mc = new TEvent(mevent);
-        tl.push(mc);
+      for (let [k, v] of this.eventsById) {
+        if (eventIds.includes(k)) {
+          const mevent = await formatDmMsgFromOthersOrMe(v, this.user);
+          const mc = new TEvent(mevent!);
+          tl.push(mc);
+        }
       }
     }
-    log(timelineToPaginate);
+    if (room.type == 'groupChannel') {
+      eventIds = this.cMsgsByCid.get(room.roomId)!.eventIds;
+      for (let [k, v] of this.eventsById) {
+        if (eventIds.includes(k)) {
+          const mevent = formatChannelMsg(v);
+          const mc = new TEvent(mevent);
+          tl.push(mc);
+        }
+      }
+    }
+
     return tl.reverse();
     console.log(`paginateEventTimeline`);
     console.log(timelineToPaginate);
@@ -515,11 +522,13 @@ class MatrixClientA extends EventEmitter {
     return Promise.resolve(a);
   }
   async joinRoom(roomIdOrAlias: string, arg1: { viaServers: string[] }) {
-    const a = this.publicRoomList.get(roomIdOrAlias.split(':')[0]);
+    const roomId = roomIdOrAlias.split(':')[0];
+    const a = this.publicRoomList.get(roomId) as TRoom;
     let me = a?.getMember(this.user.userId);
     if (me?.membership != 'join') {
       a?.setMemberWithMembership(this.user.userId, 'join');
     }
+    this.publicRoomList.set(roomId, a!);
     const membership = 'join';
     const prevMembership = 'invite';
     this.emit('Room.myMembership', a, membership, prevMembership);
@@ -618,6 +627,20 @@ class MatrixClientA extends EventEmitter {
     } else if ((type = 'groupRelay')) {
     }
   }
+  saveLocalStorageEvents = () =>
+    debounce._(() => {
+      console.log('保存成功');
+      const dms: NostrEvent[] = [];
+      for (const set of this.directMessagesByUser.values()) {
+        set.eventIds.forEach((eventId: any) => {
+          dms.push(this.eventsById.get(eventId)!);
+        });
+      }
+
+      localForage.setItem('dms', dms);
+
+      // TODO save own block and flag events
+    }, 500)();
   publishEvent = (event: NostrEvent) => {
     // also publish at most 10 events referred to in tags
     const referredEvents = event.tags
@@ -631,7 +654,6 @@ class MatrixClientA extends EventEmitter {
       const pub = relay.publish(event);
       pub.on('ok', () => {
         console.log(`${relay.url} has accepted our event`);
-        console.log(event);
       });
       pub.on('seen', () => {
         console.log(`we saw the event on ${relay.url}`);
@@ -746,9 +768,18 @@ class MatrixClientA extends EventEmitter {
     const filter = {
       kinds: [4],
       '#p': [pubkey],
-      limit: 30,
+      limit: 1000,
     };
     this.sendSubToRelays([filter], 'subDmFromStranger');
+  };
+  subDmByMe = () => {
+    const pubkey = this.user.userId;
+    const filter = {
+      authors: [pubkey],
+      kinds: [4],
+      limit: 1000,
+    };
+    this.sendSubToRelays([filter], 'subDmByMe');
   };
 
   fetchChannelsMeta = debounce._((channels: string[]) => {
@@ -1007,7 +1038,7 @@ class MatrixClientA extends EventEmitter {
     //   return;
     // }
     if (event.created_at > Date.now() / 1000) {
-      console.log('future event', event.created_at);
+      // console.log('future event', event.created_at);
       return;
     }
 
@@ -1073,10 +1104,10 @@ class MatrixClientA extends EventEmitter {
 
     channelId = events_replied_to[0]; // root event.id
 
-    if (!this.channelMessagesByChannelId.has(channelId)) {
-      this.channelMessagesByChannelId.set(channelId, new SortedLimitedEventSet(500));
+    if (!this.cMsgsByCid.has(channelId)) {
+      this.cMsgsByCid.set(channelId, new SortedLimitedEventSet(500));
     }
-    this.channelMessagesByChannelId.get(channelId)?.add(event);
+    this.cMsgsByCid.get(channelId)?.add(event);
   }
   handlePublicNostrEvent(event: NostrEvent) {
     this.eventsById.set(event.id, event);
@@ -1099,8 +1130,126 @@ class MatrixClientA extends EventEmitter {
   }
   handleDirectMessage = async (event: NostrEvent) => {
     this.eventsById.set(event.id, event);
-    this.emit('handleDirectMessage', event);
+
+    const myPub = this.user.userId;
+    let user = event.pubkey;
+    if (event.pubkey === myPub) {
+      user = event.tags.find((tag) => tag[0] === 'p')?.[1] || user;
+    }
+    // else {
+    //   const forMe = event.tags.some((tag) => tag[0] === 'p' && tag[1] === myPub);
+    //   if (!forMe) {
+    //     return;
+    //   }
+    // }
+    console.log('from stranger', event.pubkey, event.content);
+    this.eventsById.set(event.id, event);
+    if (!this.directMessagesByUser.has(user)) {
+      this.directMessagesByUser.set(user, new SortedLimitedEventSet(500));
+    }
+    this.directMessagesByUser.get(user)?.add(event);
+
+    const mevent = await formatDmMsgFromOthersOrMe(event, this.user);
+    const mc = new TEvent(mevent);
+    const roomId = mevent.room_id;
+    const senderId = mevent.sender;
+    const room = this.publicRoomList.get(roomId);
+    if (room) {
+      const me = room.getMember(this.user.userId);
+      if (me?.membership == 'invite') {
+        const membership = 'invite';
+        const prevMembership = 'invite';
+        this.emit('Room.myMembership', room, membership, prevMembership);
+      } else if (me?.membership == 'join') {
+        const sender = room.getMember(senderId);
+        if (sender) {
+          mc.sender = sender;
+        } else {
+          const asender = new TRoomMember(senderId);
+          asender.init();
+          room.addMember(asender);
+          mc.sender = asender;
+        }
+        console.log('888888888');
+        this.emit('Event.decrypted', mc);
+      }
+      console.log(mc);
+    } else {
+      const room = new TRoom(senderId, 'single');
+      room.init();
+      const asender = new TRoomMember(senderId);
+      asender.init();
+      room.addMember(asender);
+      mc.sender = asender;
+      const me = new TRoomMember(this.user.userId, this.user.displayName, this.user.avatarUrl);
+      me.membership = 'invite';
+      room.addMember(me);
+      this.publicRoomList.set(senderId, room);
+      const membership = 'invite';
+      const prevMembership = null;
+      this.emit('Room.myMembership', room, membership, prevMembership);
+    }
+    this.saveLocalStorageEvents();
   };
+  // handleDirectMessage = async (event: NostrEvent) => {
+  //   const myPub = this.user.userId;
+  //   let user = event.pubkey;
+  //   if (event.pubkey === myPub) {
+  //     user = event.tags.find((tag) => tag[0] === 'p')?.[1] || user;
+  //   } else {
+  //     const forMe = event.tags.some((tag) => tag[0] === 'p' && tag[1] === myPub);
+  //     if (!forMe) {
+  //       return;
+  //     }
+  //   }
+  //   this.eventsById.set(event.id, event);
+  //   if (!this.directMessagesByUser.has(user)) {
+  //     this.directMessagesByUser.set(user, new SortedLimitedEventSet(500));
+  //   }
+  //   this.directMessagesByUser.get(user)?.add(event);
+  //   this.emit('handleDirectMessage', event);
+  //   // const mevent = await formatDmMsgFromOthersOrMe(event, this.user);
+  //   // const mc = new TEvent(mevent);
+  //   // const roomId = mevent.room_id;
+  //   // const senderId = mevent.sender;
+  //   // const room = this.publicRoomList.get(roomId);
+  //   // if (!room) {
+  //   //   const room = new TRoom(senderId, 'single');
+  //   //   room.init();
+  //   //   const asender = new TRoomMember(senderId);
+  //   //   asender.init();
+  //   //   room.addMember(asender);
+  //   //   mc.sender = asender;
+  //   //   const me = new TRoomMember(this.user.userId, this.user.displayName, this.user.avatarUrl);
+  //   //   me.membership = 'invite';
+  //   //   room.addMember(me);
+  //   //   this.publicRoomList.set(senderId, room);
+  //   //   const membership = 'invite';
+  //   //   const prevMembership = null;
+  //   //   this.emit('Room.myMembership', room, membership, prevMembership);
+  //   //   return;
+  //   // }
+
+  //   // const me = room.getMember(this.user.userId);
+  //   // if (me?.membership == 'invite') {
+  //   //   const membership = 'invite';
+  //   //   const prevMembership = 'invite';
+  //   //   this.emit('Room.myMembership', room, membership, prevMembership);
+  //   // } else if (me?.membership == 'join') {
+  //   //   const sender = room.getMember(senderId);
+  //   //   if (sender) {
+  //   //     mc.sender = sender;
+  //   //   } else {
+  //   //     const asender = new TRoomMember(senderId);
+  //   //     asender.init();
+  //   //     room.addMember(asender);
+  //   //     mc.sender = asender;
+  //   //   }
+  //   //   this.emit('Event.decrypted', mc);
+  //   // }
+  //   console.log('555555555555');
+  //   this.saveLocalStorageEvents();
+  // };
   handleMetaEvent(event: Event) {
     try {
       const existing = this.profiles.get(event.pubkey);
