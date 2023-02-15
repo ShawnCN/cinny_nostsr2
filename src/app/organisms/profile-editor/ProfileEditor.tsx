@@ -15,7 +15,7 @@ import PencilIC from '../../../../public/res/ic/outlined/pencil.svg';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 
 import './ProfileEditor.scss';
-import { toNostrBech32Address } from '../../../util/nostrUtil';
+import { defaultName, toNostrBech32Address } from '../../../util/nostrUtil';
 interface IPropsProfileEditor {
   userId: string;
 }
@@ -24,7 +24,6 @@ function ProfileEditor({ userId = null as unknown as string }: IPropsProfileEdit
   const [isEditing, setIsEditing] = useState(false);
   const mx = initMatrix.matrixClient;
   const user = mx.getUser(mx.getUserId());
-
   const displayNameRef = useRef<any>(null);
   const [avatarSrc, setAvatarSrc] = useState(
     // user.avatarUrl ? mx.mxcUrlToHttp(user.avatarUrl, 80, 80, 'crop') : null
@@ -33,20 +32,29 @@ function ProfileEditor({ userId = null as unknown as string }: IPropsProfileEdit
   const [username, setUsername] = useState(user.displayName);
   const [disabled, setDisabled] = useState(true);
 
-  useEffect(() => {
-    let isMounted = true;
-    mx.getProfileInfo(mx.getUserId()).then((info) => {
-      if (!isMounted || !info) return;
-      // setAvatarSrc(info.avatarUrl ? mx.mxcUrlToHttp(info.avatarUrl, 80, 80, 'crop') : null);
-      setAvatarSrc(info.avatarUrl ? info.avatarUrl : null);
-      setUsername(info.displayName);
-    });
-    return () => {
-      isMounted = false;
-    };
-  }, [userId]);
+  // useEffect(() => {
+  //   let isMounted = true;
+  //   mx.getProfileInfo(mx.getUserId()).then((info) => {
+  //     if (!isMounted || !info) return;
+  //     // setAvatarSrc(info.avatarUrl ? mx.mxcUrlToHttp(info.avatarUrl, 80, 80, 'crop') : null);
+  //     setAvatarSrc(info.avatarUrl ? info.avatarUrl : null);
+  //     setUsername(info.displayName);
+  //   });
+  //   return () => {
+  //     // isMounted = false;
+  //   };
+  // }, [userId]);
 
-  const handleAvatarUpload = async (url) => {
+  useEffect(() => {
+    initMatrix.matrixClient.getUserWithCB(userId, (profile) => {
+      if (profile) {
+        setAvatarSrc(profile.picture && profile.picture.length > 0 ? profile.picture : null);
+        setUsername(profile.name ? profile.name : defaultName(userId, 'npub'));
+      }
+    });
+  }, []);
+
+  const handleAvatarUpload = async (url: string) => {
     console.log('handleAvatarUpload', url);
     if (url === null) {
       const isConfirmed = await confirmDialog(
@@ -61,8 +69,9 @@ function ProfileEditor({ userId = null as unknown as string }: IPropsProfileEdit
       }
       return;
     }
-    mx.setAvatarUrl(url);
-    setAvatarSrc(mx.mxcUrlToHttp(url, 80, 80, 'crop'));
+    await mx.setAvatarUrl(url);
+    // setAvatarSrc(mx.mxcUrlToHttp(url, 80, 80, 'crop'));
+    setAvatarSrc(url);
   };
 
   const saveDisplayName = () => {

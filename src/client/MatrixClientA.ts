@@ -31,7 +31,13 @@ import {
   attachmentsChanged,
 } from '../util/nostrUtil';
 import EventEmitter from './EventEmitter';
-import { aevent2, defaultChatroomList, log, stage3relays, TChannelMapList } from './state/cons';
+import cons, {
+  aevent2,
+  defaultChatroomList,
+  log,
+  stage3relays,
+  TChannelMapList,
+} from './state/cons';
 import { Debounce } from '../util/common';
 import SortedLimitedEventSet from '../../types/SortedLimitedEventSet';
 import { savechannelProfileEventsToLocal, saveprofileEventsToLocal } from '../util/localForageUtil';
@@ -47,7 +53,7 @@ class MatrixClientA extends EventEmitter {
   relayInstance: Map<string, Relay>;
   eventsById: Map<string, NostrEvent>;
   blockedUsers: Set<string>;
-  profileEvents: Map<string, any>;
+  profileEvents: Map<string, NostrEvent>;
   profiles: Map<string, any>;
   channelProfiles: Map<
     string,
@@ -212,7 +218,16 @@ class MatrixClientA extends EventEmitter {
     const nostrEvent = await this.fetchUserMeta(userId);
     if (nostrEvent) {
       this.handleEvent(nostrEvent);
+      const profile = JSON.parse(nostrEvent.content);
+      if (userId == this.user.userId) {
+        this.user.displayName = profile.name;
+        this.user.about = profile.about;
+        this.user.avatarUrl = profile.picture;
+      }
       cb(profile);
+      if (initMatrix.roomList.directs.has(userId)) {
+        this.emit(cons.events.roomList.ROOM_PROFILE_UPDATED, userId);
+      }
     }
   }
 
@@ -237,6 +252,7 @@ class MatrixClientA extends EventEmitter {
       room!.avatarUrl = profile.picture;
       this.publicRoomList.set(channelId, room!);
       cb(profile);
+      this.emit(cons.events.roomList.ROOM_PROFILE_UPDATED, channelId);
     }
   }
   async logout() {
@@ -333,14 +349,29 @@ class MatrixClientA extends EventEmitter {
   mxcUrlToHttp(arg0: string, arg1?: number, arg2?: number, arg3?: string) {
     return '';
   }
-  setAvatarUrl(url: string) {
+  async setAvatarUrl(url: string) {
     this.user.avatarUrl = url;
+    let profile: any = {};
+    const profileEvent = this.profileEvents.get(this.user.userId);
+
+    if (profileEvent) {
+      profile = JSON.parse(profileEvent.content);
+      profile.picture = url;
+    } else {
+      profile = {
+        name: this.user.displayName,
+        about: this.user.about,
+        picture: this.user.avatarUrl,
+      };
+    }
+    await this.setUserMetadata(profile);
   }
   async setDisplayName(name: string) {
     this.user.displayName = name;
     let profile: any = {};
-    profile = this.profiles.get(this.user.userId);
-    if (profile) {
+    const profileEvent = this.profileEvents.get(this.user.userId);
+    if (profileEvent) {
+      profile = JSON.parse(profileEvent.content);
       profile.name = name;
     } else {
       profile = {
@@ -349,7 +380,10 @@ class MatrixClientA extends EventEmitter {
         picture: this.user.avatarUrl,
       };
     }
+    await this.setUserMetadata(profile);
+  }
 
+  async setUserMetadata(profile) {
     const note = JSON.stringify(profile);
     const now = Math.floor(Date.now() / 1000);
     let event = {
@@ -1014,9 +1048,10 @@ class MatrixClientA extends EventEmitter {
       }
     }
   }
-  uploadContent(file: any, { includeFilename: any, progressHandler }) {
+  uploadContent(file: any, arg1?: { includeFilename: any; progressHandler }) {
     console.log('8888888888888', file);
-    attachmentsChanged(file);
+    const url = attachmentsChanged(file);
+    return url;
   }
   getRoomPushRule(arg0: 'global', roomId: string) {
     return undefined;
@@ -1146,7 +1181,6 @@ class MatrixClientA extends EventEmitter {
     //     return;
     //   }
     // }
-    console.log('from stranger', event.pubkey, event.content);
     this.eventsById.set(event.id, event);
     if (!this.directMessagesByUser.has(user)) {
       this.directMessagesByUser.set(user, new SortedLimitedEventSet(500));
@@ -1174,10 +1208,9 @@ class MatrixClientA extends EventEmitter {
           room.addMember(asender);
           mc.sender = asender;
         }
-        console.log('888888888');
         this.emit('Event.decrypted', mc);
       }
-      console.log(mc);
+      // console.log(mc);
     } else {
       const room = new TRoom(senderId, 'single');
       room.init();
@@ -1256,6 +1289,10 @@ class MatrixClientA extends EventEmitter {
   // };
   handleMetaEvent(event: Event) {
     try {
+      if (event.pubkey == this.user.userId) {
+        console.log('event: ' + event.content, event.created_at);
+        console.log(this.user);
+      }
       const existing = this.profiles.get(event.pubkey);
       if (existing?.created_at && existing?.created_at >= event.created_at) {
         return false;

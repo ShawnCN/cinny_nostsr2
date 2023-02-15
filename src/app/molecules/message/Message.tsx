@@ -52,7 +52,7 @@ import { getBlobSafeMimeType } from '../../../util/mimetypes';
 import { html, plain } from '../../../util/markdown';
 import RoomTimeline from '../../../client/state/RoomTimeline';
 import TEvent from '../../../../types/TEvent';
-import { toNostrBech32Address } from '../../../util/nostrUtil';
+import { defaultName, toNostrBech32Address } from '../../../util/nostrUtil';
 
 function PlaceholderMessage() {
   return (
@@ -872,9 +872,9 @@ function Message({
       ) : (
         <MessageAvatar
           roomId={roomId}
-          avatarSrc={display.avatarSrc}
+          avatarSrc={display?.avatarSrc}
           userId={senderId}
-          username={display.username}
+          username={display?.username ? display.username : defaultName(senderId, 'npub')!}
         />
       )}
       <div className="message__main-container">

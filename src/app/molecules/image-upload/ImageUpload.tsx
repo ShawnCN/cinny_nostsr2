@@ -18,12 +18,14 @@ function ImageUpload({ text, bgColor, imageSrc, onUpload, onRequestRemove, size,
   async function uploadImage(e) {
     const file = e.target.files.item(0);
     if (file === null) return;
+    console.log('tttttttttt', file);
     try {
       const uPromise = initMatrix.matrixClient.uploadContent(file);
       setUploadPromise(uPromise);
-
+      console.log('ffff', uPromise);
       const res = await uPromise;
-      if (typeof res?.content_uri === 'string') onUpload(res.content_uri);
+      console.log('ffff', res);
+      if (res && typeof res[0] === 'string') onUpload(res[0]);
       setUploadPromise(null);
     } catch {
       setUploadPromise(null);

@@ -298,7 +298,6 @@ class InitMatrix extends EventEmitter {
   };
 
   async updateDirectMessageEvent(event: NostrEvent) {
-    console.log('from stranger', event.pubkey, event.content);
     const mevent = await formatDmMsgFromOthersOrMe(event, this.matrixClient.user);
     const mc = new TEvent(mevent);
     const roomId = mevent.room_id;

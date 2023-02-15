@@ -37,6 +37,7 @@ import { useSelectedTab } from '../../hooks/useSelectedTab';
 import { useDeviceList } from '../../hooks/useDeviceList';
 
 import { tabText as settingTabText } from '../settings/Settings';
+import { defaultName } from '../../../util/nostrUtil';
 
 function useNotificationUpdate() {
   const { notifications } = initMatrix;
@@ -57,18 +58,18 @@ function ProfileAvatarMenu() {
   const mx = initMatrix.matrixClient;
   const [profile, setProfile] = useState({
     avatarUrl: null,
-    displayName: mx.getUser(mx.getUserId()).displayName,
+    displayName: null,
   });
 
   useEffect(() => {
     const user = mx.getUser(mx.getUserId());
-    const setNewProfile = (avatarUrl, displayName) =>
-      setProfile({
-        avatarUrl: avatarUrl || null,
-        displayName: displayName || profile.displayName,
-      });
+    // const setNewProfile = (avatarUrl, displayName) =>
+    //   setProfile({
+    //     avatarUrl: avatarUrl || null,
+    //     displayName: displayName || profile.displayName,
+    //   });
     const onAvatarChange = (event, myUser) => {
-      setNewProfile(myUser.avatarUrl, myUser.displayName);
+      setProfile({ avatarUrl: myUser.avatarUrl, displayName: myUser.displayName });
     };
     // mx.getProfileInfo(mx.getUserId()).then((info) => {
     //   if (info) {
@@ -82,9 +83,8 @@ function ProfileAvatarMenu() {
     //   }
     // });
     mx.getUserWithCB(mx.getUserId(), (profile) => {
-      console.log('mx.getProfile');
       if (profile) {
-        setNewProfile(profile.picture, profile.name);
+        setProfile({ avatarUrl: profile.picture, displayName: profile.name });
       }
     });
     user.on('User.avatarUrl', onAvatarChange);
@@ -99,7 +99,7 @@ function ProfileAvatarMenu() {
       tooltip="Settings"
       avatar={
         <Avatar
-          text={profile.displayName}
+          text={profile.displayName ? profile.displayName : defaultName(mx.getUserId(), 'npub')}
           bgColor={colorMXID(mx.getUserId())}
           size="normal"
           imageSrc={

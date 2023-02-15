@@ -364,20 +364,17 @@ class RoomList extends EventEmitter {
         // room => prevMembership = null | invite | join | leave | kick | ban | unban
         // room => membership = invite | join | leave | kick | ban | unban
         const { roomId } = room;
-        console.log('44444444444444444444444', roomId, membership, prevMembership);
         const isRoomReady = () => this.matrixClient.getRoom(roomId) !== null;
         if (['join', 'invite'].includes(membership) && isRoomReady() === false) {
           if ((await waitFor(isRoomReady, 200, 100)) === false) return;
         }
 
         if (membership === 'unban') return;
-        console.log('2244444444444444444444444');
         if (membership === 'invite') {
           // only consider dm invite now.
           // if (this._isDMInvite(room)) this.inviteDirects.add(roomId);
           // else if (room.isSpaceRoom()) this.inviteSpaces.add(roomId);
           // else this.inviteRooms.add(roomId);
-          console.log('3344444444444444444444444');
           this.inviteDirects.add(roomId);
 
           this.emit(cons.events.roomList.INVITELIST_UPDATED, roomId);
