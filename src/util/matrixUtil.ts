@@ -12,6 +12,7 @@ import TRoomMember from '../../types/TRoomMember';
 import { getEventHash, nip04, Relay, signEvent } from 'nostr-tools';
 import TRoom from '../../types/TRoom';
 import TUser from '../../types/TUser';
+import { contectDetect } from './nostrUtil';
 
 const WELL_KNOWN_URI = '/.well-known/matrix/client';
 
@@ -321,29 +322,29 @@ export const formatDmMsgFromOthersOrMe = async (event: NostrEvent, user: TUser) 
     replyingTo = events_replied_to[0];
   }
 
-  const event_time = event.created_at;
-
-  let content = await decryptContent(user, event);
-  content = content.replace(/&/g, '&#38;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const content = await decryptContent(user, event);
+  // content = content.replace(/&/g, '&#38;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const dContent = contectDetect(content);
+  const msgs = convertToMatrixContent(dContent, event, parent);
+  return msgs;
   //If the current message is already in the message cache, return, otherwise add to the number of unread messages
   // let citedMsg = {} as TCitedMsg | null;
   // if (replyingTo != '') {
   //   citedMsg = findCitedMsgFromLocalStorage(replyingTo, parent, user.pubkey);
   // }
-  let contentObject: TContent = {
-    body: content,
-    msgtype: 'm.text',
-  };
-  let msg: TEventFormat = {
-    content: contentObject,
-    type: 'm.room.message',
-    origin_server_ts: event_time,
-    sender: event.pubkey,
-    event_id: event.id,
-    room_id: parent, // 母帖eventid或者是聊天室id
-  };
-
-  return msg;
+  // let contentObject: TContent = {
+  //   body: content,
+  //   msgtype: 'm.text',
+  // };
+  // let msg: TEventFormat = {
+  //   content: contentObject,
+  //   type: 'm.room.message',
+  //   origin_server_ts: event_time,
+  //   sender: event.pubkey,
+  //   event_id: event.id,
+  //   room_id: parent, // 母帖eventid或者是聊天室id
+  // };
+  // return msg;
 };
 
 export const formatChannelMsg = (event: NostrEvent) => {
@@ -354,15 +355,18 @@ export const formatChannelMsg = (event: NostrEvent) => {
   if (events_replied_to[0] && events_replied_to.length > 1) {
     replyingTo = events_replied_to[events_replied_to.length - 1];
   }
-  if (events_replied_to[0] && event.kind == 42) {
+  if (events_replied_to[0]) {
     parent = events_replied_to[0]; // root event.id
   }
-  let content = event.content.replace(/&/g, '&#38;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  let shortened_content = content.replace(/\n/g, ' ').substring(0, 400);
-  shortened_content = shortened_content;
-  if (content.length > 50) {
-    shortened_content = shortened_content + '...';
-  }
+  const content = contectDetect(event.content);
+  const msgs = convertToMatrixContent(content, event, parent);
+  return msgs;
+  // let content = event.content.replace(/&/g, '&#38;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // let shortened_content = content.replace(/\n/g, ' ').substring(0, 400);
+  // shortened_content = shortened_content;
+  // if (content.length > 50) {
+  //   shortened_content = shortened_content + '...';
+  // }
   // array_of_replies.forEach(function (item) {
   //   if (item[0] == event.id) {
   //     let replyPubkey = event.pubkey;
@@ -378,25 +382,53 @@ export const formatChannelMsg = (event: NostrEvent) => {
   // if (replyingTo != '') {
   //   citedMsg = findCitedMsgFromLocalStorage(replyingTo, parent, pubkey);
   // }
+};
+
+const convertToMatrixContent = (
+  content: { text: string; imgs: string[] },
+  event: NostrEvent,
+  parent: string
+) => {
+  let msgs = [] as TEventFormat[];
   let contentObject: TContent = {
-    body: content,
+    body: content.text,
     msgtype: 'm.text',
   };
-  let msg: TEventFormat = {
-    // color,
+  let msg = {
     content: contentObject,
-    type: 'm.room.message',
-    // replyingTo,
-    // message: content,
-    // kind: event.kind,
-    // relayUrl: relayUrl,
-    origin_server_ts: event_time,
+    type: 'm.room.message' as const,
+    origin_server_ts: event.created_at,
     sender: event.pubkey,
     event_id: event.id,
     room_id: parent, // 母帖eventid或者是聊天室id
   };
+  if (content.text.length > 0) msgs.push(msg);
 
-  return msg;
+  if (content.imgs.length == 0) return msgs;
+  content.imgs.forEach((imgUrl) => {
+    let imgObject: TContent = {
+      // info: {
+      //   mimetype: 'image/png',
+      //   size: 494,
+      //   w: 43,
+      //   h: 54,
+      //   'xyz.amorgan.blurhash': 'UMSr}._MMKyX%fRQXSnOyCMeyCR5n5tlR6kq',
+      // },
+      msgtype: 'm.image',
+      body: imgUrl,
+      url: imgUrl,
+    };
+    let msg2 = {
+      content: imgObject,
+      type: 'm.room.message' as const,
+      origin_server_ts: event.created_at,
+      sender: event.pubkey,
+      event_id: event.id,
+      room_id: parent, // 母帖eventid或者是聊天室id}
+    };
+    msgs.unshift(msg2);
+  });
+  return msgs;
 };
 
 export const decryptContent = async (user: TUser, event: NostrEvent) => {
@@ -523,7 +555,7 @@ export const fetchUserMetaFromRelay = async (pubkey: string, relay: Relay) => {
 };
 export const fetchUsersMetaFromRelay = async (pubkeys: string[], relay: Relay) => {
   if (!relay || relay.status != 1) return null;
-  const filter = { authors: pubkeys, kinds: [0], limit: 200 };
+  const filter = { authors: pubkeys, kinds: [0], limit: 500 };
   const sub = relay.sub([filter]);
   let aevent = {} as NostrEvent;
   const event = new Promise<NostrEvent>((resolve, reject) => {

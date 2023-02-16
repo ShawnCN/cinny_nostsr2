@@ -353,7 +353,7 @@ class MatrixClientA extends EventEmitter {
   }
   getCapabilities() {}
   mxcUrlToHttp(arg0: string, arg1?: number, arg2?: number, arg3?: string) {
-    return '';
+    return arg0;
   }
   async setAvatarUrl(url: string) {
     this.user.avatarUrl = url;
@@ -663,16 +663,14 @@ class MatrixClientA extends EventEmitter {
         c = content.url!;
       }
       const nostrEvent = await formatDMEvent(c, roomId, this.user);
-      console.log('2', nostrEvent);
-      // this.publishEvent(nostrEvent);
+      this.publishEvent(nostrEvent);
     } else if (roomType === 'groupChannel') {
       let c = content.body;
       if (msgType == 'm.image') {
         c = content.url!;
       }
       const nostrEvent = await formatChannelEvent(c, roomId, this.user);
-      console.log('2', nostrEvent);
-      // this.publishEvent(nostrEvent);
+      this.publishEvent(nostrEvent);
     } else if (roomType == 'groupRelay') {
     }
   }
@@ -1148,9 +1146,12 @@ class MatrixClientA extends EventEmitter {
     }
   }
   handleChannelMessageEvent(event: NostrEvent) {
-    const mevent = formatChannelMsg(event);
-    const mc = new TEvent(mevent);
-    this.emit('Event.decrypted', mc);
+    const mevents = formatChannelMsg(event);
+    mevents.forEach((m) => {
+      const mc = new TEvent(m);
+      this.emit('Event.decrypted', mc);
+    });
+
     this.eventsById.set(event.id, event);
     const { events_replied_to } = FormatCitedEventsAndCitedPubkeys(event);
     let channelId = '';
@@ -1201,46 +1202,47 @@ class MatrixClientA extends EventEmitter {
       this.directMessagesByUser.set(user, new SortedLimitedEventSet(500));
     }
     this.directMessagesByUser.get(user)?.add(event);
-
-    const mevent = await formatDmMsgFromOthersOrMe(event, this.user);
-    const mc = new TEvent(mevent);
-    const roomId = mevent.room_id;
-    const senderId = mevent.sender;
-    const room = this.publicRoomList.get(roomId);
-    if (room) {
-      const me = room.getMember(this.user.userId);
-      if (me?.membership == 'invite') {
-        const membership = 'invite';
-        const prevMembership = 'invite';
-        this.emit('Room.myMembership', room, membership, prevMembership);
-      } else if (me?.membership == 'join') {
-        const sender = room.getMember(senderId);
-        if (sender) {
-          mc.sender = sender;
-        } else {
-          const asender = new TRoomMember(senderId);
-          asender.init();
-          room.addMember(asender);
-          mc.sender = asender;
+    const mevents = await formatDmMsgFromOthersOrMe(event, this.user);
+    mevents.forEach((mevent) => {
+      const mc = new TEvent(mevent);
+      const roomId = mevent.room_id;
+      const senderId = mevent.sender;
+      const room = this.publicRoomList.get(roomId);
+      if (room) {
+        const me = room.getMember(this.user.userId);
+        if (me?.membership == 'invite') {
+          const membership = 'invite';
+          const prevMembership = 'invite';
+          this.emit('Room.myMembership', room, membership, prevMembership);
+        } else if (me?.membership == 'join') {
+          const sender = room.getMember(senderId);
+          if (sender) {
+            mc.sender = sender;
+          } else {
+            const asender = new TRoomMember(senderId);
+            asender.init();
+            room.addMember(asender);
+            mc.sender = asender;
+          }
+          this.emit('Event.decrypted', mc);
         }
-        this.emit('Event.decrypted', mc);
+        // console.log(mc);
+      } else {
+        const room = new TRoom(senderId, 'single');
+        room.init();
+        const asender = new TRoomMember(senderId);
+        asender.init();
+        room.addMember(asender);
+        mc.sender = asender;
+        const me = new TRoomMember(this.user.userId, this.user.displayName, this.user.avatarUrl);
+        me.membership = 'invite';
+        room.addMember(me);
+        this.publicRoomList.set(senderId, room);
+        const membership = 'invite';
+        const prevMembership = null;
+        this.emit('Room.myMembership', room, membership, prevMembership);
       }
-      // console.log(mc);
-    } else {
-      const room = new TRoom(senderId, 'single');
-      room.init();
-      const asender = new TRoomMember(senderId);
-      asender.init();
-      room.addMember(asender);
-      mc.sender = asender;
-      const me = new TRoomMember(this.user.userId, this.user.displayName, this.user.avatarUrl);
-      me.membership = 'invite';
-      room.addMember(me);
-      this.publicRoomList.set(senderId, room);
-      const membership = 'invite';
-      const prevMembership = null;
-      this.emit('Room.myMembership', room, membership, prevMembership);
-    }
+    });
     this.saveLocalStorageEvents();
   };
   // handleDirectMessage = async (event: NostrEvent) => {

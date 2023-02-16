@@ -704,9 +704,10 @@ function genMediaContent(mE: TEvent) {
   const safeMimetype = getBlobSafeMimeType(mContent.info?.mimetype);
   if (mE.getType() === 'm.sticker') {
     msgType = 'm.sticker';
-  } else if (safeMimetype === 'application/octet-stream') {
-    msgType = 'm.file';
   }
+  // else if (safeMimetype === 'application/octet-stream') {
+  //   msgType = 'm.file';
+  // }
 
   const blurhash = mContent?.info?.['xyz.amorgan.blurhash'];
 
@@ -726,6 +727,7 @@ function genMediaContent(mE: TEvent) {
           name={mContent.body}
           width={typeof mContent.info?.w === 'number' ? mContent.info?.w : null}
           height={typeof mContent.info?.h === 'number' ? mContent.info?.h : null}
+          // link={mx.mxcUrlToHttp(mediaMXC)}
           link={mx.mxcUrlToHttp(mediaMXC)}
           file={isEncryptedFile ? mContent.file : null}
           type={mContent.info?.mimetype}

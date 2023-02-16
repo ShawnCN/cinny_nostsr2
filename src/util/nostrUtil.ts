@@ -111,3 +111,17 @@ export const attachmentsChanged = (file) => {
     }
   }
 };
+
+const imgRegex =
+  /\b(https?:\/\/\S+(?:\.png|\.jpe?g|\.gif|\.webp|\.PNG|\.JPE?G|\.GIF|\.WEBP)\S*)\b/g;
+
+export const contectDetect = (c: string) => {
+  let imgs: string[] = [];
+  if (c.match(imgRegex)) {
+    c = c.replace(imgRegex, (img) => {
+      imgs.unshift(img);
+      return '';
+    });
+  }
+  return { text: c, imgs: imgs };
+};

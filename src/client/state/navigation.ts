@@ -56,7 +56,6 @@ class Navigation extends EventEmitter {
 
   _mapRoomToSpace(roomId: string) {
     const { roomList, accountData } = this.initMatrix;
-    console.log('_mapRoomToSpace', roomId, roomList.directs);
     // home按钮
     if (
       this.selectedTab === cons.tabs.HOME &&

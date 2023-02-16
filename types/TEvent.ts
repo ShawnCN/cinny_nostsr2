@@ -82,7 +82,7 @@ export type TContent = {
 };
 
 export type TContentInfo = {
-  mimetype: 'image/jpeg';
+  mimetype: 'image/jpeg' | 'image/png';
   size: number;
   w: number;
   h: number;
