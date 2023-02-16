@@ -1,7 +1,13 @@
 import { Event, Filter, getEventHash, nip19, Relay, relayInit, Sub } from 'nostr-tools';
-import { NostrEvent, SearchResultUser, Subscription, TSubscribedChannel } from '../../types';
+import {
+  NostrEvent,
+  SearchResultUser,
+  Subscription,
+  TRoomType,
+  TSubscribedChannel,
+} from '../../types';
 import TDevice from '../../types/TDevice';
-import TEvent from '../../types/TEvent';
+import TEvent, { TContent, TEventFormat } from '../../types/TEvent';
 import TRoom from '../../types/TRoom';
 import TRoomMember from '../../types/TRoomMember';
 import TUser from '../../types/TUser';
@@ -648,18 +654,26 @@ class MatrixClientA extends EventEmitter {
       return Promise.resolve(a);
     }
   }
-  async sendMessage(roomId, content, type) {
-    const c = content.body;
-    if (type === 'single') {
+  async sendMessage(roomId: string, content: TContent, type: TRoomType) {
+    const roomType = type;
+    const msgType = content.msgtype;
+    if (roomType === 'single') {
+      let c = content.body;
+      if (msgType == 'm.image') {
+        c = content.url!;
+      }
       const nostrEvent = await formatDMEvent(c, roomId, this.user);
-      // this.sendMsgToSingle(nostEvent);
-      console.log('2', c);
-      this.publishEvent(nostrEvent);
-    } else if (type === 'groupChannel') {
+      console.log('2', nostrEvent);
+      // this.publishEvent(nostrEvent);
+    } else if (roomType === 'groupChannel') {
+      let c = content.body;
+      if (msgType == 'm.image') {
+        c = content.url!;
+      }
       const nostrEvent = await formatChannelEvent(c, roomId, this.user);
-      // this.sendMsgToGroupChannel(nostrEvent);
-      this.publishEvent(nostrEvent);
-    } else if ((type = 'groupRelay')) {
+      console.log('2', nostrEvent);
+      // this.publishEvent(nostrEvent);
+    } else if (roomType == 'groupRelay') {
     }
   }
   saveLocalStorageEvents = () =>

@@ -118,6 +118,7 @@ class TRoom {
     return Date.now();
   }
   canInvite(userId: string) {
+    if (this.type == 'single') return false;
     return true;
   }
   getDMInviter() {

@@ -9,7 +9,7 @@ import settings from './settings';
 import { markdown, plain } from '../../util/markdown';
 import MatrixClientA from '../MatrixClientA';
 import RoomList from './RoomList';
-import TEvent from '../../../types/TEvent';
+import TEvent, { TContent, TContentInfo } from '../../../types/TEvent';
 
 const blurhashField = 'xyz.amorgan.blurhash';
 
@@ -113,7 +113,7 @@ class RoomsInput extends EventEmitter {
     this.roomIdToInput = new Map();
   }
 
-  cleanEmptyEntry(roomId) {
+  cleanEmptyEntry(roomId: string) {
     const input = this.getInput(roomId);
     const isEmpty =
       typeof input.attachment === 'undefined' &&
@@ -124,43 +124,43 @@ class RoomsInput extends EventEmitter {
     }
   }
 
-  getInput(roomId) {
+  getInput(roomId: string) {
     return this.roomIdToInput.get(roomId) || {};
   }
 
-  setMessage(roomId, message) {
+  setMessage(roomId: string, message) {
     const input = this.getInput(roomId);
     input.message = message;
     this.roomIdToInput.set(roomId, input);
     if (message === '') this.cleanEmptyEntry(roomId);
   }
 
-  getMessage(roomId) {
+  getMessage(roomId: string) {
     const input = this.getInput(roomId);
     if (typeof input.message === 'undefined') return '';
     return input.message;
   }
 
-  setReplyTo(roomId, replyTo) {
+  setReplyTo(roomId: string, replyTo) {
     const input = this.getInput(roomId);
     input.replyTo = replyTo;
     this.roomIdToInput.set(roomId, input);
   }
 
-  getReplyTo(roomId) {
+  getReplyTo(roomId: string) {
     const input = this.getInput(roomId);
     if (typeof input.replyTo === 'undefined') return null;
     return input.replyTo;
   }
 
-  cancelReplyTo(roomId) {
+  cancelReplyTo(roomId: string) {
     const input = this.getInput(roomId);
     if (typeof input.replyTo === 'undefined') return;
     delete input.replyTo;
     this.roomIdToInput.set(roomId, input);
   }
 
-  setAttachment(roomId, file) {
+  setAttachment(roomId: string, file) {
     const input = this.getInput(roomId);
     input.attachment = {
       file,
@@ -168,7 +168,7 @@ class RoomsInput extends EventEmitter {
     this.roomIdToInput.set(roomId, input);
   }
 
-  getAttachment(roomId) {
+  getAttachment(roomId: string) {
     const input = this.getInput(roomId);
     if (typeof input.attachment === 'undefined') return null;
     return input.attachment.file;
@@ -270,7 +270,7 @@ class RoomsInput extends EventEmitter {
     return content;
   }
 
-  async sendInput(roomId, options, roomType) {
+  async sendInput(roomId: string, options, roomType) {
     const input = this.getInput(roomId);
     input.isSending = true;
     this.roomIdToInput.set(roomId, input);
@@ -288,7 +288,7 @@ class RoomsInput extends EventEmitter {
     this.emit(cons.events.roomsInput.MESSAGE_SENT, roomId);
   }
 
-  async sendSticker(roomId, data) {
+  async sendSticker(roomId: string, data) {
     const { mxc: url, body, httpUrl } = data;
     const info: any = {};
 
@@ -316,20 +316,20 @@ class RoomsInput extends EventEmitter {
     this.emit(cons.events.roomsInput.MESSAGE_SENT, roomId);
   }
 
-  async sendFile(roomId, file, roomType) {
+  async sendFile(roomId: string, file, roomType) {
     const fileType = getBlobSafeMimeType(file.type).slice(0, file.type.indexOf('/'));
     const info = {
       mimetype: file.type,
       size: file.size,
-    };
-    const content = { info };
-    let uploadData = null;
+    } as TContentInfo;
+    const content = { info } as TContent;
+    let uploadData: any = null;
 
     if (fileType === 'image') {
       const img = await loadImage(URL.createObjectURL(file));
 
-      info.w = img.width;
-      info.h = img.height;
+      info.w = img?.width;
+      info.h = img?.height;
       info[blurhashField] = encodeBlurhash(img);
 
       content.msgtype = 'm.image';
@@ -389,7 +389,7 @@ class RoomsInput extends EventEmitter {
     }
   }
 
-  async uploadFile(roomId, file, progressHandler) {
+  async uploadFile(roomId: string, file, progressHandler) {
     const isEncryptedRoom = this.matrixClient.isRoomEncrypted(roomId);
 
     let encryptInfo = null;
@@ -416,8 +416,11 @@ class RoomsInput extends EventEmitter {
     input.attachment.uploadingPromise = uploadingPromise;
     this.roomIdToInput.set(roomId, input);
 
-    const { content_uri: url } = await uploadingPromise;
-
+    // const { content_uri: url } = await uploadingPromise;
+    const res = await uploadingPromise;
+    console.log('ddddddddddddddd', res);
+    const url = res[0];
+    console.log('ddddddddddddddd', url);
     delete input.attachment.uploadingPromise;
     this.roomIdToInput.set(roomId, input);
 

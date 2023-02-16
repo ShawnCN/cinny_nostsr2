@@ -64,7 +64,7 @@ export type SearchResultUser = {
   avatarUrl: string;
 };
 
-export type TRoomType = 'single' | 'groupChannels' | 'groupRelay';
+export type TRoomType = 'single' | 'groupChannel' | 'groupRelay';
 
 export type Subscription = {
   filters: Filter[];

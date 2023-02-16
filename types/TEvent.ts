@@ -58,7 +58,7 @@ class TEvent {
 
 export type TEventFormat = {
   content: TContent;
-  type: string;
+  type: 'm.room.message' | 'm.sticker' | 'm.room.member';
   shortcut?: string[];
   shortcode?: string;
   state_key?: string;
@@ -70,12 +70,25 @@ export type TEventFormat = {
   redacts?: any;
 };
 export type TContent = {
+  info?: TContentInfo;
   body: string;
-  msgtype?: string;
+  msgtype: 'm.text' | 'm.image' | 'm.sticker' | 'm.file' | 'm.audio' | 'm.video';
   external_url?: string;
   format?: string;
   formatted_body?: string;
   membership?: string;
+  file?: { url?: string };
+  url?: string;
+};
+
+export type TContentInfo = {
+  mimetype: 'image/jpeg';
+  size: number;
+  w: number;
+  h: number;
+  'xyz.amorgan.blurhash': string;
+  thumbnail_url?: string;
+  url?: string;
 };
 
 type TMsgType = 'm.text';

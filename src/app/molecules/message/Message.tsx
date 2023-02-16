@@ -256,7 +256,7 @@ const MessageBody = React.memo(
     // if body is not string it is a React element.
     if (typeof body !== 'string') return <div className="message__body">{body}</div>;
 
-    let content = null;
+    let content: any = null;
     if (isCustomHTML) {
       try {
         content = twemojify(
@@ -579,7 +579,7 @@ MessageReactionGroup.propTypes = {
   mEvent: PropTypes.shape({}).isRequired,
 };
 
-function isMedia(mE) {
+function isMedia(mE: TEvent) {
   return (
     mE.getContent()?.msgtype === 'm.file' ||
     mE.getContent()?.msgtype === 'm.image' ||
@@ -685,7 +685,7 @@ const MessageOptions = React.memo(({ roomTimeline, mEvent, edit, reply }: IProps
 //   reply: PropTypes.func.isRequired,
 // };
 
-function genMediaContent(mE) {
+function genMediaContent(mE: TEvent) {
   const mx = initMatrix.matrixClient;
   const mContent = mE.getContent();
   if (!mContent || !mContent.body)
