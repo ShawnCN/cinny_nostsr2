@@ -4,6 +4,7 @@ import './Settings.scss';
 import initMatrix from '../../../client/InitMatrix';
 import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
+import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 import navigation from '../../../client/state/navigation';
 import {
   toggleSystemTheme,
@@ -47,6 +48,8 @@ import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 import CinnySVG from '../../../../public/res/svg/cinny.svg';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
+import { Relay } from 'nostr-tools';
+import Input from '../../atoms/input/Input';
 
 function AppearanceSection() {
   const [, updateState] = useState({});
@@ -88,7 +91,9 @@ function AppearanceSection() {
           }
         />
       </div>
-      <div className="settings-appearance__card">
+      <RelaySettings />
+
+      {/* <div className="settings-appearance__card">
         <MenuHeader>Room messages</MenuHeader>
         <SettingTile
           title="Markdown formatting"
@@ -136,7 +141,138 @@ function AppearanceSection() {
             <Text variant="b3">Hide nick and avatar change messages from room timeline.</Text>
           }
         />
-      </div>
+      </div> */}
+    </div>
+  );
+}
+
+function RelaySettings() {
+  const [, updateState] = useState({});
+  const mx = initMatrix.matrixClient;
+  const [relays, setRelays] = useState(Array.from(mx.relayInstance.values()));
+  const [newRelayUrl, setNewRelayUrl] = useState('fffffffff'); // added state to store the new relay URL
+
+  useEffect(() => {
+    const iId = setInterval(() => {
+      setRelays(Array.from(mx.relayInstance.values()));
+    }, 1000);
+    return () => {
+      clearInterval(iId);
+    };
+  }, []);
+
+  const handleRemoveRelay = (relay: Relay) => {
+    // iris.local().get('relays').get(relay.url).put(null);
+    mx.removeRelay(relay.url);
+  };
+
+  const handleAddRelay = (evt) => {
+    evt.preventDefault();
+    const { keywordInput } = evt.target.elements;
+    const value = keywordInput.value.trim();
+    if (value === '') return;
+    console.log(value);
+    mx.addRelay(value); // add the new relay using the Nostr method
+    keywordInput.value = '';
+  };
+
+  const getStatus = (relay: Relay) => {
+    try {
+      return relay.status;
+    } catch (e) {
+      return 3;
+    }
+  };
+
+  const getClassName = (relay: Relay) => {
+    switch (getStatus(relay)) {
+      case 0:
+        return 'neutral';
+      case 1:
+        return 'positive';
+      case 2:
+        return 'neutral';
+      case 3:
+        return '';
+      default:
+        return 'status';
+    }
+  };
+
+  return (
+    <div className="settings-appearance__card">
+      <MenuHeader>Relay Network List</MenuHeader>
+      {relays.map((relay) => (
+        <SettingTile
+          key={relay.url}
+          title={relay.url}
+          options={
+            <div className="relay-manage">
+              <div className="toggle-margin">
+                {' '}
+                <Toggle
+                  isActive={relay.status == 1}
+                  onToggle={async () => {
+                    relay.status == 1 ? await relay.close() : await relay.connect();
+                    updateState({});
+                  }}
+                />
+              </div>
+
+              <IconButton
+                size="small"
+                onClick={() => handleRemoveRelay(relay)}
+                src={BinIC}
+                tooltip="Remove session"
+              />
+            </div>
+          }
+          // content={<Text variant="b3">Format messages with markdown syntax before sending.</Text>}
+        />
+      ))}
+      <SettingTile
+        title=""
+        content={
+          <div className="keyword-notification__keyword">
+            {/* <Text variant="b3">Get notification when a message contains keyword.</Text> */}
+            <form onSubmit={handleAddRelay}>
+              <Input name="keywordInput" required placeholder="New Relay Url" />
+              <Button variant="primary" type="submit">
+                Add
+              </Button>
+            </form>
+            {/* {keywordRules.length > 0 && (
+              <div>
+                {keywordRules.map((rule) => (
+                  <Chip
+                    iconSrc={CrossIC}
+                    key={rule.rule_id}
+                    text={rule.pattern}
+                    iconColor={CrossIC}
+                    onClick={() => removeKeyword(rule)}
+                  />
+                ))}
+              </div>
+            )} */}{' '}
+            <div className="relay-buttons">
+              {' '}
+              <Button
+                variant="primary"
+                type="submit"
+                onClick={
+                  () => mx.saveRelaysToLocal()
+                  // mx.saveRelaysToContacts()
+                }
+              >
+                Save
+              </Button>
+              <Button variant="primary" type="submit" onClick={() => mx.restoreDefaultRelays()}>
+                Reset
+              </Button>
+            </div>
+          </div>
+        }
+      />
     </div>
   );
 }

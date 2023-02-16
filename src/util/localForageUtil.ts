@@ -27,7 +27,7 @@ export const savechannelProfileUpdateEventsToLocal = (
   localForage.setItem('channelProfileUpdateEvents', c);
 };
 
-export const saveprofileEventsToLocal = (profileEvents: Map<string, NostrEvent>) => {
+export const saveProfileEventsToLocal = (profileEvents: Map<string, NostrEvent>) => {
   const c = Array.from(profileEvents.values());
   localForage.setItem('profileEvents', c);
 };

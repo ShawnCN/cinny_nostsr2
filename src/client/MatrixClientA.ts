@@ -50,7 +50,7 @@ import {
   saveChannelMessageEvents,
   savechannelProfileEventsToLocal,
   savechannelProfileUpdateEventsToLocal,
-  saveprofileEventsToLocal,
+  saveProfileEventsToLocal,
 } from '../util/localForageUtil';
 import TEventTimelineSet from '../../types/TEventTimelineSet';
 import initMatrix from './InitMatrix';
@@ -105,7 +105,6 @@ class MatrixClientA extends EventEmitter {
     this.contactList = new Set();
     this.subscriptionId = 0;
     this.contactEvents = new Map();
-
     this.directMessagesByUser = new Map<string, SortedLimitedEventSet>();
     this.cMsgsByCid = new Map<string, SortedLimitedEventSet>();
     this.subscriptionsByName = new Map<string, Set<Sub>>();
@@ -128,10 +127,20 @@ class MatrixClientA extends EventEmitter {
   }
   async startClient({ lazyLoadMembers: boolean }) {
     console.log('startClient');
-    for (let i = 0; i < DEFAULT_RELAY_URLS.length; i++) {
-      const pubkey = '33333';
-      await this.connectAndJoin(DEFAULT_RELAY_URLS[i], pubkey);
-      // this.addRelay(DEFAULT_RELAY_URLS[i]);
+    const c = this.profileEvents.get(this.user.userId);
+    const relayList = await localForage.getItem('relayList');
+    if (Array.isArray(relayList) && relayList.length > 0) {
+      for (let i = 0; i < relayList.length; i++) {
+        const pubkey = '33333';
+        await this.connectAndJoin(relayList[i], pubkey);
+      }
+    } else {
+      for (let i = 0; i < DEFAULT_RELAY_URLS.length; i++) {
+        const pubkey = '33333';
+        await this.connectAndJoin(DEFAULT_RELAY_URLS[i], pubkey);
+        // this.addRelay(DEFAULT_RELAY_URLS[i]);
+      }
+      localForage.setItem('relayList', DEFAULT_RELAY_URLS);
     }
   }
   async connectAndJoin(wss: string, pubkey: string) {
@@ -842,16 +851,17 @@ class MatrixClientA extends EventEmitter {
     this.sendSubToRelays([filter], 'subDmByMe');
   };
 
-  fetchChannelsMeta = debounce._((channels: string[]) => {
-    console.log('subscribeToRepliesAndLikes', this.subscribedChannels);
-    const filters: Filter[] = [
-      {
-        ids: channels,
-        kinds: [40],
-      },
-    ];
-    this.sendSubToRelays(filters, 'subscribedChannels', true);
-  }, 500)();
+  fetchChannelsMeta = () =>
+    debounce._((channels: string[]) => {
+      console.log('subscribeToRepliesAndLikes', this.subscribedChannels);
+      const filters: Filter[] = [
+        {
+          ids: channels,
+          kinds: [40],
+        },
+      ];
+      this.sendSubToRelays(filters, 'subscribedChannels', true);
+    }, 500)();
   fetchChannelMetaFromRelay = async (channelId: string, relay: Relay) => {
     if (!relay || relay.status != 1) return null;
     const filter = {
@@ -937,14 +947,15 @@ class MatrixClientA extends EventEmitter {
     // console.log(this.subscriptionsByName);
     // console.log(this.subscribedFiltersByName);
   };
-  subscribeToProfiles = debounce._(() => {
-    const now = Math.floor(Date.now() / 1000);
-    const myPub = this.user.userId;
-    const contacts = Array.from(this.contactList);
-    console.log('subscribe to', contacts.length, 'contacts');
+  subscribeToProfiles = () =>
+    debounce._(() => {
+      const now = Math.floor(Date.now() / 1000);
+      const myPub = this.user.userId;
+      const contacts = Array.from(this.contactList);
+      console.log('subscribe to', contacts.length, 'contacts');
 
-    this.sendSubToRelays([{ authors: contacts, kinds: [0] }], 'subscribedProfiles', true);
-  }, 1000);
+      this.sendSubToRelays([{ authors: contacts, kinds: [0] }], 'subscribedProfiles', true);
+    }, 1000)();
   removeRelay(url: string) {
     try {
       this.relayInstance.get(url)?.close();
@@ -1054,7 +1065,6 @@ class MatrixClientA extends EventEmitter {
     const user_id = this.user.userId;
     for (let [key, relay] of this.relayInstance) {
       const event = await fetchContacts(relay, user_id);
-      this.handleEvent(event);
       if (event) {
         this.handleEvent(event);
         const tags = event.tags;
@@ -1074,7 +1084,6 @@ class MatrixClientA extends EventEmitter {
     }
   }
   uploadContent(file: any, arg1?: { includeFilename: any; progressHandler }) {
-    console.log('8888888888888', file);
     const url = attachmentsChanged(file);
     return url;
   }
@@ -1319,7 +1328,7 @@ class MatrixClientA extends EventEmitter {
   //   console.log('555555555555');
   //   this.saveLocalStorageEvents();
   // };
-  handleMetaEvent(event: Event) {
+  handleMetaEvent(event: NostrEvent) {
     try {
       const existing = this.profiles.get(event.pubkey);
       if (existing?.created_at && existing?.created_at >= event.created_at) {
@@ -1333,9 +1342,7 @@ class MatrixClientA extends EventEmitter {
       const existingEvent = this.profileEvents.get(event.pubkey);
       if (!existingEvent || existingEvent.created_at < event.created_at) {
         this.profileEvents.set(event.pubkey, event);
-        if (this.localStorageLoaded) {
-          this.saveLocalStorageProfilesAndContact();
-        }
+        saveProfileEventsToLocal(this.profileEvents);
       }
     } catch (e) {
       console.log('error parsing nostr profile', e, event);
@@ -1359,7 +1366,6 @@ class MatrixClientA extends EventEmitter {
 
       delete profile['nip05valid']; // not robust
       this.channelProfiles.set(parent, profile);
-      console.log(this.channelProfiles);
       this.setRoomName(parent, profile.name);
       this.setRoomAvatar(parent, profile.picture);
       this.setRoomAbout(parent, profile.about);
@@ -1391,7 +1397,6 @@ class MatrixClientA extends EventEmitter {
 
       delete profile['nip05valid']; // not robust
       this.channelProfiles.set(parent, profile);
-      console.log(this.channelProfiles);
       this.setRoomName(parent, profile.name);
       this.setRoomAvatar(parent, profile.picture);
       this.setRoomAbout(parent, profile.about);
@@ -1405,47 +1410,47 @@ class MatrixClientA extends EventEmitter {
     }
   };
   handleContactEvents = (event: NostrEvent) => {
-    if (event.pubkey != this.user.userId) return;
-    console.log('handleContactEvents', event);
+    // if (event.pubkey != this.user.userId) return;
     const existing = this.contactEvents.get(event.pubkey);
     if (existing && existing.created_at >= event.created_at) {
       return;
     }
-
     if (event.tags) {
-      this.contactList.clear();
+      initMatrix.roomList.mDirects.clear();
       for (const tag of event.tags) {
         if (Array.isArray(tag) && tag[0] === 'p') {
-          this.contactList.add(tag[1]);
+          initMatrix.roomList.mDirects.add(tag[1]);
         }
       }
     }
-    console.log('2handleContactEvents', event);
-    if (this.localStorageLoaded) {
-      console.log('3handleContactEvents', event);
-      this.saveLocalStorageProfilesAndContact();
-    }
+    this.contactEvents.set(event.pubkey, event);
+    this.saveLocalStorageProfilesAndContact();
   };
 
-  saveLocalStorageProfilesAndContact = debounce._(() => {
-    console.log('saveLocalStorageProfilesAndContact');
-    const profileEvents = Array.from(this.profileEvents.values());
-    const contactEvents = Array.from(this.contactEvents.values());
-    console.log('saving', profileEvents.length + contactEvents.length, 'events to local storage');
-    localForage.setItem('profileEvents', profileEvents);
-    localForage.setItem('contactEvents', contactEvents);
-  }, 5000);
+  saveLocalStorageProfilesAndContact = () =>
+    debounce._(() => {
+      console.log('saveLocalStorageProfilesAndContact');
+      const profileEvents = Array.from(this.profileEvents.values());
+      const contactEvents = Array.from(this.contactEvents.values());
+      console.log('saving', profileEvents.length + contactEvents.length, 'events to local storage');
+      localForage.setItem('profileEvents', profileEvents);
+      localForage.setItem('contactEvents', contactEvents);
+    }, 500)();
   restoreDefaultRelays() {
     this.relayInstance.clear();
     for (const url of DEFAULT_RELAY_URLS) {
       this.addRelay(url);
     }
-    this.saveRelaysToContacts();
+    // this.saveRelaysToContacts();
     // do not save these to contact list
     // for (const url of SEARCH_RELAYS) {
     //   if (!this.relayInstance.has(url)) this.addRelay(url);
     // }
   }
+  saveRelaysToLocal = () => {
+    const list = Array.from(this.relayInstance.keys());
+    localForage.setItem('relayList', list);
+  };
   saveRelaysToContacts = async () => {
     const relaysObj: any = {};
     for (const url of this.relayInstance.keys()) {
@@ -1453,7 +1458,6 @@ class MatrixClientA extends EventEmitter {
     }
     const existing = this.contactEvents.get(this.user.userId);
     const content = JSON.stringify(relaysObj);
-
     const event = {
       pubkey: this.user.userId,
       kind: 3,

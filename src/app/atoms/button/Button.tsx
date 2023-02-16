@@ -12,7 +12,7 @@ interface IPropsButton {
   variant?: 'surface' | 'primary' | 'positive' | 'caution' | 'danger';
   iconSrc?: string | null;
   type?: 'button' | 'submit' | 'reset';
-  onClick?: () => void;
+  onClick?: (arg0?: string) => void;
   children: ReactNode;
   disabled?: boolean;
 }
@@ -25,7 +25,7 @@ const Button = React.forwardRef(
       variant = 'surface',
       iconSrc = null,
       type = 'button',
-      onClick = null as unknown as () => void,
+      onClick = null as unknown as (arg0?: string) => void,
       children,
       disabled = false,
     }: IPropsButton,
