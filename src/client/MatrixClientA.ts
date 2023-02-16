@@ -41,12 +41,17 @@ import cons, {
   aevent2,
   defaultChatroomList,
   log,
-  stage3relays,
+  DEFAULT_RELAY_URLS,
   TChannelMapList,
 } from './state/cons';
 import { Debounce } from '../util/common';
 import SortedLimitedEventSet from '../../types/SortedLimitedEventSet';
-import { savechannelProfileEventsToLocal, saveprofileEventsToLocal } from '../util/localForageUtil';
+import {
+  saveChannelMessageEvents,
+  savechannelProfileEventsToLocal,
+  savechannelProfileUpdateEventsToLocal,
+  saveprofileEventsToLocal,
+} from '../util/localForageUtil';
 import TEventTimelineSet from '../../types/TEventTimelineSet';
 import initMatrix from './InitMatrix';
 const debounce = new Debounce();
@@ -63,9 +68,10 @@ class MatrixClientA extends EventEmitter {
   profiles: Map<string, any>;
   channelProfiles: Map<
     string,
-    { name: string; about: string; picture: string; created_at: number }
+    { name: string; about: string; picture: string; created_at: number; founderId: string }
   >;
   cProfileEvents: Map<string, any>;
+  cProfileUpdateEvents: Map<string, any>;
   channelProfileEvents: Map<string, any>;
   contactList: Set<string>;
   contactEvents: Map<string, any>; //my contacts, or someone added my to his/her contacts.
@@ -86,8 +92,9 @@ class MatrixClientA extends EventEmitter {
     this.user = new TUser();
     this.eventsById = new Map();
     this.blockedUsers = new Set<string>();
-    this.profileEvents = new Map<string, any>();
-    this.cProfileEvents = new Map<string, any>();
+    this.profileEvents = new Map<string, NostrEvent>();
+    this.cProfileEvents = new Map<string, NostrEvent>();
+    this.cProfileUpdateEvents = new Map<string, NostrEvent>();
     this.channelProfileEvents = new Map<string, any>();
     this.channelProfiles = new Map<string, any>();
     this.profiles = new Map<string, any>();
@@ -121,10 +128,10 @@ class MatrixClientA extends EventEmitter {
   }
   async startClient({ lazyLoadMembers: boolean }) {
     console.log('startClient');
-    for (let i = 0; i < stage3relays.length; i++) {
+    for (let i = 0; i < DEFAULT_RELAY_URLS.length; i++) {
       const pubkey = '33333';
-      await this.connectAndJoin(stage3relays[i], pubkey);
-      // this.addRelay(stage3relays[i]);
+      await this.connectAndJoin(DEFAULT_RELAY_URLS[i], pubkey);
+      // this.addRelay(DEFAULT_RELAY_URLS[i]);
     }
   }
   async connectAndJoin(wss: string, pubkey: string) {
@@ -464,18 +471,16 @@ class MatrixClientA extends EventEmitter {
 
     for (let [key, relay] of this.relayInstance) {
       if (!relay || getRelayStatus(relay) != 1) {
-        // console.log('not found', relay.url);
         continue;
       }
-      // console.log('start searching', relay.url);
       const a = await fetchChannelMetaFromRelay(roomId, relay);
-
       if (!a || Object.keys(a).length == 0) {
         // console.log('not found', relay.url);
         continue;
       }
       this.handleChannelMetaEvent(a);
       const room = formatRoomFromNostrEvent(roomId, a);
+      room.founderId = a.pubkey;
       this.publicRoomList.set(roomId, room);
 
       console.log('Found', relay.url, room);
@@ -525,32 +530,36 @@ class MatrixClientA extends EventEmitter {
   ) {
     let tl = [] as TEvent[];
     let eventIds: string[] = [];
-    console.log('---------------------');
     if (room.type == 'single') {
       eventIds = this.directMessagesByUser.get(room.roomId)!.eventIds;
       for (let [k, v] of this.eventsById) {
         if (eventIds.includes(k)) {
-          const mevent = await formatDmMsgFromOthersOrMe(v, this.user);
-          const mc = new TEvent(mevent!);
-          tl.push(mc);
+          const mevents = await formatDmMsgFromOthersOrMe(v, this.user);
+          mevents.forEach((m) => {
+            const mc = new TEvent(m);
+            tl.push(mc);
+          });
         }
       }
+      return tl.reverse();
     }
     if (room.type == 'groupChannel') {
       eventIds = this.cMsgsByCid.get(room.roomId)!.eventIds;
       for (let [k, v] of this.eventsById) {
         if (eventIds.includes(k)) {
-          const mevent = formatChannelMsg(v);
-          const mc = new TEvent(mevent);
-          tl.push(mc);
+          const mevents = formatChannelMsg(v);
+          mevents.forEach((m) => {
+            const mc = new TEvent(m);
+            tl.push(mc);
+          });
         }
       }
+      return tl.reverse();
     }
 
-    return tl.reverse();
-    console.log(`paginateEventTimeline`);
-    console.log(timelineToPaginate);
-    console.log(backwards, limit);
+    // console.log(`paginateEventTimeline`);
+    // console.log(timelineToPaginate);
+    // console.log(backwards, limit);
   }
   getEventTimeline(timelineSet: Set<TEvent>, eventId: string) {
     const event = this.eventsById.get(eventId);
@@ -617,9 +626,14 @@ class MatrixClientA extends EventEmitter {
     dmUser?: SearchResultUser
   ) {
     if (options.is_direct == true) {
-      const a = new TRoom(options.invite[0], 'single');
-      a.name = dmUser!.display_name;
-      a.avatarUrl = dmUser!.avatarUrl;
+      const a = new TRoom(
+        options.invite[0],
+        'single',
+        dmUser!.display_name,
+        null as unknown as string,
+        dmUser!.avatarUrl
+      );
+      a.founderId = this.user.userId;
       const m1 = new TRoomMember(options.invite[0], a.name, a.avatarUrl);
       const m2 = new TRoomMember(this.user.userId, this.user.displayName, this.user.avatarUrl);
       a.addMember(m1);
@@ -640,11 +654,10 @@ class MatrixClientA extends EventEmitter {
       // this.publishEvent(event);
       // this.handleEvent(event);
       const a = new TRoom(event.id, 'groupChannel', name, about, picture);
-      let me2 = new TRoomMember(this.user.userId);
-      me2.name = this.user.displayName;
-      me2.avatarSrc = this.user.avatarUrl;
+      a.founderId = this.user.userId;
+      let me2 = new TRoomMember(this.user.userId, this.user.displayName, this.user.avatarUrl);
+
       a.addMember(me2);
-      a.founder = this.user.userId;
       this.publicRoomList.set(a.roomId, a);
       let channetProfile = JSON.parse(event.content);
       channetProfile.created_at = event.created_at;
@@ -1129,6 +1142,7 @@ class MatrixClientA extends EventEmitter {
         break;
       case 41:
         console.log(event.kind, event.content, event.tags);
+        this.handleChannelMetaUpdateEvent(event);
         break;
       case 42:
         this.handleChannelMessageEvent(event);
@@ -1163,6 +1177,7 @@ class MatrixClientA extends EventEmitter {
       this.cMsgsByCid.set(channelId, new SortedLimitedEventSet(500));
     }
     this.cMsgsByCid.get(channelId)?.add(event);
+    saveChannelMessageEvents(this.cMsgsByCid, this.eventsById);
   }
   handlePublicNostrEvent(event: NostrEvent) {
     this.eventsById.set(event.id, event);
@@ -1327,7 +1342,6 @@ class MatrixClientA extends EventEmitter {
     }
   }
   handleChannelMetaEvent = (event: NostrEvent) => {
-    console.log('handleChannelMetaEvent', event);
     const roomIds = Array.from(initMatrix.roomList.rooms);
     let parent = event.id;
     if (!roomIds.includes(parent)) {
@@ -1341,8 +1355,11 @@ class MatrixClientA extends EventEmitter {
       }
       const profile = JSON.parse(event.content);
       profile.created_at = event.created_at;
+      profile.founderId = event.pubkey;
+
       delete profile['nip05valid']; // not robust
       this.channelProfiles.set(parent, profile);
+      console.log(this.channelProfiles);
       this.setRoomName(parent, profile.name);
       this.setRoomAvatar(parent, profile.picture);
       this.setRoomAbout(parent, profile.about);
@@ -1356,6 +1373,37 @@ class MatrixClientA extends EventEmitter {
     }
   };
 
+  handleChannelMetaUpdateEvent = (event: NostrEvent) => {
+    try {
+      const roomIds = Array.from(initMatrix.roomList.rooms);
+      const etags = event.tags.find((tag) => tag[0] === 'e');
+      if (!etags) return;
+      let parent = etags[1];
+      if (!roomIds.includes(parent)) return;
+      const cprofile = this.channelProfiles.get(parent);
+      // not update from founderId
+      if (!cprofile || cprofile.founderId != event.pubkey) return;
+      if (cprofile.created_at > event.created_at) return;
+
+      const profile = JSON.parse(event.content);
+      profile.created_at = event.created_at;
+      profile.founderId = event.pubkey;
+
+      delete profile['nip05valid']; // not robust
+      this.channelProfiles.set(parent, profile);
+      console.log(this.channelProfiles);
+      this.setRoomName(parent, profile.name);
+      this.setRoomAvatar(parent, profile.picture);
+      this.setRoomAbout(parent, profile.about);
+      const existingEvent = this.cProfileUpdateEvents.get(parent);
+      if (!existingEvent || existingEvent.created_at < event.created_at) {
+        this.cProfileUpdateEvents.set(parent, event);
+        savechannelProfileUpdateEventsToLocal(this.cProfileUpdateEvents);
+      }
+    } catch (e) {
+      console.log('error parsing channel profile', e, event);
+    }
+  };
   handleContactEvents = (event: NostrEvent) => {
     if (event.pubkey != this.user.userId) return;
     console.log('handleContactEvents', event);
@@ -1389,7 +1437,7 @@ class MatrixClientA extends EventEmitter {
   }, 5000);
   restoreDefaultRelays() {
     this.relayInstance.clear();
-    for (const url of stage3relays) {
+    for (const url of DEFAULT_RELAY_URLS) {
       this.addRelay(url);
     }
     this.saveRelaysToContacts();

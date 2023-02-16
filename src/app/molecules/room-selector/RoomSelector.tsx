@@ -75,20 +75,21 @@ function RoomSelector({
   const room = initMatrix.matrixClient.getRoom(roomId);
   const [display, setDisplay] = useState({ name, imageSrc });
   useEffect(() => {
+    let unmounted = false;
+    function handleGetProfile(profile) {
+      if (profile && !unmounted) {
+        setDisplay({ name: profile.name, imageSrc: profile.picture });
+      }
+    }
     if (type == 'groupChannel') {
-      initMatrix.matrixClient.getChannelInfoWithCB(roomId, (profile) => {
-        if (profile) {
-          setDisplay({ name: profile.name, imageSrc: profile.picture });
-        }
-      });
+      initMatrix.matrixClient.getChannelInfoWithCB(roomId, handleGetProfile);
     }
     if (type == 'single') {
-      initMatrix.matrixClient.getUserWithCB(roomId, (profile) => {
-        if (profile) {
-          setDisplay({ name: profile.name, imageSrc: profile.picture });
-        }
-      });
+      initMatrix.matrixClient.getUserWithCB(roomId, handleGetProfile);
     }
+    return () => {
+      unmounted = true;
+    };
   }, []);
   return (
     <RoomSelectorWrapper

@@ -54,24 +54,23 @@ function RoomViewHeader({ roomId }) {
     setRoomName(room!.name);
     setRoomTopic(room?.canonical_alias);
     setAvatarSrc(room?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop'));
+    let unmounted = false;
+    function handleGetProfile(profile) {
+      if (profile && !unmounted) {
+        setRoomName(profile.name);
+        setRoomTopic(profile.about);
+        setAvatarSrc(profile.picture);
+      }
+    }
     if (type == 'groupChannel') {
-      initMatrix.matrixClient.getChannelInfoWithCB(roomId, (profile) => {
-        if (profile) {
-          setRoomName(profile.name);
-          setRoomTopic(profile.about);
-          setAvatarSrc(profile.picture);
-        }
-      });
+      initMatrix.matrixClient.getChannelInfoWithCB(roomId, handleGetProfile);
     }
     if (type == 'single') {
-      initMatrix.matrixClient.getUserWithCB(roomId, (profile) => {
-        if (profile) {
-          setRoomName(profile.name);
-          setRoomTopic(profile.about);
-          setAvatarSrc(profile.picture);
-        }
-      });
+      initMatrix.matrixClient.getUserWithCB(roomId, handleGetProfile);
     }
+    return () => {
+      unmounted = true;
+    };
   }, [roomId, type]);
   useEffect(() => {
     const settingsToggle = (isVisibile) => {

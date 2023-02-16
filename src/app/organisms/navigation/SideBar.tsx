@@ -82,13 +82,15 @@ function ProfileAvatarMenu() {
     //     setNewProfile(profile.picture, profile.name);
     //   }
     // });
+    let unmounted = false;
     mx.getUserWithCB(mx.getUserId(), (profile) => {
-      if (profile) {
+      if (profile && !unmounted) {
         setProfile({ avatarUrl: profile.picture, displayName: profile.name });
       }
     });
     user.on('User.avatarUrl', onAvatarChange);
     return () => {
+      unmounted = true;
       user.removeListener('User.avatarUrl', onAvatarChange);
     };
   }, []);

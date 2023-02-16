@@ -857,14 +857,18 @@ function Message({
   if (typeof body !== 'string') body = '';
   const [display, setDisplay] = useState({ username, avatarSrc });
   useEffect(() => {
+    let unmounted = false;
     initMatrix.matrixClient.getUserWithCB(senderId, (profile) => {
-      if (profile) {
+      if (profile && !unmounted) {
         setDisplay({
           avatarSrc: profile.picture,
           username: profile.name,
         });
       }
     });
+    return () => {
+      unmounted = true;
+    };
   }, [senderId]);
 
   return (

@@ -56,24 +56,23 @@ function RoomProfile({ roomId }) {
   const canChangeTopic = currentState.maySendStateEvent('m.room.topic', userId);
 
   useEffect(() => {
+    let unmounted = false;
+    function handlGetProfile(profile) {
+      if (profile && !unmounted) {
+        setRoomName(profile.name);
+        setRoomTopic(profile.about);
+        setAvatarSrc(profile.picture);
+      }
+    }
     if (type == 'groupChannel') {
-      initMatrix.matrixClient.getChannelInfoWithCB(roomId, (profile) => {
-        if (profile) {
-          setRoomName(profile.name);
-          setRoomTopic(profile.about);
-          setAvatarSrc(profile.picture);
-        }
-      });
+      initMatrix.matrixClient.getChannelInfoWithCB(roomId, handlGetProfile);
     }
     if (type == 'single') {
-      initMatrix.matrixClient.getUserWithCB(roomId, (profile) => {
-        if (profile) {
-          setRoomName(profile.name);
-          setRoomTopic(profile.about);
-          setAvatarSrc(profile.picture);
-        }
-      });
+      initMatrix.matrixClient.getUserWithCB(roomId, handlGetProfile);
     }
+    return () => {
+      unmounted = true;
+    };
   }, []);
 
   useEffect(() => {

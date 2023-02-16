@@ -228,7 +228,7 @@ class InitMatrix extends EventEmitter {
       window.localStorage.clear();
       window.location.reload();
     });
-    this.on('handleDirectMessage', this.updateDirectMessageEvent);
+    // this.on('handleDirectMessage', this.updateDirectMessageEvent);
   }
   loadLocalStorageEvents = async () => {
     const latestMsgs = await localForage.getItem('latestMsgs');
@@ -237,12 +237,13 @@ class InitMatrix extends EventEmitter {
     const mDirects = await localForage.getItem('mdirects');
     const inviteDirects = await localForage.getItem('inviteDirects');
     const latestMsgsByEveryone = await localForage.getItem('latestMsgsByEveryone');
-    const followEvents = await localForage.getItem('followEvents');
     const profileEvents = await localForage.getItem('profileEvents');
     const channelProfileEvents = await localForage.getItem('channelProfileEvents');
+    const channelProfileUpdateEvents = await localForage.getItem('channelProfileUpdateEvents');
     const notificationEvents = await localForage.getItem('notificationEvents');
     const eventsById = await localForage.getItem('eventsById');
     const dms = await localForage.getItem('dms');
+    const cmsgs = await localForage.getItem('cmsgs');
     const keyValueEvents = await localForage.getItem('keyValueEvents');
     if (Array.isArray(rooms)) {
       this.roomList.rooms = new Set(rooms);
@@ -256,9 +257,6 @@ class InitMatrix extends EventEmitter {
     if (Array.isArray(inviteDirects)) {
       this.roomList.inviteDirects = new Set(inviteDirects);
     }
-    if (Array.isArray(followEvents)) {
-      followEvents.forEach((e) => this.matrixClient.handleEvent(e));
-    }
     if (Array.isArray(profileEvents)) {
       profileEvents.forEach((e) => this.matrixClient.handleEvent(e));
     }
@@ -267,6 +265,9 @@ class InitMatrix extends EventEmitter {
     }
     if (Array.isArray(channelProfileEvents)) {
       channelProfileEvents.forEach((e) => this.matrixClient.handleEvent(e));
+    }
+    if (Array.isArray(channelProfileUpdateEvents)) {
+      channelProfileUpdateEvents.forEach((e) => this.matrixClient.handleEvent(e));
     }
     if (Array.isArray(latestMsgs)) {
       latestMsgs.forEach((msg) => {
@@ -288,6 +289,11 @@ class InitMatrix extends EventEmitter {
         this.matrixClient.handleEvent(msg);
       });
     }
+    if (Array.isArray(cmsgs)) {
+      cmsgs.forEach((msg) => {
+        this.matrixClient.handleEvent(msg);
+      });
+    }
     if (Array.isArray(keyValueEvents)) {
       keyValueEvents.forEach((msg) => {
         this.matrixClient.handleEvent(msg);
@@ -296,52 +302,6 @@ class InitMatrix extends EventEmitter {
 
     this.localStorageLoaded = true;
   };
-
-  async updateDirectMessageEvent(event: NostrEvent) {
-    const mevent = await formatDmMsgFromOthersOrMe(event, this.matrixClient.user);
-    const mc = new TEvent(mevent);
-    const roomId = mevent.room_id;
-    const senderId = mevent.sender;
-    const room = this.matrixClient.publicRoomList.get(roomId);
-    if (!room) {
-      const room = new TRoom(senderId, 'single');
-      room.init();
-      const asender = new TRoomMember(senderId);
-      asender.init();
-      room.addMember(asender);
-      mc.sender = asender;
-      const me = new TRoomMember(
-        this.matrixClient.user.userId,
-        this.matrixClient.user.displayName,
-        this.matrixClient.user.avatarUrl
-      );
-      me.membership = 'invite';
-      room.addMember(me);
-      this.matrixClient.publicRoomList.set(senderId, room);
-      const membership = 'invite';
-      const prevMembership = null;
-      this.emit('Room.myMembership', room, membership, prevMembership);
-      return;
-    }
-
-    const me = room.getMember(this.matrixClient.user.userId);
-    if (me?.membership == 'invite') {
-      const membership = 'invite';
-      const prevMembership = 'invite';
-      this.emit('Room.myMembership', room, membership, prevMembership);
-    } else if (me?.membership == 'join') {
-      const sender = room.getMember(senderId);
-      if (sender) {
-        mc.sender = sender;
-      } else {
-        const asender = new TRoomMember(senderId);
-        asender.init();
-        room.addMember(asender);
-        mc.sender = asender;
-      }
-      this.emit('Event.decrypted', mc);
-    }
-  }
 
   async logout() {
     this.matrixClient.stopClient();

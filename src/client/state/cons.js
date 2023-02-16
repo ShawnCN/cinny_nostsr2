@@ -156,7 +156,8 @@ const cons = {
 
 Object.freeze(cons);
 
-export const stage3relays = [
+export const DEFAULT_RELAY_URLS = [
+  'wss://nostr-pub.wellorder.net',
   'wss://nos.lol',
   'wss://node01.nostress.cc',
   ' wss://nostr.orangepill.dev',
@@ -166,7 +167,7 @@ export const stage3relays = [
   'wss://relay.nostr.info',
   'wss://offchain.pub',
   'wss://relay.nostr.ch',
-  // 'wss://nostr-pub.wellorder.net',
+
   // 'wss://nostr.zebedee.cloud',
   // 'wss://nostr-relay.lnmarkets.com',
   // 'wss://nostr.rdfriedl.com',

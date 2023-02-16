@@ -218,12 +218,14 @@ function CreateRoomContent({ isSpace, parentId, onRequestClose }) {
           options={
             <SegmentControl
               selected={roleIndex}
-              segments={[{ text: 'Admin' }, { text: 'Founder' }]}
+              segments={[{ text: 'Admin' }, { text: 'founderId' }]}
               onSelect={setRoleIndex}
             />
           }
           content={
-            <Text variant="b3">Selecting Admin sets 100 power level whereas Founder sets 101.</Text>
+            <Text variant="b3">
+              Selecting Admin sets 100 power level whereas founderId sets 101.
+            </Text>
           }
         />
         <Input name="topic" minHeight={174} resizable label="Topic (optional)" />

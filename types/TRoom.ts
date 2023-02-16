@@ -9,7 +9,7 @@ import TRoomMember from './TRoomMember';
 
 class TRoom {
   roomId: string;
-  type: string;
+  type: TRoomType;
   name: string;
   avatarUrl: string;
   canonical_alias: string; //intro
@@ -18,11 +18,11 @@ class TRoom {
   topic: string;
   currentState: CurrentState;
   roomMembers: Map<string, TRoomMember>;
-  founder: string;
+  founderId: string;
   // currentState: {
   //   getStateEvents: typeof getStateEvents;
   // };
-  constructor(roomId: string, type: string, name?: string, about?: string, avatarUrl?: string) {
+  constructor(roomId: string, type: TRoomType, name?: string, about?: string, avatarUrl?: string) {
     // this.currentState.getStateEvents = getStateEvents();
     this.currentState = new CurrentState();
     this.roomMembers = new Map();

@@ -13,6 +13,7 @@ import { getEventHash, nip04, Relay, signEvent } from 'nostr-tools';
 import TRoom from '../../types/TRoom';
 import TUser from '../../types/TUser';
 import { contectDetect } from './nostrUtil';
+import { DEFAULT_RELAY_URLS } from '../client/state/cons';
 
 const WELL_KNOWN_URI = '/.well-known/matrix/client';
 
@@ -59,7 +60,7 @@ export async function isRoomAliasAvailable(alias: string) {
 
 export function getPowerLabel(powerLevel: number) {
   if (powerLevel > 9000) return 'Goku';
-  if (powerLevel > 100) return 'Founder';
+  if (powerLevel > 100) return 'founderId';
   if (powerLevel === 100) return 'Admin';
   if (powerLevel >= 50) return 'Mod';
   return null;
@@ -582,7 +583,7 @@ export const fetchChannelMetaFromRelay = async (channelId: string, relay: Relay)
   if (!relay || relay.status != 1) return null;
   const filter = {
     ids: [channelId],
-    kinds: [40, 41],
+    kinds: [40],
   };
   const sub = relay.sub([filter]);
   const channel = new Promise<NostrEvent>((resolve, reject) => {
@@ -691,6 +692,8 @@ export const formatChannelEvent = async (
       'e',
       // '25e5c82273a271cb1a840d0060391a0bf4965cafeb029d5ab55350b418953fbb',
       roomId,
+      DEFAULT_RELAY_URLS[0],
+      'root',
       // url.toString(),
     ],
   ] as string[][];
