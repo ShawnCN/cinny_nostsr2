@@ -877,7 +877,7 @@ function Auth() {
                 <Avatar size="extra-small" imageSrc={CinnySvg} />
                 <TitleWrapper>
                   <Text variant="h2" weight="medium">
-                    Cinny
+                    Noteon
                   </Text>
                 </TitleWrapper>
               </Header>

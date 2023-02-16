@@ -131,8 +131,8 @@ class RoomList extends EventEmitter {
     if (parents.size === 0) this.roomIdToParents.delete(roomId);
   }
 
-  getAllParentSpaces(roomId) {
-    const allParents = new Set();
+  getAllParentSpaces(roomId: string) {
+    const allParents = new Set() as Set<string>;
 
     const addAllParentIds = (rId) => {
       if (allParents.has(rId)) return;
@@ -391,9 +391,14 @@ class RoomList extends EventEmitter {
         }
 
         if (['leave', 'kick', 'ban'].includes(membership)) {
-          if (this.directs.has(roomId)) this.directs.delete(roomId);
-          else if (this.spaces.has(roomId)) this.deleteFromSpaces(roomId);
-          else this.rooms.delete(roomId);
+          if (this.directs.has(roomId)) {
+            this.directs.delete(roomId);
+            saveDirectsToLocal(this.directs);
+          } else if (this.spaces.has(roomId)) this.deleteFromSpaces(roomId);
+          else {
+            this.rooms.delete(roomId);
+            saveRoomsToLocal(this.rooms);
+          }
           this.emit(cons.events.roomList.ROOM_LEAVED, roomId);
           // @ts-ignore
           this.emit(cons.events.roomList.ROOMLIST_UPDATED);

@@ -621,7 +621,11 @@ class MatrixClientA extends EventEmitter {
   async resolveRoomAlias(alias): Promise<any> {
     return {};
   }
-  async leave(roomId) {
+  async leave(roomId: string) {
+    const a = this.getRoom(roomId);
+    const membership = 'leave';
+    const prevMembership = 'join';
+    this.emit('Room.myMembership', a, membership, prevMembership);
     console.log('leave');
   }
   async createRoom(

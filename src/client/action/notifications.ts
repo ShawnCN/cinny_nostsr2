@@ -1,7 +1,7 @@
 import initMatrix from '../InitMatrix';
 
 // eslint-disable-next-line import/prefer-default-export
-export async function markAsRead(roomId) {
+export async function markAsRead(roomId: string) {
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
   if (!room) return;

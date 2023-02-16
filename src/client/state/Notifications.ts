@@ -209,8 +209,8 @@ class Notifications extends EventEmitter {
     this._updateFavicon();
   }
 
-  _deleteNoti(roomId, total, highlight) {
-    const removeNoti = (id, t, h, fromId) => {
+  _deleteNoti(roomId: string, total: number, highlight: number) {
+    const removeNoti = (id: string, t: number, h: number, fromId?: string) => {
       if (this.roomIdToNoti.has(id) === false) return;
 
       const noti = this.getNoti(id);

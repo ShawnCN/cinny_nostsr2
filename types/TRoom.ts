@@ -119,6 +119,7 @@ class TRoom {
   }
   canInvite(userId: string) {
     if (this.type == 'single') return false;
+    if (this.founderId != userId) return false;
     return true;
   }
   getDMInviter() {

@@ -46,7 +46,7 @@ import InfoIC from '../../../../public/res/ic/outlined/info.svg';
 import PowerIC from '../../../../public/res/ic/outlined/power.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
-import CinnySVG from '../../../../public/res/svg/cinny.svg';
+import CinnySVG from '../../../../public/res/svg/noteon.svg';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 import { Relay } from 'nostr-tools';
 import Input from '../../atoms/input/Input';
@@ -408,19 +408,21 @@ function AboutSection() {
       <div className="settings-about__card">
         <MenuHeader>Application</MenuHeader>
         <div className="settings-about__branding">
-          <img width="60" height="60" src={CinnySVG} alt="Cinny logo" />
+          <img width="60" height="60" src="./public/noteon.jpg" alt="Cinny logo" />
           <div>
             <Text variant="h2" weight="medium">
-              Cinny
+              Nostr
               <span
                 className="text text-b3"
                 style={{ margin: '0 var(--sp-extra-tight)' }}
               >{`v${cons.version}`}</span>
             </Text>
-            <Text>Yet another matrix client</Text>
+            <Text>Yet another nostr client</Text>
 
             <div className="settings-about__btns">
-              <Button onClick={() => window.open('https://github.com/ajbura/cinny')}>
+              <Button
+                onClick={() => window.open('https://github.com/ShawnCN/cinny_nostsr2/tree/dev')}
+              >
                 Source code
               </Button>
               <Button onClick={() => window.open('https://cinny.in/#sponsor')}>Support</Button>
@@ -438,25 +440,40 @@ function AboutSection() {
             <li>
               {/* eslint-disable-next-line react/jsx-one-expression-per-line */}
               <Text>
+                {' '}
+                <a
+                  href="https://github.com/nostr-protocol/nostr"
+                  rel="noreferrer noopener"
+                  target="_blank"
+                >
+                  Nostr
+                </a>{' '}
+                is a open protocol that is able to create a censorship-resistant global "social"
+                network once and for all.
+              </Text>
+            </li>
+            <li>
+              {/* eslint-disable-next-line react/jsx-one-expression-per-line */}
+              <Text>
                 The{' '}
                 <a
-                  href="https://github.com/matrix-org/matrix-js-sdk"
+                  href="https://github.com/cinnyapp/cinny"
                   rel="noreferrer noopener"
                   target="_blank"
                 >
-                  matrix-js-sdk
+                  Cinny
                 </a>{' '}
-                is ©{' '}
+                is{' '}
                 <a href="https://matrix.org/foundation" rel="noreferrer noopener" target="_blank">
-                  The Matrix.org Foundation C.I.C
+                  a Matrix client
                 </a>{' '}
-                used under the terms of{' '}
+                licensed under the{' '}
                 <a
-                  href="http://www.apache.org/licenses/LICENSE-2.0"
+                  href="https://opensource.org/license/mit/"
                   rel="noreferrer noopener"
                   target="_blank"
                 >
-                  Apache 2.0
+                  MIT License
                 </a>
                 .
               </Text>
