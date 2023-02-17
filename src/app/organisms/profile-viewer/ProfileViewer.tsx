@@ -38,8 +38,9 @@ import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 import TRoom from '../../../../types/TRoom';
-import { TDevice } from '../../../../types';
+import { SearchResultUser } from '../../../../types';
 import { defaultName, toNostrBech32Address } from '../../../util/nostrUtil';
+import TDevice from '../../../../types/TDevice';
 
 function ModerationTools({ roomId, userId }) {
   const mx = initMatrix.matrixClient;
@@ -150,11 +151,12 @@ function SessionInfo({ userId }: { userId: string }) {
   );
 }
 
-// SessionInfo.propTypes = {
-//   userId: PropTypes.string.isRequired,
-// };
-
-function ProfileFooter({ roomId, userId, onRequestClose }) {
+interface IPropsProfileFooter {
+  roomId: string;
+  userId: string;
+  onRequestClose: () => void;
+}
+function ProfileFooter({ roomId, userId, onRequestClose }: IPropsProfileFooter) {
   const [isCreatingDM, setIsCreatingDM] = useState(false);
   const [isIgnoring, setIsIgnoring] = useState(false);
   const [isUserIgnored, setIsUserIgnored] = useState(initMatrix.matrixClient.isUserIgnored(userId));
@@ -162,7 +164,7 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
   const isMountedRef = useRef(true);
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
-  const member = room.getMember(userId);
+  const member = room!.getMember(userId);
   const isInvitable = member?.membership !== 'join' && member?.membership !== 'ban';
 
   const [isInviting, setIsInviting] = useState(false);
@@ -175,7 +177,7 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
 
   const isBanned = member?.membership === 'ban';
 
-  const onCreated = (dmRoomId) => {
+  const onCreated = (dmRoomId: string) => {
     if (isMountedRef.current === false) return;
     setIsCreatingDM(false);
     selectRoom(dmRoomId);
@@ -197,8 +199,10 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
   }, [userId]);
 
   const openDM = async () => {
+    console.log('8888888888888888888');
     // Check and open if user already have a DM with userId.
     const dmRoomId = hasDMWith(userId);
+    console.log('5555555555', dmRoomId);
     if (dmRoomId) {
       selectRoom(dmRoomId);
       onRequestClose();
@@ -280,11 +284,6 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
     </div>
   );
 }
-ProfileFooter.propTypes = {
-  roomId: PropTypes.string.isRequired,
-  userId: PropTypes.string.isRequired,
-  onRequestClose: PropTypes.func.isRequired,
-};
 
 function useToggleDialog() {
   const [isOpen, setIsOpen] = useState(false);
@@ -340,18 +339,43 @@ function ProfileViewer() {
 
   const mx = initMatrix.matrixClient;
 
-  const room = mx.getRoom(roomId as string);
+  const room = mx.getRoom(roomId as string) as TRoom;
+
+  // const [display, setDisplay] = useState<SearchResultUser>({
+  //   user_id: userId as string,
+  //   display_name: username,
+  //   avatarUrl: avatarUrl as string,
+  //   about: null as unknown as string,
+  // });
+
+  const [display, setDisplay] = useState<SearchResultUser | null>(null);
+  useEffect(() => {
+    let unmounted = false;
+    userId &&
+      typeof userId === 'string' &&
+      initMatrix.matrixClient.getUserWithCB(userId, (profile) => {
+        if (profile && !unmounted) {
+          setDisplay({
+            user_id: userId as string,
+            display_name: profile?.name,
+            avatarUrl: profile?.picture,
+            about: profile?.about,
+          });
+        }
+      });
+    return () => {
+      unmounted = true;
+    };
+  }, [userId]);
 
   const renderProfile = () => {
-    console.log(roomId);
-    const roomMember = room.getMember(userId as string);
+    const roomMember = room?.getMember(userId as string);
     const username = roomMember
       ? getUsernameOfRoomMember(roomMember)
       : getUsername(userId as string);
     const avatarMxc = roomMember?.getMxcAvatarUrl?.() || mx.getUser(userId as string)?.avatarUrl;
     const avatarUrl =
       avatarMxc && avatarMxc !== 'null' ? mx.mxcUrlToHttp(avatarMxc, 80, 80, 'crop') : null;
-
     const powerLevel = roomMember?.powerLevel || 0;
     const myPowerLevel = room.getMember(mx.getUserId())?.powerLevel || 0;
 
@@ -399,14 +423,15 @@ function ProfileViewer() {
       <div className="profile-viewer">
         <div className="profile-viewer__user">
           <Avatar
-            imageSrc={avatarUrl}
-            text={defaultName(userId, 'npub')}
+            imageSrc={display?.avatarUrl ?? avatarUrl}
+            text={display?.display_name ?? defaultName(userId as string, 'npub')}
             bgColor={colorMXID(userId)}
             size="large"
+            type="single"
           />
           <div className="profile-viewer__user__info">
             <Text variant="s1" weight="medium">
-              {twemojify(defaultName(userId, 'npub'))}
+              {twemojify(display?.display_name ?? defaultName(userId as string, 'npub'))}
             </Text>
             <Text variant="b2">{twemojify(toNostrBech32Address(userId!, 'npub')!)}</Text>
           </div>
@@ -421,7 +446,7 @@ function ProfileViewer() {
           </div>
         </div>
         <ModerationTools roomId={roomId as string} userId={userId as string} />
-        <SessionInfo userId={userId} />
+        {/* <SessionInfo userId={userId as string} /> */}
         {userId !== mx.getUserId() && (
           <ProfileFooter
             roomId={roomId as string}

@@ -53,9 +53,9 @@ function RoomsCategory({
     ));
   };
 
-  const renderSelector = (roomId) => {
-    // const isSpace = spaces.has(roomId);
-    const isSpace = false;
+  const renderSelector = (roomId: string) => {
+    const isSpace = spaces.has(roomId);
+    // const isSpace = false;
     const isDM = directs.has(roomId);
 
     return (

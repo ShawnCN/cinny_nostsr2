@@ -3,6 +3,7 @@ import {
   NostrEvent,
   SearchResultUser,
   Subscription,
+  TOptionsCreateDM,
   TRoomType,
   TSubscribedChannel,
 } from '../../types';
@@ -628,23 +629,26 @@ class MatrixClientA extends EventEmitter {
     this.emit('Room.myMembership', a, membership, prevMembership);
     console.log('leave');
   }
-  async createRoom(
-    options: {
-      is_direct: boolean;
-      invite: string[];
-      visibility: 'private';
-      preset: 'trusted_private_chat';
-      initial_state: any[];
-    },
-    dmUser?: SearchResultUser
-  ) {
+  async createRoom(options: TOptionsCreateDM, dmUser?: SearchResultUser) {
     if (options.is_direct == true) {
+      const userId = options.invite[0];
+      if (!dmUser) {
+        const profile = this.profiles.get(userId);
+        if (profile) {
+          dmUser = {
+            user_id: userId,
+            display_name: profile?.name,
+            avatarUrl: profile?.picture,
+            about: profile?.about,
+          };
+        }
+      }
       const a = new TRoom(
         options.invite[0],
         'single',
-        dmUser!.display_name,
+        dmUser?.display_name,
         null as unknown as string,
-        dmUser!.avatarUrl
+        dmUser?.avatarUrl
       );
       a.founderId = this.user.userId;
       const m1 = new TRoomMember(options.invite[0], a.name, a.avatarUrl);
@@ -669,7 +673,7 @@ class MatrixClientA extends EventEmitter {
       const a = new TRoom(event.id, 'groupChannel', name, about, picture);
       a.founderId = this.user.userId;
       let me2 = new TRoomMember(this.user.userId, this.user.displayName, this.user.avatarUrl);
-
+      me2.powerLevel = 10000;
       a.addMember(me2);
       this.publicRoomList.set(a.roomId, a);
       let channetProfile = JSON.parse(event.content);

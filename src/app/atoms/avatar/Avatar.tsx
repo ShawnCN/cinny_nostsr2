@@ -10,6 +10,7 @@ import RawIcon from '../system-icons/RawIcon';
 import ImageBrokenSVG from '../../../../public/res/svg/image-broken.svg';
 import { avatarInitials } from '../../../util/common';
 import CanvasPic from '../avatar-channel/CanvasPic';
+import { TRoomType } from '../../../../types';
 
 interface IPropsAvatar {
   text?: string;
@@ -19,7 +20,7 @@ interface IPropsAvatar {
   imageSrc?: string | null;
   size: 'large' | 'normal' | 'small' | 'extra-small';
   id?: string | null;
-  type: string;
+  type: TRoomType;
 }
 
 const Avatar = React.forwardRef(

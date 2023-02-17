@@ -101,13 +101,18 @@ export function hasDMWith(userId: string) {
   const mx = initMatrix.matrixClient;
   const directIds = [...initMatrix.roomList.directs];
 
+  // return directIds.find((roomId) => {
+  //   const dRoom = mx.getRoom(roomId);
+  //   const roomMembers = dRoom.getMembers();
+  //   if (roomMembers.length <= 2 && dRoom.getMember(userId)) {
+  //     return true;
+  //   }
+  //   return false;
+  // });
+
+  // 自定义
   return directIds.find((roomId) => {
-    const dRoom = mx.getRoom(roomId);
-    const roomMembers = dRoom.getMembers();
-    if (roomMembers.length <= 2 && dRoom.getMember(userId)) {
-      return true;
-    }
-    return false;
+    roomId == userId;
   });
 }
 

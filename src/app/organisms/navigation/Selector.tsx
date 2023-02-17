@@ -17,6 +17,7 @@ import SpaceOptions from '../../molecules/space-options/SpaceOptions';
 import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg';
 
 import { useForceUpdate } from '../../hooks/useForceUpdate';
+import { defaultName } from '../../../util/nostrUtil';
 
 function Selector({ roomId, isDM, drawerPostie, onClick }) {
   const mx = initMatrix.matrixClient;
@@ -53,7 +54,7 @@ function Selector({ roomId, isDM, drawerPostie, onClick }) {
     <RoomSelector
       key={roomId}
       type={isDM ? 'single' : 'groupChannel'}
-      name={room?.name ? room.name : null}
+      name={room?.name ?? defaultName(roomId, isDM ? 'npub' : 'note')!}
       roomId={roomId}
       imageSrc={isDM ? imageSrc : null}
       iconSrc={isDM ? null : joinRuleToIconSrc(room?.getJoinRule(), room.isSpaceRoom())}

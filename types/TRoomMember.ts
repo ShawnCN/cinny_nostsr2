@@ -17,6 +17,7 @@ class TRoomMember {
     this.userId = id;
     this.username = id;
     this.membership = 'join';
+    // this.powerLevel = 10000;
     if (name) {
       this.name = name;
     } else {

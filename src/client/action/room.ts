@@ -4,7 +4,7 @@ import cons from '../state/cons';
 import { getIdServer } from '../../util/matrixUtil';
 import TRoom from '../../../types/TRoom';
 import TEvent from '../../../types/TEvent';
-import { SearchResultUser } from '../../../types';
+import { SearchResultUser, TOptionsCreateDM } from '../../../types';
 
 /**
  * https://github.com/matrix-org/matrix-react-sdk/blob/1e6c6e9d800890c732d60429449bc280de01a647/src/Rooms.js#L73
@@ -154,7 +154,7 @@ async function leave(roomId) {
   }
 }
 
-async function create(options, isDM = false, dmUser?: SearchResultUser) {
+async function create(options: TOptionsCreateDM, isDM = false, dmUser?: SearchResultUser) {
   const mx = initMatrix.matrixClient;
   try {
     const result = await mx.createRoom(options, dmUser);
@@ -183,7 +183,11 @@ async function create(options, isDM = false, dmUser?: SearchResultUser) {
   }
 }
 
-async function createDM(userIdOrIds, isEncrypted = true, user?: SearchResultUser) {
+async function createDM(
+  userIdOrIds: string | string[],
+  isEncrypted = true,
+  user?: SearchResultUser
+) {
   const options = {
     is_direct: true,
     invite: Array.isArray(userIdOrIds) ? userIdOrIds : [userIdOrIds],

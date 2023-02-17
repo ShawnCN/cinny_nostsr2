@@ -62,6 +62,7 @@ export type SearchResultUser = {
   user_id: string;
   display_name: string;
   avatarUrl: string;
+  about?: string;
 };
 
 export type TRoomType = 'single' | 'groupChannel' | 'groupRelay';
@@ -83,4 +84,13 @@ export type TOptions = {
       };
     }
   ];
+};
+export type TOptionsCreateDM = {
+  is_direct: boolean;
+  invite: string[];
+  visibility: string;
+  preset: string;
+  initial_state: any;
+  name?: string;
+  topic?: string;
 };

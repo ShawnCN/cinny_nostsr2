@@ -12,7 +12,7 @@ interface IPropsButton {
   variant?: 'surface' | 'primary' | 'positive' | 'caution' | 'danger';
   iconSrc?: string | null;
   type?: 'button' | 'submit' | 'reset';
-  onClick?: (arg0?: string) => void;
+  onClick?: ((arg0?: string) => void) | null;
   children: ReactNode;
   disabled?: boolean;
 }
