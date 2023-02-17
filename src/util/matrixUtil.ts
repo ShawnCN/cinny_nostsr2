@@ -7,7 +7,7 @@ import SpaceIC from '../../public/res/ic/outlined/space.svg';
 import SpaceGlobeIC from '../../public/res/ic/outlined/space-globe.svg';
 import SpaceLockIC from '../../public/res/ic/outlined/space-lock.svg';
 import { NostrEvent } from '../../types';
-import { TContent, TEventFormat } from '../../types/TEvent';
+import TEvent, { TContent, TEventFormat } from '../../types/TEvent';
 import TRoomMember from '../../types/TRoomMember';
 import { getEventHash, nip04, Relay, signEvent } from 'nostr-tools';
 import TRoom from '../../types/TRoom';
@@ -44,6 +44,8 @@ export function getUsername(userId: string): string {
 }
 
 export function getUsernameOfRoomMember(roomMember: TRoomMember): string {
+  const profile = initMatrix.matrixClient.profiles.get(roomMember.userId);
+  if (profile && profile.name && profile.name.length > 0) return profile.name;
   return roomMember.name || roomMember.userId;
 }
 

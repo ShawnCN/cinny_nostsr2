@@ -12,13 +12,12 @@ import { cryptoCallbacks } from './state/secretStorageKeys';
 import navigation from './state/navigation';
 
 import MatrixClientA from './MatrixClientA';
-import { NostrEvent, TChannelmapObject, TMyMemberships, TSubscribedChannel } from '../../types';
+import { TMyMemberships, TSubscribedChannel } from '../../types';
 import { defaultChatroomList } from './state/cons';
-import TRoom from '../../types/TRoom';
-import TRoomMember from '../../types/TRoomMember';
-import { saveDirectsToLocal, saveMDirectsToLocal } from '../util/localForageUtil';
-import { formatDmMsgFromOthersOrMe, initialChannelroom, initialDMroom } from '../util/matrixUtil';
-import TEvent from '../../types/TEvent';
+
+import { saveMDirectsToLocal } from '../util/localForageUtil';
+import { initialChannelroom, initialDMroom } from '../util/matrixUtil';
+
 // const matrixClientA = new MatrixClientA();
 
 // global.Olm = Olm;
@@ -219,9 +218,7 @@ class InitMatrix extends EventEmitter {
   }
 
   listenEvents() {
-    console.log('emit sync');
     this.matrixClient.emit('sync', { state: 'PREPARED', prevState: null });
-    console.log('emit sync2222222');
     this.matrixClient.on('Session.logged_out', async () => {
       this.matrixClient.stopClient();
       await this.matrixClient.clearStores();

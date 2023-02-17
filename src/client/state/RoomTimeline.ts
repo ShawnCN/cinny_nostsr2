@@ -1,6 +1,7 @@
 import TEvent from '../../../types/TEvent';
 import TLiveTimeline from '../../../types/TLiveTimeline';
 import TRoom from '../../../types/TRoom';
+import { formatChannelMsg } from '../../util/matrixUtil';
 import EventEmitter from '../EventEmitter';
 import initMatrix from '../InitMatrix';
 import MatrixClientA from '../MatrixClientA';
@@ -346,7 +347,12 @@ class RoomTimeline extends EventEmitter {
   }
 
   findEventById(eventId: string) {
-    return this.timeline[this.getEventIndex(eventId)] ?? null;
+    // return this.timeline[this.getEventIndex(eventId)] ?? null;
+    const event = initMatrix.matrixClient.eventsById.get(eventId);
+    if (!event) return null;
+    const mevent = formatChannelMsg(event);
+    const mc = new TEvent(mevent[0]);
+    return mc;
   }
 
   deleteFromTimeline(eventId: string) {

@@ -27,7 +27,6 @@ import {
   formatDmMsgFromOthersOrMe,
   formatGlobalMsg,
   formatRoomFromNostrEvent,
-  formatRoomMemberFromNostrEvent,
   getRelayStatus,
   getSignedEvent,
 } from '../util/matrixUtil';
@@ -38,6 +37,7 @@ import {
   getSubscriptionIdForName,
   attachmentsChanged,
   howLong,
+  sortedChats,
 } from '../util/nostrUtil';
 import EventEmitter from './EventEmitter';
 import cons, {
@@ -543,6 +543,7 @@ class MatrixClientA extends EventEmitter {
     timelineToPaginate: any,
     { backwards, limit }: { backwards: boolean; limit: number }
   ) {
+    console.log('11111111111111111111');
     let tl = [] as TEvent[];
     let eventIds: string[] = [];
     if (room.type == 'single') {
@@ -556,7 +557,7 @@ class MatrixClientA extends EventEmitter {
           });
         }
       }
-      return tl.reverse();
+      return sortedChats(tl);
     }
     if (room.type == 'groupChannel') {
       eventIds = this.cMsgsByCid.get(room.roomId)!.eventIds;
@@ -569,7 +570,7 @@ class MatrixClientA extends EventEmitter {
           });
         }
       }
-      return tl.reverse();
+      return sortedChats(tl);
     }
 
     // console.log(`paginateEventTimeline`);
@@ -579,9 +580,12 @@ class MatrixClientA extends EventEmitter {
   getEventTimeline(timelineSet: Set<TEvent>, eventId: string) {
     const event = this.eventsById.get(eventId);
     if (!event) return Promise.resolve(Array.from(timelineSet));
-    const mevent = formatChannelMsg(event);
-    const mc = new TEvent(mevent);
-    timelineSet.add(mc);
+    const mevents = formatChannelMsg(event);
+    mevents.forEach((m) => {
+      const mc = new TEvent(m);
+      timelineSet.add(mc);
+    });
+
     const a = Array.from(timelineSet);
 
     return Promise.resolve(a);
@@ -1547,7 +1551,7 @@ class MatrixClientA extends EventEmitter {
     const event2 = await getSignedEvent(event, this.user?.privatekey);
     this.publishEvent(event2);
   };
-  addUserToContact = async (userId) => {
+  addUserToContact = async (userId: string) => {
     const existing = this.contactEvents.get(this.user.userId);
     let event = {} as NostrEvent;
     if (!existing) {

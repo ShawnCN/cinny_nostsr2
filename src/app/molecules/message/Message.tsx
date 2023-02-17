@@ -168,20 +168,22 @@ const MessageReplyWrapper = React.memo(({ roomTimeline, eventId }: IPropsMessage
     const timelineSet = roomTimeline.getUnfilteredTimelineSet();
     const loadReply = async () => {
       try {
-        const eTimeline = await mx.getEventTimeline(timelineSet, eventId);
-        await roomTimeline.decryptAllEventsOfTimeline(eTimeline);
+        // const eTimeline = await mx.getEventTimeline(timelineSet, eventId as string);
+        // await roomTimeline.decryptAllEventsOfTimeline(eTimeline);
 
-        let mEvent = eTimeline.getTimelineSet().findEventById(eventId);
-        const editedList = roomTimeline.editedTimeline.get(mEvent.getId());
+        // let mEvent: TEvent = eTimeline.getTimelineSet().findEventById(eventId);
+        // 自定义
+        let mEvent = roomTimeline.findEventById(eventId as string);
+        const editedList = roomTimeline.editedTimeline.get(mEvent?.getId());
         if (editedList) {
           mEvent = editedList[editedList.length - 1];
         }
 
-        const rawBody = mEvent.getContent().body;
-        const username = getUsernameOfRoomMember(mEvent.sender);
+        const rawBody = mEvent?.getContent().body;
+        const username = getUsernameOfRoomMember(mEvent?.sender);
 
         if (isMountedRef.current === false) return;
-        const fallbackBody = mEvent.isRedacted()
+        const fallbackBody = mEvent?.isRedacted()
           ? '*** This message has been deleted ***'
           : '*** Unable to load reply ***';
         let parsedBody = parseReply(rawBody)?.body ?? rawBody ?? fallbackBody;
@@ -399,7 +401,7 @@ function MessageEdit({ body, onSave, onCancel }: IPropsMessageEdit) {
 //   onCancel: PropTypes.func.isRequired,
 // };
 
-function getMyEmojiEvent(emojiKey, eventId, roomTimeline) {
+function getMyEmojiEvent(emojiKey, eventId: string, roomTimeline: RoomTimeline) {
   const mx = initMatrix.matrixClient;
   const rEvents = roomTimeline.reactionTimeline.get(eventId);
   let rEvent = null as unknown as TEvent;
@@ -414,7 +416,13 @@ function getMyEmojiEvent(emojiKey, eventId, roomTimeline) {
   return rEvent;
 }
 
-function toggleEmoji(roomId, eventId, emojiKey, shortcode, roomTimeline) {
+function toggleEmoji(
+  roomId: string,
+  eventId: string,
+  emojiKey,
+  shortcode,
+  roomTimeline: RoomTimeline
+) {
   const myAlreadyReactEvent = getMyEmojiEvent(emojiKey, eventId, roomTimeline);
   if (myAlreadyReactEvent) {
     const rId = myAlreadyReactEvent.getId();
@@ -425,7 +433,7 @@ function toggleEmoji(roomId, eventId, emojiKey, shortcode, roomTimeline) {
   sendReaction(roomId, eventId, emojiKey, shortcode);
 }
 
-function pickEmoji(e, roomId, eventId, roomTimeline) {
+function pickEmoji(e, roomId: string, eventId: string, roomTimeline: RoomTimeline) {
   openEmojiBoard(getEventCords(e), (emoji) => {
     toggleEmoji(roomId, eventId, emoji.mxc ?? emoji.unicode, emoji.shortcodes[0], roomTimeline);
     e.target.click();
@@ -498,15 +506,18 @@ MessageReaction.propTypes = {
   isActive: PropTypes.bool.isRequired,
   onClick: PropTypes.func.isRequired,
 };
-
-function MessageReactionGroup({ roomTimeline, mEvent }) {
+interface IPropsMessageReactionGroup {
+  roomTimeline: RoomTimeline;
+  mEvent: TEvent;
+}
+function MessageReactionGroup({ roomTimeline, mEvent }: IPropsMessageReactionGroup) {
   const { roomId, room, reactionTimeline } = roomTimeline;
   const mx = initMatrix.matrixClient;
   const reactions = {};
   const canSendReaction = room.currentState.maySendEvent('m.reaction', mx.getUserId());
 
   const eventReactions = reactionTimeline.get(mEvent.getId());
-  const addReaction = (key, shortcode, count, senderId, isActive) => {
+  const addReaction = (key, shortcode, count: number, senderId: string, isActive: boolean) => {
     let reaction = reactions[key];
     if (reaction === undefined) {
       reaction = {
@@ -574,10 +585,10 @@ function MessageReactionGroup({ roomTimeline, mEvent }) {
     </div>
   );
 }
-MessageReactionGroup.propTypes = {
-  roomTimeline: PropTypes.shape({}).isRequired,
-  mEvent: PropTypes.shape({}).isRequired,
-};
+// MessageReactionGroup.propTypes = {
+//   roomTimeline: PropTypes.shape({}).isRequired,
+//   mEvent: PropTypes.shape({}).isRequired,
+// };
 
 function isMedia(mE: TEvent) {
   return (

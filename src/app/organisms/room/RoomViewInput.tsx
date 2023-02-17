@@ -49,7 +49,9 @@ interface IPropsRoomViewInput {
 }
 function RoomViewInput({ roomId, roomTimeline, viewEvent, roomType }: IPropsRoomViewInput) {
   const [attachment, setAttachment] = useState(null);
-  const [replyTo, setReplyTo] = useState(null);
+  const [replyTo, setReplyTo] = useState<{ userId: string; eventId: string; body: any } | null>(
+    null
+  );
 
   const textAreaRef = useRef<any>(null);
   const inputBaseRef = useRef(null);
@@ -151,7 +153,8 @@ function RoomViewInput({ roomId, roomTimeline, viewEvent, roomType }: IPropsRoom
     textAreaRef.current.focus();
   }
 
-  function setUpReply(userId, eventId, body, formattedBody) {
+  function setUpReply(userId: string, eventId: string, body, formattedBody) {
+    console.log('rrrrrrrrrrrrrrrrrrrrrr', body, formattedBody);
     setReplyTo({ userId, eventId, body });
     roomsInput.setReplyTo(roomId, {
       userId,

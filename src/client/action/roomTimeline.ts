@@ -16,7 +16,7 @@ async function redactEvent(roomId, eventId, reason?: any) {
   }
 }
 
-async function sendReaction(roomId, toEventId, reaction, shortcode) {
+async function sendReaction(roomId: string, toEventId: string, reaction, shortcode) {
   const mx = initMatrix.matrixClient;
   let content = {
     'm.relates_to': {

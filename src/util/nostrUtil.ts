@@ -2,6 +2,7 @@ import { Buffer } from 'buffer';
 import * as bech32 from 'bech32-buffer'; /* eslint-disable-line @typescript-eslint/no-var-requires */
 import { Debounce } from './common';
 import { sha256 } from '@noble/hashes/sha256';
+import TEvent from '../../types/TEvent';
 export const toNostrBech32Address = (address: string, prefix: string) => {
   if (!prefix) {
     throw new Error('prefix is required');
@@ -131,3 +132,13 @@ export const howLong = (created_at: number) => {
   const days = (now - created_at) / (3600 * 24);
   return days;
 };
+
+export const sortedChats = (chats: TEvent[]) =>
+  chats.sort((a, b) => {
+    if (a.event.origin_server_ts > b.event.origin_server_ts) {
+      return 1;
+    } else if (a.event.origin_server_ts < b.event.origin_server_ts) {
+      return -1;
+    }
+    return 0;
+  });
