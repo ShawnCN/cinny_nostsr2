@@ -12,7 +12,7 @@ import { cryptoCallbacks } from './state/secretStorageKeys';
 import navigation from './state/navigation';
 
 import MatrixClientA from './MatrixClientA';
-import { NostrEvent, TChannelmapObject, TSubscribedChannel } from '../../types';
+import { NostrEvent, TChannelmapObject, TMyMemberships, TSubscribedChannel } from '../../types';
 import { defaultChatroomList } from './state/cons';
 import TRoom from '../../types/TRoom';
 import TRoomMember from '../../types/TRoomMember';
@@ -233,6 +233,7 @@ class InitMatrix extends EventEmitter {
   loadLocalStorageEvents = async () => {
     const latestMsgs = await localForage.getItem('latestMsgs');
     const rooms = await localForage.getItem('rooms');
+    const myMemberships = await localForage.getItem('myMemberships');
     const directs = await localForage.getItem('directs');
     const mDirects = await localForage.getItem('mdirects');
     const inviteDirects = await localForage.getItem('inviteDirects');
@@ -247,6 +248,11 @@ class InitMatrix extends EventEmitter {
     const keyValueEvents = await localForage.getItem('keyValueEvents');
     if (Array.isArray(rooms)) {
       this.roomList.rooms = new Set(rooms);
+    }
+    if (Array.isArray(myMemberships)) {
+      myMemberships.forEach((member: TMyMemberships) => {
+        initMatrix.matrixClient.myMemberships.set(member.roomId, member);
+      });
     }
     if (Array.isArray(directs)) {
       this.roomList.directs = new Set(directs);

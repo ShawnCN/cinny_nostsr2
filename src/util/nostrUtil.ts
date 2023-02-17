@@ -125,3 +125,9 @@ export const contectDetect = (c: string) => {
   }
   return { text: c, imgs: imgs };
 };
+
+export const howLong = (created_at: number) => {
+  const now = Math.floor(Date.now() / 1000);
+  const days = (now - created_at) / (3600 * 24);
+  return days;
+};

@@ -3,6 +3,7 @@ import {
   NostrEvent,
   SearchResultUser,
   Subscription,
+  TMyMemberships,
   TOptionsCreateDM,
   TRoomType,
   TSubscribedChannel,
@@ -36,6 +37,7 @@ import {
   toNostrHexAddress,
   getSubscriptionIdForName,
   attachmentsChanged,
+  howLong,
 } from '../util/nostrUtil';
 import EventEmitter from './EventEmitter';
 import cons, {
@@ -44,6 +46,7 @@ import cons, {
   log,
   DEFAULT_RELAY_URLS,
   TChannelMapList,
+  REJECT_INVITE_DAYS,
 } from './state/cons';
 import { Debounce } from '../util/common';
 import SortedLimitedEventSet from '../../types/SortedLimitedEventSet';
@@ -51,6 +54,7 @@ import {
   saveChannelMessageEvents,
   savechannelProfileEventsToLocal,
   savechannelProfileUpdateEventsToLocal,
+  saveMyMembershipsToLocal,
   saveProfileEventsToLocal,
 } from '../util/localForageUtil';
 import TEventTimelineSet from '../../types/TEventTimelineSet';
@@ -76,7 +80,7 @@ class MatrixClientA extends EventEmitter {
   channelProfileEvents: Map<string, any>;
   contactList: Set<string>;
   contactEvents: Map<string, any>; //my contacts, or someone added my to his/her contacts.
-
+  myMemberships: Map<string, TMyMemberships>;
   localStorageLoaded: boolean;
   directMessagesByUser: Map<string, SortedLimitedEventSet>;
   cMsgsByCid: Map<string, SortedLimitedEventSet>;
@@ -99,6 +103,7 @@ class MatrixClientA extends EventEmitter {
     this.channelProfileEvents = new Map<string, any>();
     this.channelProfiles = new Map<string, any>();
     this.profiles = new Map<string, any>();
+    this.myMemberships = new Map<string, any>();
     this.user.userId = userId;
     this.user.displayName = defaultName(userId, 'npub')!;
     this.user.privatekey = privkey!;
@@ -624,8 +629,26 @@ class MatrixClientA extends EventEmitter {
   }
   async leave(roomId: string) {
     const a = this.getRoom(roomId);
+    let myMembership = this.myMemberships.get(roomId);
+    if (myMembership && myMembership.membership == 'invite') {
+      // 说明是邀请的聊天室。
+      myMembership.membership = 'leave';
+      myMembership.prevMembership = 'invite';
+      myMembership.created_at = Math.floor(Date.now() / 1000);
+      this.updateMyMemberships(roomId, myMembership);
+      this.emit('Room.myMembership', a, myMembership.membership, myMembership.prevMembership);
+      return;
+    }
     const membership = 'leave';
     const prevMembership = 'join';
+    const mShip: TMyMemberships = {
+      roomId,
+      membership,
+      prevMembership,
+      created_at: Math.floor(Date.now() / 1000),
+    };
+    this.updateMyMemberships(roomId, mShip);
+
     this.emit('Room.myMembership', a, membership, prevMembership);
     console.log('leave');
   }
@@ -703,6 +726,11 @@ class MatrixClientA extends EventEmitter {
       this.publishEvent(nostrEvent);
     } else if (roomType == 'groupRelay') {
     }
+  }
+
+  updateMyMemberships(id: string, mShip: TMyMemberships) {
+    this.myMemberships.set(id, mShip);
+    saveMyMembershipsToLocal(this.myMemberships);
   }
   saveLocalStorageEvents = () =>
     debounce._(() => {
@@ -1217,18 +1245,16 @@ class MatrixClientA extends EventEmitter {
   }
   handleDirectMessage = async (event: NostrEvent) => {
     this.eventsById.set(event.id, event);
-
     const myPub = this.user.userId;
     let user = event.pubkey;
     if (event.pubkey === myPub) {
       user = event.tags.find((tag) => tag[0] === 'p')?.[1] || user;
+    } else {
+      const forMe = event.tags.some((tag) => tag[0] === 'p' && tag[1] === myPub);
+      if (!forMe) {
+        return;
+      }
     }
-    // else {
-    //   const forMe = event.tags.some((tag) => tag[0] === 'p' && tag[1] === myPub);
-    //   if (!forMe) {
-    //     return;
-    //   }
-    // }
     this.eventsById.set(event.id, event);
     if (!this.directMessagesByUser.has(user)) {
       this.directMessagesByUser.set(user, new SortedLimitedEventSet(500));
@@ -1240,13 +1266,26 @@ class MatrixClientA extends EventEmitter {
       const roomId = mevent.room_id;
       const senderId = mevent.sender;
       const room = this.publicRoomList.get(roomId);
+      const myMembership = this.myMemberships.get(roomId);
+      if (
+        myMembership &&
+        myMembership.membership == 'leave' &&
+        howLong(myMembership.created_at) < REJECT_INVITE_DAYS
+      )
+        return false;
       if (room) {
         const me = room.getMember(this.user.userId);
-        if (me?.membership == 'invite') {
+        let myMembership = this.myMemberships.get(roomId);
+        if (myMembership!.membership == 'invite') {
           const membership = 'invite';
           const prevMembership = 'invite';
+          myMembership!.prevMembership = 'invite';
+          myMembership!.created_at = Math.floor(Date.now() / 1000);
+
+          this.updateMyMemberships(roomId, myMembership!);
+
           this.emit('Room.myMembership', room, membership, prevMembership);
-        } else if (me?.membership == 'join') {
+        } else if (myMembership?.membership == 'join') {
           const sender = room.getMember(senderId);
           if (sender) {
             mc.sender = sender;
@@ -1260,7 +1299,7 @@ class MatrixClientA extends EventEmitter {
         }
         // console.log(mc);
       } else {
-        const room = new TRoom(senderId, 'single');
+        const room = new TRoom(roomId, 'single');
         room.init();
         const asender = new TRoomMember(senderId);
         asender.init();
@@ -1270,6 +1309,14 @@ class MatrixClientA extends EventEmitter {
         me.membership = 'invite';
         room.addMember(me);
         this.publicRoomList.set(senderId, room);
+        const myRoomIdnMembership = {
+          roomId: senderId,
+          membership: 'invite' as const,
+          prevMembership: null,
+          created_at: Math.floor(Date.now() / 1000),
+        };
+        this.updateMyMemberships(senderId, myRoomIdnMembership);
+
         const membership = 'invite';
         const prevMembership = null;
         this.emit('Room.myMembership', room, membership, prevMembership);

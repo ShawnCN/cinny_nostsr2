@@ -139,7 +139,7 @@ async function join(roomIdOrAlias: string, isDM = false, via = undefined) {
  * @param {string} roomId
  * @param {boolean} isDM
  */
-async function leave(roomId) {
+async function leave(roomId: string) {
   const mx = initMatrix.matrixClient;
   const isDM = initMatrix.roomList.directs.has(roomId);
   try {

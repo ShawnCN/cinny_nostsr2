@@ -373,3 +373,5 @@ export const aevent4 = {
 export const log = console.log.bind(console);
 
 export default cons;
+
+export const REJECT_INVITE_DAYS = 180;

@@ -94,3 +94,10 @@ export type TOptionsCreateDM = {
   name?: string;
   topic?: string;
 };
+
+export type TMyMemberships = {
+  roomId: string;
+  membership: 'invite' | 'join' | 'leave' | 'kick' | 'ban' | 'unban';
+  prevMembership: null | 'invite' | 'join' | 'leave' | 'kick' | 'ban' | 'unban';
+  created_at: number;
+};

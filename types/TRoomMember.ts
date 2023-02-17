@@ -12,6 +12,7 @@ class TRoomMember {
   peopleRole: string;
   powerLevel: number;
   membership: string; //'join'|'leave'|'ban'|'invite'
+  prevMembership: string;
   events: TEvent[];
   constructor(id: string, name?: string, avatarSrc?: string) {
     this.userId = id;

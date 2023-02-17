@@ -1,5 +1,5 @@
 import localForage from 'localforage';
-import { NostrEvent } from '../../types';
+import { NostrEvent, TMyRoomIdnMemberships } from '../../types';
 import SortedLimitedEventSet from '../../types/SortedLimitedEventSet';
 import { Debounce } from './common';
 const debounce = new Debounce();
@@ -30,6 +30,11 @@ export const savechannelProfileUpdateEventsToLocal = (
 export const saveProfileEventsToLocal = (profileEvents: Map<string, NostrEvent>) => {
   const c = Array.from(profileEvents.values());
   localForage.setItem('profileEvents', c);
+};
+
+export const saveMyMembershipsToLocal = (m: Map<string, TMyRoomIdnMemberships>) => {
+  const c = Array.from(m.values());
+  localForage.setItem('myMemberships', c);
 };
 
 export const saveChannelMessageEvents = (
