@@ -160,8 +160,9 @@ function InviteUser({
     updateIsSearching(false);
   }
 
-  async function createDM(userId, user: SearchResultUser) {
-    userId = toNostrHexAddress(userId);
+  async function createDM(userId: string, user: SearchResultUser) {
+    userId = toNostrHexAddress(userId)!;
+    user.user_id = userId;
     if (mx.getUserId() === userId) return;
     const dmRoomId = hasDMWith(userId);
     if (dmRoomId) {

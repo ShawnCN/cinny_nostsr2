@@ -25,6 +25,7 @@ class TRoomMember {
       this.name = defaultName(id, 'npub')!;
     }
     if (avatarSrc) this.avatarSrc = avatarSrc;
+    this.powerLevel = 100;
   }
 
   async init() {

@@ -105,7 +105,6 @@ function convertToRoom(roomId) {
  * @param {string[]} via
  */
 async function join(roomIdOrAlias: string, isDM = false, via = undefined) {
-  console.log(roomIdOrAlias, isDM, via);
   const mx = initMatrix.matrixClient;
   const roomIdParts = roomIdOrAlias.split(':');
   // const viaServers = via || [roomIdParts[1]];
@@ -121,7 +120,7 @@ async function join(roomIdOrAlias: string, isDM = false, via = undefined) {
       const targetUserId = resultRoom!.roomId;
       // 自定义
       // await addRoomToMDirect(resultRoom!.roomId, targetUserId);
-      // await initMatrix.matrixClient.addUserToContact(roomIdOrAlias);
+      await initMatrix.matrixClient.addUserToContact(roomIdOrAlias);
     }
     appDispatcher.dispatch({
       type: cons.actions.room.JOIN,

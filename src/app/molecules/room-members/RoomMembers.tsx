@@ -31,7 +31,7 @@ function normalizeMembers(members) {
   }));
 }
 
-function useMemberOfMembership(roomId, membership) {
+function useMemberOfMembership(roomId: string, membership) {
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
   const [members, setMembers] = useState([]);

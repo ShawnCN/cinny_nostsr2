@@ -596,6 +596,13 @@ class MatrixClientA extends EventEmitter {
     this.publicRoomList.set(roomId, a!);
     const membership = 'join';
     const prevMembership = 'invite';
+    const myMembership: TMyMemberships = {
+      roomId: roomId,
+      membership,
+      prevMembership,
+      created_at: Math.floor(Date.now() / 1000),
+    };
+    this.updateMyMemberships(roomId, myMembership);
     this.emit('Room.myMembership', a, membership, prevMembership);
     return Promise.resolve(a);
   }
@@ -676,6 +683,14 @@ class MatrixClientA extends EventEmitter {
       a.founderId = this.user.userId;
       const m1 = new TRoomMember(options.invite[0], a.name, a.avatarUrl);
       const m2 = new TRoomMember(this.user.userId, this.user.displayName, this.user.avatarUrl);
+      const myMembership: TMyMemberships = {
+        roomId: userId,
+        membership: 'join',
+        prevMembership: null,
+        created_at: Math.floor(Date.now() / 1000),
+      };
+      this.updateMyMemberships(userId, myMembership);
+      // this.myMemberships.set(userId);
       a.addMember(m1);
       a.addMember(m2);
       this.publicRoomList.set(a.roomId, a);
@@ -728,8 +743,8 @@ class MatrixClientA extends EventEmitter {
     }
   }
 
-  updateMyMemberships(id: string, mShip: TMyMemberships) {
-    this.myMemberships.set(id, mShip);
+  updateMyMemberships(roomId: string, mShip: TMyMemberships) {
+    this.myMemberships.set(roomId, mShip);
     saveMyMembershipsToLocal(this.myMemberships);
   }
   saveLocalStorageEvents = () =>
@@ -893,7 +908,7 @@ class MatrixClientA extends EventEmitter {
       const filters: Filter[] = [
         {
           ids: channels,
-          kinds: [40],
+          kinds: [40, 41],
         },
       ];
       this.sendSubToRelays(filters, 'subscribedChannels', true);
@@ -1013,6 +1028,7 @@ class MatrixClientA extends EventEmitter {
 
   resubscribe(relay: Relay) {
     for (const [name, filters] of this.subscribedFiltersByName.entries()) {
+      console.log(name, filters);
       const id = getSubscriptionIdForName(name);
       const sub = relay.sub(filters, { id });
       if (!this.subscriptionsByName.has(name)) {
@@ -1276,6 +1292,14 @@ class MatrixClientA extends EventEmitter {
       if (room) {
         const me = room.getMember(this.user.userId);
         let myMembership = this.myMemberships.get(roomId);
+        if (!myMembership) {
+          const myRoomIdnMembership = {
+            roomId: senderId,
+            membership: 'invite' as const,
+            prevMembership: null,
+            created_at: Math.floor(Date.now() / 1000),
+          };
+        }
         if (myMembership!.membership == 'invite') {
           const membership = 'invite';
           const prevMembership = 'invite';
