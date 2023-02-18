@@ -141,7 +141,6 @@ export function openViewSource(event) {
 }
 
 export function replyTo(userId: string, eventId: string, body, formattedBody) {
-  console.log('qqqqqqqqqqqqqq', body, formattedBody);
   appDispatcher.dispatch({
     type: cons.actions.navigation.CLICK_REPLY_TO,
     userId,

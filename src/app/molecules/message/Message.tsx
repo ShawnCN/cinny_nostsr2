@@ -601,15 +601,18 @@ function isMedia(mE: TEvent) {
 }
 
 // if editedTimeline has mEventId then pass editedMEvent else pass mEvent to openViewSource
-function handleOpenViewSource(mEvent, roomTimeline) {
+function handleOpenViewSource(mEvent: TEvent, roomTimeline: RoomTimeline) {
   const eventId = mEvent.getId();
+  // 自定义
+  const nostrEvent = initMatrix.matrixClient.eventsById.get(eventId);
   const { editedTimeline } = roomTimeline ?? {};
   let editedMEvent;
   if (editedTimeline?.has(eventId)) {
     const editedList = editedTimeline.get(eventId);
     editedMEvent = editedList[editedList.length - 1];
   }
-  openViewSource(editedMEvent !== undefined ? editedMEvent : mEvent);
+  // openViewSource(editedMEvent !== undefined ? editedMEvent : mEvent);
+  openViewSource(editedMEvent !== undefined ? editedMEvent : nostrEvent);
 }
 interface IPropsMessageOptions {
   roomTimeline: RoomTimeline;

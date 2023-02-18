@@ -580,7 +580,9 @@ function RoomViewContent({
     let unreadDivider = false;
 
     if (roomTimeline.canPaginateBackward() || limit.from > 0) {
-      tl.push(loadingMsgPlaceholders(1, PLACEHOLDER_COUNT));
+      // tl.push(loadingMsgPlaceholders(1, PLACEHOLDER_COUNT));
+      // 自定义
+      tl.push(<div style={{ marginTop: '100px' }}></div>);
       itemCountIndex += PLACEHOLDER_COUNT;
     }
     for (let i = limit.from; i < limit.length; i += 1) {

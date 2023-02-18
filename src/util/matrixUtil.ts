@@ -356,13 +356,14 @@ export const formatDmMsgFromOthersOrMe = async (event: NostrEvent, user: TUser, 
   const dContent = contectDetect(content);
   const msgs = convertToMatrixContent(dContent, event, parent);
   const citedEvtId = getEventReplyingTo(event);
-  let eventList: TEvent[] = [];
-  msgs.forEach((m) => {
-    const mc = new TEvent(m);
-    if (citedEvtId) mc.replyEventId = citedEvtId;
-    eventList.push(mc);
-  });
-  return eventList;
+  // let eventList: TEvent[] = [];
+  // msgs.forEach((m) => {
+  //   const mc = new TEvent(m);
+  //   if (citedEvtId) mc.replyEventId = citedEvtId;
+  //   eventList.push(mc);
+  // });
+
+  return msgs;
   //If the current message is already in the message cache, return, otherwise add to the number of unread messages
   // let citedMsg = {} as TCitedMsg | null;
   // if (replyingTo != '') {

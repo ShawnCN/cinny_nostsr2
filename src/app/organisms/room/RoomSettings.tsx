@@ -71,16 +71,16 @@ const tabItems = [
     text: tabText.EMOJIS,
     disabled: false,
   },
-  {
-    iconSrc: ShieldUserIC,
-    text: tabText.PERMISSIONS,
-    disabled: false,
-  },
-  {
-    iconSrc: LockIC,
-    text: tabText.SECURITY,
-    disabled: false,
-  },
+  // {
+  //   iconSrc: ShieldUserIC,
+  //   text: tabText.PERMISSIONS,
+  //   disabled: false,
+  // },
+  // {
+  //   iconSrc: LockIC,
+  //   text: tabText.SECURITY,
+  //   disabled: false,
+  // },
 ];
 
 function GeneralSettings({ roomId }) {

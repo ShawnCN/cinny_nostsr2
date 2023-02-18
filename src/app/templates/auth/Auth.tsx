@@ -23,7 +23,7 @@ import ContextMenu, { MenuItem, MenuHeader } from '../../atoms/context-menu/Cont
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 import EyeIC from '../../../../public/res/ic/outlined/eye.svg';
 import EyeBlindIC from '../../../../public/res/ic/outlined/eye-blind.svg';
-import CinnySvg from '../../../../public/res/svg/cinny.svg';
+import CinnySvg from '../../../../public/res/svg/noteon.svg';
 import SSOButtons from '../../molecules/sso-buttons/SSOButtons';
 import { generatePrivateKey, getPublicKey, nip19 } from 'nostr-tools';
 import { defaultName, toNostrBech32Address } from '../../../util/nostrUtil';
@@ -382,7 +382,7 @@ function Login({ loginFlow, baseUrl }: IPropsLogin) {
                 )}
                 <div className="auth-form__btns">
                   <Button variant="primary" type="submit" disabled={isSubmitting}>
-                    Login
+                    Login With Extension
                   </Button>
                 </div>
               </form>
@@ -804,7 +804,8 @@ Register.propTypes = {
 };
 
 function AuthCard() {
-  const [hsConfig, setHsConfig] = useState(null);
+  let flows = { flows: [{ type: 'm.login.password' }] };
+  const [hsConfig, setHsConfig] = useState({ login: flows, baseUrl: 'noteon.io', register: {} });
   const [type, setType] = useState('login');
 
   const handleHsChange = (info) => {
@@ -815,7 +816,7 @@ function AuthCard() {
 
   return (
     <>
-      <Homeserver onChange={handleHsChange} />
+      {/* <Homeserver onChange={handleHsChange} /> */}
       {hsConfig !== null &&
         (type === 'login' ? (
           <Login loginFlow={hsConfig.login.flows} baseUrl={hsConfig.baseUrl} />
@@ -874,11 +875,12 @@ function Auth() {
           {!loginToken && (
             <div className="auth-card">
               <Header>
-                <Avatar size="extra-small" imageSrc={CinnySvg} />
+                <Avatar size="extra-small" imageSrc="./public/noteon.jpg" type="single" />
                 <TitleWrapper>
                   <Text variant="h2" weight="medium">
-                    Noteon
+                    Noteon |
                   </Text>
+                  <div className="slogan">Yet another nostr client</div>
                 </TitleWrapper>
               </Header>
               <div className="auth-card__content">
@@ -889,11 +891,11 @@ function Auth() {
         </div>
 
         <div className="auth-footer">
-          <Text variant="b2">
+          {/* <Text variant="b2">
             <a href="https://cinny.in" target="_blank" rel="noreferrer">
               About
             </a>
-          </Text>
+          </Text> */}
           <Text variant="b2">
             <a
               href="https://github.com/ajbura/cinny/releases"
@@ -901,14 +903,14 @@ function Auth() {
               rel="noreferrer"
             >{`v${cons.version}`}</a>
           </Text>
-          <Text variant="b2">
+          {/* <Text variant="b2">
             <a href="https://twitter.com/cinnyapp" target="_blank" rel="noreferrer">
               Twitter
             </a>
-          </Text>
+          </Text> */}
           <Text variant="b2">
-            <a href="https://matrix.org" target="_blank" rel="noreferrer">
-              Powered by Matrix
+            <a href="https://github.com/nostr-protocol/nostr" target="_blank" rel="noreferrer">
+              Powered by Nostr
             </a>
           </Text>
         </div>

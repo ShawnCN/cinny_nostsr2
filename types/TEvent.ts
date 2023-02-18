@@ -58,7 +58,7 @@ class TEvent {
 
 export type TEventFormat = {
   content: TContent;
-  type: 'm.room.message' | 'm.sticker' | 'm.room.member';
+  type: 'm.room.message' | 'm.sticker' | 'm.room.member' | 'm.room.create';
   shortcut?: string[];
   shortcode?: string;
   state_key?: string;
