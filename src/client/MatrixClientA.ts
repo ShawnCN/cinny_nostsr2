@@ -550,11 +550,13 @@ class MatrixClientA extends EventEmitter {
     let eventIds: string[] = [];
     if (room.type == 'single') {
       eventIds = this.directMessagesByUser.get(room.roomId)!.eventIds;
-      for (let [k, v] of this.eventsById) {
+      for (let [k, event] of this.eventsById) {
         if (eventIds.includes(k)) {
-          const mevents = await formatDmMsgFromOthersOrMe(v, this.user, room.roomId);
+          const mevents = await formatDmMsgFromOthersOrMe(event, this.user, room.roomId);
+          const citedEvtId = getEventReplyingTo(event);
           mevents.forEach((m) => {
             const mc = new TEvent(m);
+            if (citedEvtId) mc.replyEventId = citedEvtId;
             tl.push(mc);
           });
         }
