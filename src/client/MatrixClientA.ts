@@ -1,4 +1,4 @@
-import { Event, Filter, getEventHash, nip19, Relay, relayInit, Sub } from 'nostr-tools';
+import { Event, Filter, nip19, Relay, relayInit, Sub } from 'nostr-tools';
 import {
   NostrEvent,
   SearchResultUser,
@@ -6,7 +6,6 @@ import {
   TMyMemberships,
   TOptionsCreateDM,
   TRoomType,
-  TSubscribedChannel,
 } from '../../types';
 import TDevice from '../../types/TDevice';
 import TEvent, { TContent, TEventFormat } from '../../types/TEvent';
@@ -32,24 +31,14 @@ import {
 } from '../util/matrixUtil';
 import {
   defaultName,
-  toNostrBech32Address,
   toNostrHexAddress,
   getSubscriptionIdForName,
   attachmentsChanged,
   howLong,
   sortedChats,
-  getEventReplyingTo,
-  getChannelEventReplyingTo,
 } from '../util/nostrUtil';
 import EventEmitter from './EventEmitter';
-import cons, {
-  aevent2,
-  defaultChatroomList,
-  log,
-  DEFAULT_RELAY_URLS,
-  TChannelMapList,
-  REJECT_INVITE_DAYS,
-} from './state/cons';
+import cons, { aevent2, DEFAULT_RELAY_URLS, REJECT_INVITE_DAYS } from './state/cons';
 import { Debounce } from '../util/common';
 import SortedLimitedEventSet from '../../types/SortedLimitedEventSet';
 import {
@@ -553,12 +542,6 @@ class MatrixClientA extends EventEmitter {
       for (let [id, event] of this.eventsById) {
         if (eventIds.includes(id)) {
           const mevents = await formatDmMsgFromOthersOrMe(event, this.user, room.roomId);
-          // const citedEvtId = getEventReplyingTo(event);
-          // mevents.forEach((m) => {
-          //   const mc = new TEvent(m);
-          //   if (citedEvtId) mc.replyEventId = citedEvtId;
-          //   tl.push(mc);
-          // });
           tl = tl.concat(mevents);
         }
       }
@@ -735,20 +718,15 @@ class MatrixClientA extends EventEmitter {
       if (msgType == 'm.image') {
         c = content.url!;
       }
-      console.log('4444444444444444');
-      // c = 'tttttttttttttttttttttt';
       const nostrEvent = await formatDMEvent(c, roomId, this.user, citedEvtId);
       this.handleEvent(nostrEvent);
-      // this.publishEvent(nostrEvent);
     } else if (roomType === 'groupChannel') {
       let c = content.body;
       if (msgType == 'm.image') {
         c = content.url!;
       }
-      // c = 'tttttttttttttttttttttt';
       const nostrEvent = await formatChannelEvent(c, roomId, this.user, citedEvtId);
       this.handleEvent(nostrEvent);
-      // this.publishEvent(nostrEvent);
     } else if (roomType == 'groupRelay') {
     }
   }
@@ -1302,10 +1280,7 @@ class MatrixClientA extends EventEmitter {
     }
     this.directMessagesByUser.get(dmRoomId)?.add(event);
     const mevents = await formatDmMsgFromOthersOrMe(event, this.user, dmRoomId);
-    // const citedEvtId = getEventReplyingTo(event);
     mevents.forEach((mevent) => {
-      // const mc = new TEvent(mevent);
-      // if (citedEvtId) mc.replyEventId = citedEvtId;
       const roomId = mevent.event.room_id;
       const senderId = mevent.event.sender;
       const room = this.publicRoomList.get(roomId);
@@ -1375,65 +1350,6 @@ class MatrixClientA extends EventEmitter {
     });
     this.saveLocalStorageEvents();
   };
-  // handleDirectMessage = async (event: NostrEvent) => {
-  //   const myPub = this.user.userId;
-  //   let user = event.pubkey;
-  //   if (event.pubkey === myPub) {
-  //     user = event.tags.find((tag) => tag[0] === 'p')?.[1] || user;
-  //   } else {
-  //     const forMe = event.tags.some((tag) => tag[0] === 'p' && tag[1] === myPub);
-  //     if (!forMe) {
-  //       return;
-  //     }
-  //   }
-  //   this.eventsById.set(event.id, event);
-  //   if (!this.directMessagesByUser.has(user)) {
-  //     this.directMessagesByUser.set(user, new SortedLimitedEventSet(500));
-  //   }
-  //   this.directMessagesByUser.get(user)?.add(event);
-  //   this.emit('handleDirectMessage', event);
-  //   // const mevent = await formatDmMsgFromOthersOrMe(event, this.user);
-  //   // const mc = new TEvent(mevent);
-  //   // const roomId = mevent.room_id;
-  //   // const senderId = mevent.sender;
-  //   // const room = this.publicRoomList.get(roomId);
-  //   // if (!room) {
-  //   //   const room = new TRoom(senderId, 'single');
-  //   //   room.init();
-  //   //   const asender = new TRoomMember(senderId);
-  //   //   asender.init();
-  //   //   room.addMember(asender);
-  //   //   mc.sender = asender;
-  //   //   const me = new TRoomMember(this.user.userId, this.user.displayName, this.user.avatarUrl);
-  //   //   me.membership = 'invite';
-  //   //   room.addMember(me);
-  //   //   this.publicRoomList.set(senderId, room);
-  //   //   const membership = 'invite';
-  //   //   const prevMembership = null;
-  //   //   this.emit('Room.myMembership', room, membership, prevMembership);
-  //   //   return;
-  //   // }
-
-  //   // const me = room.getMember(this.user.userId);
-  //   // if (me?.membership == 'invite') {
-  //   //   const membership = 'invite';
-  //   //   const prevMembership = 'invite';
-  //   //   this.emit('Room.myMembership', room, membership, prevMembership);
-  //   // } else if (me?.membership == 'join') {
-  //   //   const sender = room.getMember(senderId);
-  //   //   if (sender) {
-  //   //     mc.sender = sender;
-  //   //   } else {
-  //   //     const asender = new TRoomMember(senderId);
-  //   //     asender.init();
-  //   //     room.addMember(asender);
-  //   //     mc.sender = asender;
-  //   //   }
-  //   //   this.emit('Event.decrypted', mc);
-  //   // }
-  //   console.log('555555555555');
-  //   this.saveLocalStorageEvents();
-  // };
   handleMetaEvent(event: NostrEvent) {
     try {
       const existing = this.profiles.get(event.pubkey);
