@@ -36,6 +36,7 @@ import {
   attachmentsChanged,
   howLong,
   sortedChats,
+  findDMroomId,
 } from '../util/nostrUtil';
 import EventEmitter from './EventEmitter';
 import cons, { aevent2, DEFAULT_RELAY_URLS, REJECT_INVITE_DAYS } from './state/cons';
@@ -728,6 +729,7 @@ class MatrixClientA extends EventEmitter {
       }
       const nostrEvent = await formatDMEvent(c, roomId, this.user, citedEvtId);
       this.handleEvent(nostrEvent);
+      this.publishEvent(nostrEvent);
     } else if (roomType === 'groupChannel') {
       let c = content.body;
       if (msgType == 'm.image') {
@@ -735,6 +737,7 @@ class MatrixClientA extends EventEmitter {
       }
       const nostrEvent = await formatChannelEvent(c, roomId, this.user, citedEvtId);
       this.handleEvent(nostrEvent);
+      this.publishEvent(nostrEvent);
     } else if (roomType == 'groupRelay') {
     }
   }
@@ -1268,20 +1271,22 @@ class MatrixClientA extends EventEmitter {
     this.emit('Event.decrypted', mc);
   }
   handleDirectMessage = async (event: NostrEvent) => {
-    this.eventsById.set(event.id, event);
+    this.eventsById.set(event.id!, event);
     const myPub = this.user.userId;
-    let dmRoomId = event.pubkey;
-    if (event.pubkey === myPub) {
-      const ptagUser = event.tags.find((tag) => tag[0] === 'p')?.[1];
-      if (!ptagUser) return;
-      dmRoomId = ptagUser;
-      // user = event.tags.find((tag) => tag[0] === 'p')?.[1] || user;
-    } else {
-      const forMe = event.tags.some((tag) => tag[0] === 'p' && tag[1] === myPub);
-      if (!forMe) {
-        return;
-      }
-    }
+    const dmRoomId = findDMroomId(event, myPub);
+    if (!dmRoomId) return;
+    // let dmRoomId = event.pubkey;
+    // if (event.pubkey === myPub) {
+    //   const ptagUser = event.tags.find((tag) => tag[0] === 'p')?.[1];
+    //   if (!ptagUser) return;
+    //   dmRoomId = ptagUser;
+    //   // user = event.tags.find((tag) => tag[0] === 'p')?.[1] || user;
+    // } else {
+    //   const forMe = event.tags.some((tag) => tag[0] === 'p' && tag[1] === myPub);
+    //   if (!forMe) {
+    //     return;
+    //   }
+    // }
     this.eventsById.set(event.id, event);
     if (!this.directMessagesByUser.has(dmRoomId)) {
       this.directMessagesByUser.set(dmRoomId, new SortedLimitedEventSet(500));

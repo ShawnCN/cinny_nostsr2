@@ -132,7 +132,6 @@ function InviteUser({
     updateIsSearching(false);
   }
   async function searchNostrUser(username: string) {
-    console.log(username);
     const inputUsername = username.trim();
     if (isSearching || inputUsername === '' || inputUsername === searchQuery.username) return;
     // const isInputUserId = inputUsername[0] === '@' && inputUsername.indexOf(':') > 1;
@@ -376,7 +375,7 @@ function RenderUserTile({ user, renderOptions, renderError }: IPropsRenderUserTi
             user.avatarUrl
           : null
       }
-      name={name}
+      name={name ?? defaultName(userId, 'npub')}
       id={userId}
       options={renderOptions(userId, user)}
       desc={renderError(userId)}

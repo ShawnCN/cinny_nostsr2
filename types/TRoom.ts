@@ -1,4 +1,4 @@
-import { TRoomType } from '.';
+import { TMemberShip, TRoomType } from '.';
 import initMatrix from '../src/client/InitMatrix';
 import RoomTimeline from '../src/client/state/RoomTimeline';
 import { toNostrBech32Address } from '../src/util/nostrUtil';
@@ -125,8 +125,10 @@ class TRoom {
   getDMInviter() {
     return null;
   }
-  getMyMembership(): 'join' | 'invite' {
-    return 'join';
+  getMyMembership(): TMemberShip | null {
+    const mShip = initMatrix.matrixClient.myMemberships.get(this.roomId);
+    if (mShip && mShip.membership) return mShip.membership;
+    return null;
   }
   isSpaceRoom() {
     return false;

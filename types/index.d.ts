@@ -47,13 +47,13 @@ export type TChannelmap = {
 };
 
 export type NostrEvent = {
-  id?: string;
+  id: string;
   pubkey: string;
   created_at: number;
   kind: number;
   tags: Array<Array<string>>;
   content: string;
-  sig?: string;
+  sig: string;
 };
 
 export type TSpaceContent = {};
@@ -101,3 +101,4 @@ export type TMyMemberships = {
   prevMembership: null | 'invite' | 'join' | 'leave' | 'kick' | 'ban' | 'unban';
   created_at: number;
 };
+export type TMemberShip = 'invite' | 'join' | 'leave' | 'kick' | 'ban' | 'unban';

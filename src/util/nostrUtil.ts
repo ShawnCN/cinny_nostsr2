@@ -24,6 +24,7 @@ export const toNostrBech32Address = (address: string, prefix: string) => {
   return null;
 };
 export const toNostrHexAddress = (str: string): string | null => {
+  str = str.trim();
   if (str.match(/^[0-9a-fA-F]{64}$/)) {
     return str;
   }
@@ -173,4 +174,20 @@ export const getChannelEventReplyingTo = (event: NostrEvent, channelId: string) 
     return replyTags[1][1];
   }
   return undefined;
+};
+
+export const findDMroomId = (event: NostrEvent, myPub: string) => {
+  let dmRoomId = event.pubkey;
+  if (event.pubkey === myPub) {
+    const ptagUser = event.tags.find((tag) => tag[0] === 'p')?.[1];
+    if (!ptagUser) return;
+    dmRoomId = ptagUser;
+    // user = event.tags.find((tag) => tag[0] === 'p')?.[1] || user;
+  } else {
+    const forMe = event.tags.some((tag) => tag[0] === 'p' && tag[1] === myPub);
+    if (!forMe) {
+      return;
+    }
+  }
+  return dmRoomId;
 };

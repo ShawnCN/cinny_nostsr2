@@ -382,7 +382,6 @@ class RoomList extends EventEmitter {
         }
 
         if (prevMembership === 'invite') {
-          console.log('prevMembership,3344444444444444444444444');
           if (this.inviteDirects.has(roomId)) this.inviteDirects.delete(roomId);
           else if (this.inviteSpaces.has(roomId)) this.inviteSpaces.delete(roomId);
           else this.inviteRooms.delete(roomId);
