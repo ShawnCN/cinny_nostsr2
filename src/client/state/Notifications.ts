@@ -15,8 +15,7 @@ import TRoom from '../../../types/TRoom';
 import MatrixClientA from '../MatrixClientA';
 import RoomList from './RoomList';
 import TEvent from '../../../types/TEvent';
-
-type TNoti = { total: number; highlight: number; from: string };
+import { TNoti } from '../../../types';
 
 function isNotifEvent(mEvent: TEvent) {
   // 自定义
@@ -44,12 +43,12 @@ class Notifications extends EventEmitter {
   favicon: string;
   matrixClient: MatrixClientA;
   roomList: RoomList;
-  roomIdToNoti: Map<any, any>;
-  roomIdToPopupNotis: Map<any, any>;
-  eventIdToPopupNoti: Map<any, any>;
+  roomIdToNoti: Map<string, TNoti>;
+  roomIdToPopupNotis: Map<string, any>;
+  eventIdToPopupNoti: Map<string, any>;
   _notiAudio: any;
   _inviteAudio: any;
-  constructor(roomList) {
+  constructor(roomList: RoomList) {
     super();
 
     this.initialized = false;
@@ -89,6 +88,9 @@ class Notifications extends EventEmitter {
   }
 
   doesRoomHaveUnread(room: TRoom) {
+    // 自定义
+    return false;
+
     if (!room) return false;
     const userId = this.matrixClient.getUserId();
     const readUpToId = room.getEventReadUpTo(userId);
@@ -309,12 +311,12 @@ class Notifications extends EventEmitter {
     }
   }
 
-  _deletePopupNoti(eventId) {
+  _deletePopupNoti(eventId: string) {
     this.eventIdToPopupNoti.get(eventId)?.close();
     this.eventIdToPopupNoti.delete(eventId);
   }
 
-  _deletePopupRoomNotis(roomId) {
+  _deletePopupRoomNotis(roomId: string) {
     this.roomIdToPopupNotis.get(roomId)?.forEach((n) => {
       this.eventIdToPopupNoti.delete(n.tag);
       n.close();

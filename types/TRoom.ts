@@ -1,4 +1,4 @@
-import { TMemberShip, TRoomType } from '.';
+import { TMemberShip, TRoomType, TTotalHighlight } from '.';
 import initMatrix from '../src/client/InitMatrix';
 import RoomTimeline from '../src/client/state/RoomTimeline';
 import { toNostrBech32Address } from '../src/util/nostrUtil';
@@ -110,7 +110,7 @@ class TRoom {
     const user = new TRoomMember('1');
     return [user];
   }
-  getUnreadNotificationCount(arg0: string) {
+  getUnreadNotificationCount(arg0: TTotalHighlight) {
     // total, highlight
     return 0;
   }

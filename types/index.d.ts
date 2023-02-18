@@ -102,3 +102,6 @@ export type TMyMemberships = {
   created_at: number;
 };
 export type TMemberShip = 'invite' | 'join' | 'leave' | 'kick' | 'ban' | 'unban';
+
+export type TTotalHighlight = 'total' | 'highlight';
+export type TNoti = { total: number; highlight: number; from: string };

@@ -12,7 +12,12 @@ import RoomsCategory from './RoomsCategory';
 import { useCategorizedSpaces } from '../../hooks/useCategorizedSpaces';
 
 const drawerPostie = new Postie();
-function Home({ spaceId }) {
+
+interface IPropsHome {
+  spaceId?: string;
+}
+
+function Home({ spaceId = null as unknown as string }: IPropsHome) {
   const mx = initMatrix.matrixClient;
   const { roomList, notifications, accountData } = initMatrix;
   const { spaces, rooms, directs } = roomList;
@@ -40,7 +45,7 @@ function Home({ spaceId }) {
   }
 
   useEffect(() => {
-    const selectorChanged = (selectedRoomId, prevSelectedRoomId) => {
+    const selectorChanged = (selectedRoomId: string, prevSelectedRoomId: string) => {
       if (!drawerPostie.hasTopic('selector-change')) return;
       const addresses = [] as string[];
       if (drawerPostie.hasSubscriber('selector-change', selectedRoomId))
@@ -51,7 +56,7 @@ function Home({ spaceId }) {
       drawerPostie.post('selector-change', addresses, selectedRoomId);
     };
 
-    const notiChanged = (roomId, total, prevTotal) => {
+    const notiChanged = (roomId: string, total: number, prevTotal: number) => {
       if (total === prevTotal) return;
       if (drawerPostie.hasTopicAndSubscriber('unread-change', roomId)) {
         drawerPostie.post('unread-change', roomId);
@@ -117,11 +122,11 @@ function Home({ spaceId }) {
     </>
   );
 }
-Home.defaultProps = {
-  spaceId: null,
-};
-Home.propTypes = {
-  spaceId: PropTypes.string,
-};
+// Home.defaultProps = {
+//   spaceId: null,
+// };
+// Home.propTypes = {
+//   spaceId: PropTypes.string,
+// };
 
 export default Home;
