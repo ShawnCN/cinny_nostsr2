@@ -550,15 +550,16 @@ class MatrixClientA extends EventEmitter {
     let eventIds: string[] = [];
     if (room.type == 'single') {
       eventIds = this.directMessagesByUser.get(room.roomId)!.eventIds;
-      for (let [k, event] of this.eventsById) {
-        if (eventIds.includes(k)) {
+      for (let [id, event] of this.eventsById) {
+        if (eventIds.includes(id)) {
           const mevents = await formatDmMsgFromOthersOrMe(event, this.user, room.roomId);
-          const citedEvtId = getEventReplyingTo(event);
-          mevents.forEach((m) => {
-            const mc = new TEvent(m);
-            if (citedEvtId) mc.replyEventId = citedEvtId;
-            tl.push(mc);
-          });
+          // const citedEvtId = getEventReplyingTo(event);
+          // mevents.forEach((m) => {
+          //   const mc = new TEvent(m);
+          //   if (citedEvtId) mc.replyEventId = citedEvtId;
+          //   tl.push(mc);
+          // });
+          tl = tl.concat(mevents);
         }
       }
       return sortedChats(tl);
@@ -568,26 +569,18 @@ class MatrixClientA extends EventEmitter {
       for (let [k, v] of this.eventsById) {
         if (eventIds.includes(k)) {
           const mevents = formatChannelMsg(v);
-          mevents.forEach((m) => {
-            const mc = new TEvent(m);
-            tl.push(mc);
-          });
+          tl = tl.concat(mevents);
         }
       }
       return sortedChats(tl);
     }
-
-    // console.log(`paginateEventTimeline`);
-    // console.log(timelineToPaginate);
-    // console.log(backwards, limit);
   }
   getEventTimeline(timelineSet: Set<TEvent>, eventId: string) {
     const event = this.eventsById.get(eventId);
     if (!event) return Promise.resolve(Array.from(timelineSet));
     const mevents = formatChannelMsg(event);
     mevents.forEach((m) => {
-      const mc = new TEvent(m);
-      timelineSet.add(mc);
+      timelineSet.add(m);
     });
 
     const a = Array.from(timelineSet);
@@ -1251,13 +1244,8 @@ class MatrixClientA extends EventEmitter {
     }
   }
   handleChannelMessageEvent(event: NostrEvent) {
-    console.log('5555555555555555');
-    const mevents: TEventFormat[] = formatChannelMsg(event);
-    const citedEvtId = getChannelEventReplyingTo(event, mevents[0].room_id);
-    // const citedEvtId = '90a3d9b8376ddcfde653ed8f06f03794a111afac4b317fb0f352a3cf9ab2a434';
-    mevents.forEach((m) => {
-      const mc = new TEvent(m);
-      if (citedEvtId) mc.replyEventId = citedEvtId;
+    const mevents = formatChannelMsg(event);
+    mevents.forEach((mc) => {
       this.emit('Event.decrypted', mc);
     });
 
@@ -1314,12 +1302,12 @@ class MatrixClientA extends EventEmitter {
     }
     this.directMessagesByUser.get(dmRoomId)?.add(event);
     const mevents = await formatDmMsgFromOthersOrMe(event, this.user, dmRoomId);
-    const citedEvtId = getEventReplyingTo(event);
+    // const citedEvtId = getEventReplyingTo(event);
     mevents.forEach((mevent) => {
-      const mc = new TEvent(mevent);
-      if (citedEvtId) mc.replyEventId = citedEvtId;
-      const roomId = mevent.room_id;
-      const senderId = mevent.sender;
+      // const mc = new TEvent(mevent);
+      // if (citedEvtId) mc.replyEventId = citedEvtId;
+      const roomId = mevent.event.room_id;
+      const senderId = mevent.event.sender;
       const room = this.publicRoomList.get(roomId);
       const myMembership = this.myMemberships.get(roomId);
       if (
@@ -1351,14 +1339,14 @@ class MatrixClientA extends EventEmitter {
         } else if (myMembership?.membership == 'join') {
           const sender = room.getMember(senderId);
           if (sender) {
-            mc.sender = sender;
+            mevent.sender = sender;
           } else {
             const asender = new TRoomMember(senderId);
             asender.init();
             room.addMember(asender);
-            mc.sender = asender;
+            mevent.sender = asender;
           }
-          this.emit('Event.decrypted', mc);
+          this.emit('Event.decrypted', mevent);
         }
         // console.log(mc);
       } else {
@@ -1367,7 +1355,7 @@ class MatrixClientA extends EventEmitter {
         const asender = new TRoomMember(senderId);
         asender.init();
         room.addMember(asender);
-        mc.sender = asender;
+        mevent.sender = asender;
         const me = new TRoomMember(this.user.userId, this.user.displayName, this.user.avatarUrl);
         me.membership = 'invite';
         room.addMember(me);

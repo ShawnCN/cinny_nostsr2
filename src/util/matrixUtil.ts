@@ -12,7 +12,12 @@ import TRoomMember from '../../types/TRoomMember';
 import { getEventHash, nip04, Relay, signEvent } from 'nostr-tools';
 import TRoom from '../../types/TRoom';
 import TUser from '../../types/TUser';
-import { contectDetect, toNostrHexAddress } from './nostrUtil';
+import {
+  contectDetect,
+  getChannelEventReplyingTo,
+  getEventReplyingTo,
+  toNostrHexAddress,
+} from './nostrUtil';
 import { DEFAULT_RELAY_URLS } from '../client/state/cons';
 
 const WELL_KNOWN_URI = '/.well-known/matrix/client';
@@ -350,7 +355,14 @@ export const formatDmMsgFromOthersOrMe = async (event: NostrEvent, user: TUser, 
   // content = content.replace(/&/g, '&#38;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const dContent = contectDetect(content);
   const msgs = convertToMatrixContent(dContent, event, parent);
-  return msgs;
+  const citedEvtId = getEventReplyingTo(event);
+  let eventList: TEvent[] = [];
+  msgs.forEach((m) => {
+    const mc = new TEvent(m);
+    if (citedEvtId) mc.replyEventId = citedEvtId;
+    eventList.push(mc);
+  });
+  return eventList;
   //If the current message is already in the message cache, return, otherwise add to the number of unread messages
   // let citedMsg = {} as TCitedMsg | null;
   // if (replyingTo != '') {
@@ -428,31 +440,39 @@ const convertToMatrixContent = (
   };
   if (content.text.length > 0) msgs.push(msg);
 
-  if (content.imgs.length == 0) return msgs;
-  content.imgs.forEach((imgUrl) => {
-    let imgObject: TContent = {
-      // info: {
-      //   mimetype: 'image/png',
-      //   size: 494,
-      //   w: 43,
-      //   h: 54,
-      //   'xyz.amorgan.blurhash': 'UMSr}._MMKyX%fRQXSnOyCMeyCR5n5tlR6kq',
-      // },
-      msgtype: 'm.image',
-      body: imgUrl,
-      url: imgUrl,
-    };
-    let msg2 = {
-      content: imgObject,
-      type: 'm.room.message' as const,
-      origin_server_ts: event.created_at,
-      sender: event.pubkey,
-      event_id: event.id,
-      room_id: parent, // 母帖eventid或者是聊天室id}
-    };
-    msgs.unshift(msg2);
+  // if (content.imgs.length == 0) return msgs;
+  content.imgs.length > 0 &&
+    content.imgs.forEach((imgUrl) => {
+      let imgObject: TContent = {
+        // info: {
+        //   mimetype: 'image/png',
+        //   size: 494,
+        //   w: 43,
+        //   h: 54,
+        //   'xyz.amorgan.blurhash': 'UMSr}._MMKyX%fRQXSnOyCMeyCR5n5tlR6kq',
+        // },
+        msgtype: 'm.image',
+        body: imgUrl,
+        url: imgUrl,
+      };
+      let msg2 = {
+        content: imgObject,
+        type: 'm.room.message' as const,
+        origin_server_ts: event.created_at,
+        sender: event.pubkey,
+        event_id: event.id,
+        room_id: parent, // 母帖eventid或者是聊天室id}
+      };
+      msgs.unshift(msg2);
+    });
+  let eventList: TEvent[] = [];
+  const citedEvtId = getChannelEventReplyingTo(event, parent);
+  msgs.forEach((m) => {
+    const mc = new TEvent(m);
+    if (citedEvtId) mc.replyEventId = citedEvtId;
+    eventList.push(mc);
   });
-  return msgs;
+  return eventList;
 };
 
 export const decryptContent = async (user: TUser, event: NostrEvent) => {
