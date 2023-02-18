@@ -1,6 +1,7 @@
 import initMatrix from '../InitMatrix';
 
-async function redactEvent(roomId, eventId, reason?: any) {
+async function redactEvent(roomId: string, eventId: string, reason?: any) {
+  // delete event
   const mx = initMatrix.matrixClient;
 
   try {

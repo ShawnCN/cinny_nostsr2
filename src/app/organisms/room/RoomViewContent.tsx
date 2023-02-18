@@ -56,7 +56,7 @@ function loadingMsgPlaceholders(key: number, count = 2) {
 }
 
 interface IPropsRoomIntroContainer {
-  event: any;
+  event: TEvent;
   timeline: RoomTimeline;
 }
 
@@ -377,7 +377,6 @@ function useEventArrive(
     };
 
     const handleEvent = (event: TEvent) => {
-      console.log('handleevent', event);
       const tLength = roomTimeline.timeline.length;
       const isViewingLive = roomTimeline.isServingLiveTimeline() && limit.length >= tLength - 1;
       const isAttached = timelineScroll.bottom < SCROLL_TRIGGER_POS;
@@ -402,7 +401,7 @@ function useEventArrive(
       }
     };
 
-    const handleEventRedact = (event) => setEvent(event);
+    const handleEventRedact = (event: TEvent) => setEvent(event);
 
     roomTimeline.on(cons.events.roomTimeline.EVENT, handleEvent);
     roomTimeline.on(cons.events.roomTimeline.EVENT_REDACTED, handleEventRedact);

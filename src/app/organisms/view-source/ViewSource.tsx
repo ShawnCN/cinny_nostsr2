@@ -11,6 +11,7 @@ import ScrollView from '../../atoms/scroll/ScrollView';
 import PopupWindow from '../../molecules/popup-window/PopupWindow';
 
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
+import TEvent from '../../../../types/TEvent';
 
 function ViewSourceBlock({ title, json }) {
   return (
@@ -18,9 +19,7 @@ function ViewSourceBlock({ title, json }) {
       <MenuHeader>{title}</MenuHeader>
       <ScrollView horizontal vertical={false} autoHide>
         <pre className="text text-b1">
-          <code className="language-json">
-            {JSON.stringify(json, null, 2)}
-          </code>
+          <code className="language-json">{JSON.stringify(json, null, 2)}</code>
         </pre>
       </ScrollView>
     </div>
@@ -33,10 +32,10 @@ ViewSourceBlock.propTypes = {
 
 function ViewSource() {
   const [isOpen, setIsOpen] = useState(false);
-  const [event, setEvent] = useState(null);
+  const [event, setEvent] = useState<TEvent>(null as unknown as TEvent);
 
   useEffect(() => {
-    const loadViewSource = (e) => {
+    const loadViewSource = (e: TEvent) => {
       setEvent(e);
       setIsOpen(true);
     };
@@ -47,13 +46,15 @@ function ViewSource() {
   }, []);
 
   const handleAfterClose = () => {
-    setEvent(null);
+    setEvent(null as unknown as TEvent);
   };
 
   const renderViewSource = () => (
     <div className="view-source">
-      {event.isEncrypted() && <ViewSourceBlock title="Decrypted source" json={event.getEffectiveEvent()} />}
-      <ViewSourceBlock title="Original source" json={event.event} />
+      {event.isEncrypted() && (
+        <ViewSourceBlock title="Decrypted source" json={event.getEffectiveEvent()} />
+      )}
+      <ViewSourceBlock title="Original source" json={event.getNostrEvent()} />
     </div>
   );
 

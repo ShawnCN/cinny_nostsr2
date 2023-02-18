@@ -1,4 +1,4 @@
-import { Event, Filter, nip19, Relay, relayInit, Sub } from 'nostr-tools';
+import { Event, Filter, nip19, Relay, relayInit, signEvent, Sub } from 'nostr-tools';
 import {
   NostrEvent,
   SearchResultUser,
@@ -590,8 +590,16 @@ class MatrixClientA extends EventEmitter {
     this.emit('Room.myMembership', a, membership, prevMembership);
     return Promise.resolve(a);
   }
-  async redactEvent(roomId, eventId, undefined, arg3: any) {
-    console.log('redact event');
+  async redactEvent(roomId: string, eventId: string, undefined, reason: any) {
+    let event: NostrEvent = {
+      pubkey: this.user.userId,
+      created_at: Math.floor(Date.now() / 1000),
+      kind: 5,
+      content: 'deleted',
+      tags: [['e', eventId]],
+    };
+    event = await getSignedEvent(event, this.user?.privatekey);
+    this.publishEvent(event);
   }
   async sendEvent(roomId, arg1: string, content) {
     console.log('send event', roomId, arg1, content);
@@ -1188,7 +1196,7 @@ class MatrixClientA extends EventEmitter {
         this.handleDirectMessage(event);
         break;
       case 5:
-        // this.handleDelete(event);
+        this.handleDelete(event);
         break;
 
       case 6:
@@ -1349,6 +1357,17 @@ class MatrixClientA extends EventEmitter {
       }
     });
     this.saveLocalStorageEvents();
+  };
+  handleDelete = (event: NostrEvent) => {
+    const id = event.tags.find((tag) => tag[0] === 'e')?.[1];
+    const myPub = this.user.userId;
+    if (id) {
+      const deletedEvent = this.eventsById.get(id);
+      // only we or the author can delete
+      if (deletedEvent && [event.pubkey, myPub].includes(deletedEvent.pubkey)) {
+        this.eventsById.delete(id);
+      }
+    }
   };
   handleMetaEvent(event: NostrEvent) {
     try {

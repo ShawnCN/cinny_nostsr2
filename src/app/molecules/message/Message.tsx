@@ -604,15 +604,15 @@ function isMedia(mE: TEvent) {
 function handleOpenViewSource(mEvent: TEvent, roomTimeline: RoomTimeline) {
   const eventId = mEvent.getId();
   // 自定义
-  const nostrEvent = initMatrix.matrixClient.eventsById.get(eventId);
+  // const nostrEvent = initMatrix.matrixClient.eventsById.get(eventId);
   const { editedTimeline } = roomTimeline ?? {};
   let editedMEvent;
   if (editedTimeline?.has(eventId)) {
     const editedList = editedTimeline.get(eventId);
     editedMEvent = editedList[editedList.length - 1];
   }
-  // openViewSource(editedMEvent !== undefined ? editedMEvent : mEvent);
-  openViewSource(editedMEvent !== undefined ? editedMEvent : nostrEvent);
+  openViewSource(editedMEvent !== undefined ? editedMEvent : mEvent);
+  // openViewSource(editedMEvent !== undefined ? editedMEvent : nostrEvent);
 }
 interface IPropsMessageOptions {
   roomTimeline: RoomTimeline;
@@ -641,23 +641,23 @@ const MessageOptions = React.memo(({ roomTimeline, mEvent, edit, reply }: IProps
         />
       )}
       <IconButton onClick={() => reply()} src={ReplyArrowIC} size="extra-small" tooltip="Reply" />
-      {senderId === mx.getUserId() && !isMedia(mEvent) && (
+      {/* {senderId === mx.getUserId() && !isMedia(mEvent) && (
         <IconButton onClick={() => edit(true)} src={PencilIC} size="extra-small" tooltip="Edit" />
-      )}
+      )} */}
       <ContextMenu
         content={() => (
           <>
             <MenuHeader>Options</MenuHeader>
-            <MenuItem
+            {/* <MenuItem
               iconSrc={TickMarkIC}
               onClick={() => openReadReceipts(roomId, roomTimeline.getEventReaders(mEvent))}
             >
               Read receipts
-            </MenuItem>
+            </MenuItem> */}
             <MenuItem iconSrc={CmdIC} onClick={() => handleOpenViewSource(mEvent, roomTimeline)}>
               View source
             </MenuItem>
-            {(canIRedact || senderId === mx.getUserId()) && (
+            {/* {(canIRedact || senderId === mx.getUserId()) && (
               <>
                 <MenuBorder />
                 <MenuItem
@@ -677,7 +677,7 @@ const MessageOptions = React.memo(({ roomTimeline, mEvent, edit, reply }: IProps
                   Delete
                 </MenuItem>
               </>
-            )}
+            )} */}
           </>
         )}
         render={(toggleMenu) => (

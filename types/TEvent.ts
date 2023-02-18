@@ -1,3 +1,5 @@
+import initMatrix from '../src/client/InitMatrix';
+import { decryptContent } from '../src/util/matrixUtil';
 import TRoomMember from './TRoomMember';
 
 class TEvent {
@@ -53,6 +55,17 @@ class TEvent {
   }
   getServerAggregatedRelation(arg0: string) {
     return true;
+  }
+  getNostrEvent() {
+    const nostrEvent = initMatrix.matrixClient.eventsById.get(this.event.event_id)!;
+
+    return nostrEvent;
+  }
+  async getEffectiveEvent() {
+    let nostrEvent = initMatrix.matrixClient.eventsById.get(this.event.event_id)!;
+    if (nostrEvent.kind !== 4) return nostrEvent;
+    nostrEvent.content = await decryptContent(initMatrix.matrixClient.user, nostrEvent);
+    return nostrEvent;
   }
 }
 

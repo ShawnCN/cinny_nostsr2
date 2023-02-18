@@ -209,7 +209,7 @@ class CurrentState {
     return false;
   };
   maySendEvent = (arg0: string, arg1: string) => {
-    return true;
+    return false;
   };
   maySendStateEvent = (arg0: string, userId: string) => {
     return true;

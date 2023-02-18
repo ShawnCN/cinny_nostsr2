@@ -400,7 +400,7 @@ class RoomTimeline extends EventEmitter {
       this.emit(cons.events.roomTimeline.EVENT, event);
     };
 
-    this._listenRedaction = (mEvent, room) => {
+    this._listenRedaction = (mEvent: TEvent, room: TRoom) => {
       if (room.roomId !== this.roomId) return;
       const rEvent = this.deleteFromTimeline(mEvent.event.redacts);
       this.editedTimeline.delete(mEvent.event.redacts);

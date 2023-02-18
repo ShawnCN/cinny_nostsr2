@@ -461,13 +461,18 @@ const convertToMatrixContent = (
         type: 'm.room.message' as const,
         origin_server_ts: event.created_at,
         sender: event.pubkey,
-        event_id: event.id,
+        event_id: event.id!,
         room_id: parent, // 母帖eventid或者是聊天室id}
       };
       msgs.unshift(msg2);
     });
   let eventList: TEvent[] = [];
-  const citedEvtId = getChannelEventReplyingTo(event, parent);
+  let citedEvtId: undefined | string = undefined;
+  if (event.kind == 4) {
+    citedEvtId = getEventReplyingTo(event);
+  } else {
+    citedEvtId = getChannelEventReplyingTo(event, parent);
+  }
   msgs.forEach((m) => {
     const mc = new TEvent(m);
     if (citedEvtId) mc.replyEventId = citedEvtId;
