@@ -1,7 +1,7 @@
 import TEvent from '../../../types/TEvent';
 import TLiveTimeline from '../../../types/TLiveTimeline';
 import TRoom from '../../../types/TRoom';
-import { formatChannelMsg } from '../../util/matrixUtil';
+import { formatChannelMsg, formatDmMsgFromOthersOrMe } from '../../util/matrixUtil';
 import EventEmitter from '../EventEmitter';
 import initMatrix from '../InitMatrix';
 import MatrixClientA from '../MatrixClientA';
@@ -346,13 +346,25 @@ class RoomTimeline extends EventEmitter {
     return eventTimelineSet.findEventById(eventId);
   }
 
-  findEventById(eventId: string) {
-    // return this.timeline[this.getEventIndex(eventId)] ?? null;
-    const event = initMatrix.matrixClient.eventsById.get(eventId);
-    if (!event) return null;
-    const mevent = formatChannelMsg(event);
-    const mc = new TEvent(mevent[0]);
-    return mc;
+  async findEventById(eventId: string) {
+    console.log('5555555555555555----------');
+    return this.timeline[this.getEventIndex(eventId)] ?? null;
+    // const event = initMatrix.matrixClient.eventsById.get(eventId);
+    // if (!event) return null;
+    // // if (event.kind == 42) {
+    // const mevent = formatChannelMsg(event);
+    // const mc = new TEvent(mevent[0]);
+    // return mc;
+    // // }
+    // // if (event.kind == 4) {
+    // //   const mevent = await formatDmMsgFromOthersOrMe(
+    // //     event,
+    // //     initMatrix.matrixClient.user,
+    // //     this.roomId
+    // //   );
+    // //   const mc = new TEvent(mevent[0]);
+    // //   return mc;
+    // // }
   }
 
   deleteFromTimeline(eventId: string) {

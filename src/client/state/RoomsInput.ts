@@ -10,6 +10,7 @@ import { markdown, plain } from '../../util/markdown';
 import MatrixClientA from '../MatrixClientA';
 import RoomList from './RoomList';
 import TEvent, { TContent, TContentInfo } from '../../../types/TEvent';
+import { TRoomType } from '../../../types';
 
 const blurhashField = 'xyz.amorgan.blurhash';
 
@@ -190,11 +191,12 @@ class RoomsInput extends EventEmitter {
     this.emit(cons.events.roomsInput.ATTACHMENT_CANCELED, roomId);
   }
 
-  isSending(roomId) {
+  isSending(roomId: string) {
     return this.roomIdToInput.get(roomId)?.isSending || false;
   }
 
-  getContent(roomId, options, message, reply, edit?: TEvent) {
+  getContent(roomId: string, options, message, reply, edit?: TEvent) {
+    console.log('----------getContent-------------', roomId, options, message, reply);
     const msgType = options?.msgType || 'm.text';
     const autoMarkdown = options?.autoMarkdown ?? true;
 
@@ -253,8 +255,9 @@ class RoomsInput extends EventEmitter {
         },
       };
 
-      content.body = `> <${reply.userId}> ${reply.body.replace(/\n/g, '\n> ')}\n\n${content.body}`;
-
+      // content.body = `> <${reply.userId}> ${reply.body.replace(/\n/g, '\n> ')}\n\n${content.body}`;
+      // 自定义
+      content.body = content.body;
       const replyToLink = `<a href="https://matrix.to/#/${encodeURIComponent(
         roomId
       )}/${encodeURIComponent(reply.eventId)}">In reply to</a>`;
@@ -270,7 +273,7 @@ class RoomsInput extends EventEmitter {
     return content;
   }
 
-  async sendInput(roomId: string, options, roomType) {
+  async sendInput(roomId: string, options, roomType: TRoomType) {
     const input = this.getInput(roomId);
     input.isSending = true;
     this.roomIdToInput.set(roomId, input);
@@ -281,6 +284,7 @@ class RoomsInput extends EventEmitter {
 
     if (this.getMessage(roomId).trim() !== '') {
       const content = this.getContent(roomId, options, input.message, input.replyTo);
+      console.log('55555555555555---------', content);
       await this.matrixClient.sendMessage(roomId, content, roomType);
     }
 
@@ -418,9 +422,7 @@ class RoomsInput extends EventEmitter {
 
     // const { content_uri: url } = await uploadingPromise;
     const res = await uploadingPromise;
-    console.log('ddddddddddddddd', res);
     const url = res[0];
-    console.log('ddddddddddddddd', url);
     delete input.attachment.uploadingPromise;
     this.roomIdToInput.set(roomId, input);
 

@@ -38,6 +38,8 @@ import {
   attachmentsChanged,
   howLong,
   sortedChats,
+  getEventReplyingTo,
+  getChannelEventReplyingTo,
 } from '../util/nostrUtil';
 import EventEmitter from './EventEmitter';
 import cons, {
@@ -550,7 +552,7 @@ class MatrixClientA extends EventEmitter {
       eventIds = this.directMessagesByUser.get(room.roomId)!.eventIds;
       for (let [k, v] of this.eventsById) {
         if (eventIds.includes(k)) {
-          const mevents = await formatDmMsgFromOthersOrMe(v, this.user);
+          const mevents = await formatDmMsgFromOthersOrMe(v, this.user, room.roomId);
           mevents.forEach((m) => {
             const mc = new TEvent(m);
             tl.push(mc);
@@ -729,22 +731,44 @@ class MatrixClientA extends EventEmitter {
   async sendMessage(roomId: string, content: TContent, type: TRoomType) {
     const roomType = type;
     const msgType = content.msgtype;
+    let citedEvtId = null as unknown as string;
+    if (content['m.relates_to']) {
+      citedEvtId = content['m.relates_to']['m.in_reply_to'].event_id;
+    }
     if (roomType === 'single') {
       let c = content.body;
       if (msgType == 'm.image') {
         c = content.url!;
       }
-      const nostrEvent = await formatDMEvent(c, roomId, this.user);
-      this.publishEvent(nostrEvent);
+      console.log('4444444444444444');
+      // c = 'tttttttttttttttttttttt';
+      const nostrEvent = await formatDMEvent(c, roomId, this.user, citedEvtId);
+      this.handleEvent(nostrEvent);
+      // this.publishEvent(nostrEvent);
     } else if (roomType === 'groupChannel') {
       let c = content.body;
       if (msgType == 'm.image') {
         c = content.url!;
       }
-      const nostrEvent = await formatChannelEvent(c, roomId, this.user);
-      this.publishEvent(nostrEvent);
+      // c = 'tttttttttttttttttttttt';
+      const nostrEvent = await formatChannelEvent(c, roomId, this.user, citedEvtId);
+      this.handleEvent(nostrEvent);
+      // this.publishEvent(nostrEvent);
     } else if (roomType == 'groupRelay') {
     }
+  }
+  async getMessageById(id: string) {
+    if (this.eventsById.has(id)) {
+      return this.eventsById.get(id);
+    }
+
+    return new Promise((resolve) => {
+      this.subscribe([{ ids: [id] }], () => {
+        // TODO turn off subscription
+        const msg = this.eventsById.get(id);
+        msg && resolve(msg);
+      });
+    });
   }
 
   updateMyMemberships(roomId: string, mShip: TMyMemberships) {
@@ -1225,9 +1249,13 @@ class MatrixClientA extends EventEmitter {
     }
   }
   handleChannelMessageEvent(event: NostrEvent) {
-    const mevents = formatChannelMsg(event);
+    console.log('5555555555555555');
+    const mevents: TEventFormat[] = formatChannelMsg(event);
+    const citedEvtId = getChannelEventReplyingTo(event, mevents[0].room_id);
+    // const citedEvtId = '90a3d9b8376ddcfde653ed8f06f03794a111afac4b317fb0f352a3cf9ab2a434';
     mevents.forEach((m) => {
       const mc = new TEvent(m);
+      if (citedEvtId) mc.replyEventId = citedEvtId;
       this.emit('Event.decrypted', mc);
     });
 
@@ -1266,9 +1294,12 @@ class MatrixClientA extends EventEmitter {
   handleDirectMessage = async (event: NostrEvent) => {
     this.eventsById.set(event.id, event);
     const myPub = this.user.userId;
-    let user = event.pubkey;
+    let dmRoomId = event.pubkey;
     if (event.pubkey === myPub) {
-      user = event.tags.find((tag) => tag[0] === 'p')?.[1] || user;
+      const ptagUser = event.tags.find((tag) => tag[0] === 'p')?.[1];
+      if (!ptagUser) return;
+      dmRoomId = ptagUser;
+      // user = event.tags.find((tag) => tag[0] === 'p')?.[1] || user;
     } else {
       const forMe = event.tags.some((tag) => tag[0] === 'p' && tag[1] === myPub);
       if (!forMe) {
@@ -1276,13 +1307,15 @@ class MatrixClientA extends EventEmitter {
       }
     }
     this.eventsById.set(event.id, event);
-    if (!this.directMessagesByUser.has(user)) {
-      this.directMessagesByUser.set(user, new SortedLimitedEventSet(500));
+    if (!this.directMessagesByUser.has(dmRoomId)) {
+      this.directMessagesByUser.set(dmRoomId, new SortedLimitedEventSet(500));
     }
-    this.directMessagesByUser.get(user)?.add(event);
-    const mevents = await formatDmMsgFromOthersOrMe(event, this.user);
+    this.directMessagesByUser.get(dmRoomId)?.add(event);
+    const mevents = await formatDmMsgFromOthersOrMe(event, this.user, dmRoomId);
+    const citedEvtId = getEventReplyingTo(event);
     mevents.forEach((mevent) => {
       const mc = new TEvent(mevent);
+      if (citedEvtId) mc.replyEventId = citedEvtId;
       const roomId = mevent.room_id;
       const senderId = mevent.sender;
       const room = this.publicRoomList.get(roomId);

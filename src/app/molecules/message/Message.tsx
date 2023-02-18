@@ -173,7 +173,7 @@ const MessageReplyWrapper = React.memo(({ roomTimeline, eventId }: IPropsMessage
 
         // let mEvent: TEvent = eTimeline.getTimelineSet().findEventById(eventId);
         // 自定义
-        let mEvent = roomTimeline.findEventById(eventId as string);
+        let mEvent = await roomTimeline.findEventById(eventId as string);
         const editedList = roomTimeline.editedTimeline.get(mEvent?.getId());
         if (editedList) {
           mEvent = editedList[editedList.length - 1];

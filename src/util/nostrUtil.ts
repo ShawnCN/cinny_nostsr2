@@ -3,6 +3,7 @@ import * as bech32 from 'bech32-buffer'; /* eslint-disable-line @typescript-esli
 import { Debounce } from './common';
 import { sha256 } from '@noble/hashes/sha256';
 import TEvent from '../../types/TEvent';
+import { NostrEvent } from '../../types';
 export const toNostrBech32Address = (address: string, prefix: string) => {
   if (!prefix) {
     throw new Error('prefix is required');
@@ -142,3 +143,34 @@ export const sortedChats = (chats: TEvent[]) =>
     }
     return 0;
   });
+
+export const getEventReplyingTo = (event: NostrEvent) => {
+  const replyTags = event.tags.filter((tag) => tag[0] === 'e');
+  if (replyTags.length === 1) {
+    return replyTags[0][1];
+  }
+  const replyTag = event.tags.find((tag) => tag[0] === 'e' && tag[3] === 'reply');
+  if (replyTag) {
+    return replyTag[1];
+  }
+  if (replyTags.length > 1) {
+    return replyTags[1][1];
+  }
+  return undefined;
+};
+
+export const getChannelEventReplyingTo = (event: NostrEvent, channelId: string) => {
+  const replyTags = event.tags.filter((tag) => tag[0] === 'e');
+  if (replyTags.length === 1) {
+    // return replyTags[0][1];
+    return undefined;
+  }
+  const replyTag = event.tags.find((tag) => tag[0] === 'e' && tag[3] === 'reply');
+  if (replyTag) {
+    return replyTag[1];
+  }
+  if (replyTags.length > 1) {
+    return replyTags[1][1];
+  }
+  return undefined;
+};

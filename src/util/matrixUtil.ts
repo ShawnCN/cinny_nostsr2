@@ -12,7 +12,7 @@ import TRoomMember from '../../types/TRoomMember';
 import { getEventHash, nip04, Relay, signEvent } from 'nostr-tools';
 import TRoom from '../../types/TRoom';
 import TUser from '../../types/TUser';
-import { contectDetect } from './nostrUtil';
+import { contectDetect, toNostrHexAddress } from './nostrUtil';
 import { DEFAULT_RELAY_URLS } from '../client/state/cons';
 
 const WELL_KNOWN_URI = '/.well-known/matrix/client';
@@ -300,21 +300,37 @@ export const formatGlobalMsg = (
   // }
   return msg;
 };
-export const formatDmMsgFromOthersOrMe = async (event: NostrEvent, user: TUser) => {
-  let otherKey = '';
-  if (event.pubkey == user.userId) {
-    for (let i = 0; i < event.tags.length; i++) {
-      if (event['tags'][i][0] == 'p' && (!otherKey || otherKey == '')) {
-        otherKey = event['tags'][i][1];
-        break;
-      } else {
-        otherKey = event.pubkey;
-      }
-    }
+
+export const findParent = (event: NostrEvent, meId: string) => {
+  let parent = event.pubkey;
+  if (event.pubkey === meId) {
+    const ptagUser = event.tags.find((tag) => tag[0] === 'p')?.[1];
+    if (!ptagUser) return null;
+    parent = ptagUser;
+    return parent;
+    // user = event.tags.find((tag) => tag[0] === 'p')?.[1] || user;
   } else {
-    otherKey = event.pubkey;
+    const forMe = event.tags.some((tag) => tag[0] === 'p' && tag[1] === meId);
+    if (!forMe) {
+      return null;
+    }
   }
-  const parent = otherKey;
+};
+export const formatDmMsgFromOthersOrMe = async (event: NostrEvent, user: TUser, parent: string) => {
+  // let otherKey = '';
+  // if (event.pubkey == user.userId) {
+  //   for (let i = 0; i < event.tags.length; i++) {
+  //     if (event['tags'][i][0] == 'p' && (!otherKey || otherKey == '')) {
+  //       otherKey = event['tags'][i][1];
+  //       break;
+  //     } else {
+  //       otherKey = event.pubkey;
+  //     }
+  //   }
+  // } else {
+  //   otherKey = event.pubkey;
+  // }
+  // const parent = otherKey;
   let events_replied_to: string[] = [];
   let pubkeys_replied_to: string[] = [];
   let replyingTo = '';
@@ -646,7 +662,8 @@ export const formatDMEvent = async (
   inputMessage: string,
   roomId: string,
   // replyBox: TCitedMsg,
-  user: TUser
+  user: TUser,
+  citedEvtId?: string | null
 ) => {
   const sk1 = user.privatekey;
   let pk1 = user.userId;
@@ -666,15 +683,6 @@ export const formatDMEvent = async (
   }
 
   let tags = [['p', pk2]] as string[][];
-  // if (replyBox.pubkey && replyBox.pubkey.length > 0) {
-  //   const replyTags = [
-  //     ['p', replyBox.pubkey.toString()],
-  //     ['e', replyBox.evtId.toString()],
-  //   ];
-  //   tags = [...tags, ...replyTags];
-  //   // "tags"       : [ [ 'p', pubkey ], [ 'e', id_of_post_being_replied_to ] ],
-  // }
-
   let event = {
     pubkey: pk1,
     created_at: Math.floor(Date.now() / 1000),
@@ -682,44 +690,40 @@ export const formatDMEvent = async (
     tags,
     content: ciphertext,
   } as NostrEvent;
-  console.log(event);
+
+  if (citedEvtId) {
+    const id = toNostrHexAddress(citedEvtId)!;
+    const replyingTo = initMatrix.matrixClient.eventsById.get(id);
+    if (replyingTo) {
+      // event.tags = replyingTo.tags.filter((tag) => tag[0] === 'p');
+      let rootTag = replyingTo.tags.find((t) => t[0] === 'e' && t[3] === 'root');
+      if (!rootTag) {
+        rootTag = replyingTo.tags.find((t) => t[0] === 'e');
+      }
+      if (rootTag) {
+        event.tags.unshift(['e', id, DEFAULT_RELAY_URLS[0], 'reply']);
+        event.tags.unshift(['e', rootTag[1], DEFAULT_RELAY_URLS[0], 'root']);
+      } else {
+        event.tags.unshift(['e', id, DEFAULT_RELAY_URLS[0], 'root']);
+      }
+      // if (!event.tags.find((t) => t[0] === 'p' && t[1] === replyingTo.pubkey)) {
+      //   event.tags.push(['p', replyingTo.pubkey]);
+      // }
+    }
+  }
   event = await getSignedEvent(event, user.privatekey);
-  console.log(event);
   return event;
 };
+
 export const formatChannelEvent = async (
   inputMessage: string,
   roomId: string,
   // replyBox: TCitedMsg,
-  user: TUser
+  user: TUser,
+  citedEvtId?: string | null
 ) => {
   // const url = relayinst.url;
-  let tags = [
-    [
-      'e',
-      // '25e5c82273a271cb1a840d0060391a0bf4965cafeb029d5ab55350b418953fbb',
-      roomId,
-      DEFAULT_RELAY_URLS[0],
-      'root',
-      // url.toString(),
-    ],
-  ] as string[][];
-  // if (replyBox.pubkey && replyBox.pubkey.length > 0) {
-  //   tags = [
-  //     [
-  //       'e',
-  //       // '25e5c82273a271cb1a840d0060391a0bf4965cafeb029d5ab55350b418953fbb',
-  //       roomId,
-  //       // url.toString(),
-  //     ],
-  //     [
-  //       'e',
-  //       replyBox.evtId.toString(),
-  //       // url.toString()
-  //     ],
-  //     ['p', replyBox.pubkey.toString()],
-  //   ];
-  // }
+  let tags = [['e', roomId, DEFAULT_RELAY_URLS[0]]] as string[][];
   let event = {
     kind: 42,
     created_at: Math.floor(Date.now() / 1000),
@@ -728,9 +732,30 @@ export const formatChannelEvent = async (
     content: inputMessage,
     pubkey: user.userId,
   } as NostrEvent;
-  console.log(event);
+  if (citedEvtId) {
+    const id = toNostrHexAddress(citedEvtId)!;
+    const replyingTo = initMatrix.matrixClient.eventsById.get(id);
+    if (replyingTo) {
+      let rootTag = replyingTo.tags.find((t) => t[0] === 'e' && t[3] === 'root' && t[1] !== roomId);
+      if (!rootTag) {
+        rootTag = replyingTo.tags.find((t) => t[0] === 'e' && t[1] !== roomId);
+      }
+      if (rootTag) {
+        event.tags.push(['e', id, DEFAULT_RELAY_URLS[0], 'reply']);
+        event.tags.push(['e', rootTag[1], DEFAULT_RELAY_URLS[0], 'root']);
+      } else {
+        event.tags.push(['e', id, DEFAULT_RELAY_URLS[0], 'root']);
+      }
+      const citedPTags = replyingTo.tags.filter((tag) => tag[0] === 'p');
+      event.tags.concat(citedPTags);
+      if (!citedPTags.find((t) => t[0] === 'p' && t[1] === replyingTo.pubkey)) {
+        event.tags.push(['p', replyingTo.pubkey]);
+      }
+    }
+  }
+
+  console.log('11111111111111111111111111', event);
   event = await getSignedEvent(event, user?.privatekey);
-  console.log(event);
 
   return event;
 };

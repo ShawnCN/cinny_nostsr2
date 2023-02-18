@@ -76,6 +76,7 @@ export type TContent = {
   external_url?: string;
   format?: string;
   formatted_body?: string;
+  ['m.relates_to']?: { ['m.in_reply_to']: { event_id: string } };
   membership?: string;
   file?: { url?: string };
   url?: string;
