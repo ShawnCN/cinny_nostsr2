@@ -8,7 +8,7 @@ import colorMXID from '../../../util/colorMXID';
 
 import Text from '../../atoms/text/Text';
 import Avatar from '../../atoms/avatar/Avatar';
-import { toNostrBech32Address } from '../../../util/nostrUtil';
+import { toNostrBech32Address, toNostrHexAddress } from '../../../util/nostrUtil';
 
 function RoomTile({ avatarSrc, name, id, inviterName, memberCount, desc, options, type }) {
   const [displayId, setDisplayId] = useState(id);
@@ -35,6 +35,7 @@ function RoomTile({ avatarSrc, name, id, inviterName, memberCount, desc, options
               }`
             : displayId + (memberCount === null ? '' : ` • ${memberCount} members`)}
         </Text>
+        <Text variant="b3">{toNostrHexAddress(displayId)}</Text>
         {desc !== null && typeof desc === 'string' ? (
           <Text className="room-tile__content__desc" variant="b2">
             {twemojify(desc, undefined, true)}

@@ -131,7 +131,7 @@ function InviteUser({
     }
     updateIsSearching(false);
   }
-  async function searchNostrUser(username: string) {
+  function searchNostrUser(username: string) {
     const inputUsername = username.trim();
     if (isSearching || inputUsername === '' || inputUsername === searchQuery.username) return;
     // const isInputUserId = inputUsername[0] === '@' && inputUsername.indexOf(':') > 1;
@@ -139,14 +139,45 @@ function InviteUser({
     updateSearchQuery({ username: inputUsername });
 
     try {
-      await mx.getProfileInfo(inputUsername);
+      // await mx.getProfileInfo(inputUsername);
+      const pubkeyHex = toNostrHexAddress(inputUsername);
+      if (!pubkeyHex) throw new Error('Invalid user ID');
+      const profile = mx.profiles.get(pubkeyHex);
+      if (profile) {
+        updateUsers([
+          {
+            user_id: inputUsername,
+            display_name: profile.name,
+            avatarUrl: profile.picture,
+          },
+        ]);
+      } else {
+        updateUsers([
+          {
+            user_id: inputUsername,
+            display_name: defaultName(inputUsername, 'npub')!,
+            avatarUrl: null,
+          },
+        ]);
+        mx.getUserWithCB(pubkeyHex, (profile) => {
+          if (profile && toNostrHexAddress(users[0].user_id) == pubkeyHex) {
+            updateUsers([
+              {
+                user_id: inputUsername,
+                display_name: profile.name,
+                avatarUrl: profile.picture,
+              },
+            ]);
+          }
+        });
+      }
       // const result = await mx.getProfileInfo(inputUsername);
       // if (result) {
       //   updateUsers([
       //     {
       //       user_id: inputUsername,
-      //       display_name: result.displayName,
-      //       avatarUrl: result.avatarUrl,
+      //       display_name: result.name,
+      //       avatarUrl: result.picture,
       //     },
       //   ]);
       // } else {
@@ -291,6 +322,7 @@ function InviteUser({
 
   useEffect(() => {
     if (isOpen && typeof searchTerm === 'string') searchNostrUser(searchTerm);
+    console.log('2222222222222222');
     return () => {
       updateIsSearching(false);
       updateSearchQuery({});

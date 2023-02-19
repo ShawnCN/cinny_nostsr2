@@ -288,14 +288,17 @@ class MatrixClientA extends EventEmitter {
     if (!pubkeyHex) throw new Error('Invalid user ID');
     const profile = this.profiles.get(pubkeyHex);
     if (profile) {
-      return profile;
+      return Promise.resolve(profile);
     }
-    this.emit('foundProfileInfo', {
+    this.getProfileInfoFromRelay(pubkeyHex);
+    return Promise.resolve({
       displayName: defaultName(userId, 'npub'),
       about: null,
       avatarUrl: null,
     });
-    const nostrEvent = await this.fetchUserMeta(pubkeyHex);
+  }
+  async getProfileInfoFromRelay(userId: string) {
+    const nostrEvent = await this.fetchUserMeta(userId);
     this.handleEvent(nostrEvent);
     let user = {} as { displayName: string; about: string; avatarUrl: string };
     if (!nostrEvent) return null;
@@ -310,7 +313,6 @@ class MatrixClientA extends EventEmitter {
       user.avatarUrl = picture;
     }
     this.emit('foundProfileInfo', user);
-    return user;
   }
   getProfile(address, cb?: (profile: any, address: string) => void, verifyNip05 = false) {
     // this.knownUsers.add(address);
