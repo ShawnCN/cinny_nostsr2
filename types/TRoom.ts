@@ -189,11 +189,11 @@ class TRoom {
     return {};
   }
   getLiveTimeline() {
-    const tl = initMatrix.matrixClient.paginateEventTimeline(this, null, {
-      backwards: true,
-      limit: 1000000000,
-    });
-    if (tl) return new TLiveTimeline(tl);
+    // const tl = initMatrix.matrixClient.paginateEventTimeline(this, null, {
+    //   backwards: true,
+    //   limit: 1000000000,
+    // });
+    // if (tl) return new TLiveTimeline(tl);
 
     return new TLiveTimeline([]);
   }

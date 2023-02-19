@@ -1269,6 +1269,13 @@ class MatrixClientA extends EventEmitter {
     this.cMsgsByCid.get(channelId)?.add(event);
     saveChannelMessageEvents(this.cMsgsByCid, this.eventsById);
     this.handleUpdateLatestEvent(channelId, event);
+    const room = this.publicRoomList.get(channelId);
+    if (
+      this.roomIdnReadUpToEvent.has(channelId) &&
+      event.created_at > this.roomIdnReadUpToEvent.get(channelId)!.created_at
+    ) {
+      this.emit('Room.timeline', mevents[0], room);
+    }
   }
   handlePublicNostrEvent(event: NostrEvent) {
     this.eventsById.set(event.id, event);
@@ -1364,7 +1371,9 @@ class MatrixClientA extends EventEmitter {
             mevent.sender = asender;
           }
           this.emit('Event.decrypted', mevent);
-          this.emit('Room.timeline', mevent, room);
+          if (event.created_at > this.roomIdnReadUpToEvent.get(room.roomId)!.created_at) {
+            this.emit('Room.timeline', mevent, room);
+          }
         }
         // console.log(mc);
       } else {

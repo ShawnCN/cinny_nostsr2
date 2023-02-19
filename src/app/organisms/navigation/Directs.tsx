@@ -23,7 +23,7 @@ function Directs({ size }: IPropsDirects) {
   useEffect(() => {
     const handleTimeline = (event, room, toStartOfTimeline, removed, data) => {
       if (!roomList.directs.has(room.roomId)) return;
-      if (!data.liveEvent) return;
+      if (data?.liveEvent) return;
       if (directIds[0] === room.roomId) return;
       const newDirectIds = [room.roomId];
       directIds.forEach((id) => {
@@ -39,7 +39,7 @@ function Directs({ size }: IPropsDirects) {
   }, [directIds]);
 
   useEffect(() => {
-    const selectorChanged = (selectedRoomId, prevSelectedRoomId) => {
+    const selectorChanged = (selectedRoomId: string, prevSelectedRoomId: string) => {
       if (!drawerPostie.hasTopic('selector-change')) return;
       const addresses = [] as string[];
       if (drawerPostie.hasSubscriber('selector-change', selectedRoomId))
@@ -50,7 +50,7 @@ function Directs({ size }: IPropsDirects) {
       drawerPostie.post('selector-change', addresses, selectedRoomId);
     };
 
-    const notiChanged = (roomId, total, prevTotal) => {
+    const notiChanged = (roomId: string, total: number, prevTotal: number) => {
       if (total === prevTotal) return;
       if (drawerPostie.hasTopicAndSubscriber('unread-change', roomId)) {
         drawerPostie.post('unread-change', roomId);

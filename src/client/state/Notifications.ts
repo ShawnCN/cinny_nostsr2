@@ -16,6 +16,7 @@ import MatrixClientA from '../MatrixClientA';
 import RoomList from './RoomList';
 import TEvent from '../../../types/TEvent';
 import { TNoti } from '../../../types';
+import initMatrix from '../InitMatrix';
 
 function isNotifEvent(mEvent: TEvent) {
   // 自定义
@@ -88,23 +89,30 @@ class Notifications extends EventEmitter {
   }
 
   doesRoomHaveUnread(room: TRoom) {
-    // 自定义
-    // return false;
+    // if (!room) return false;
+    // const userId = this.matrixClient.getUserId();
+    // const readUpToId = room.getEventReadUpTo(userId);
+    // const liveEvents = room.getLiveTimeline().getEvents();
+    // if (liveEvents[liveEvents.length - 1]?.getSender() === userId) {
+    //   return false;
+    // }
 
-    if (!room) return false;
-    const userId = this.matrixClient.getUserId();
-    const readUpToId = room.getEventReadUpTo(userId);
-    const liveEvents = room.getLiveTimeline().getEvents();
-    if (liveEvents[liveEvents.length - 1]?.getSender() === userId) {
-      return false;
-    }
+    // for (let i = liveEvents.length - 1; i >= 0; i -= 1) {
+    //   const event = liveEvents[i];
+    //   if (event.getId() === readUpToId) return false;
+    //   if (isNotifEvent(event)) return true;
+    // }
+    // return true;
 
-    for (let i = liveEvents.length - 1; i >= 0; i -= 1) {
-      const event = liveEvents[i];
-      if (event.getId() === readUpToId) return false;
-      if (isNotifEvent(event)) return true;
-    }
-    return true;
+    let readTime = 0;
+    let latestTime = 0;
+    const readUpToEvent = initMatrix.matrixClient.roomIdnReadUpToEvent.get(room.roomId);
+    if (readUpToEvent) readTime = readUpToEvent.created_at;
+    const latestEvent = initMatrix.matrixClient.roomIdnLatestEvent.get(room.roomId);
+    if (latestEvent) latestTime = latestEvent.created_at;
+    if (readTime < latestTime) return true;
+    // total, highlight
+    return false;
   }
 
   getNotiType(roomId: string) {
@@ -340,7 +348,6 @@ class Notifications extends EventEmitter {
 
   _listenEvents() {
     this.matrixClient.on('Room.timeline', async (mEvent: TEvent, room: TRoom) => {
-      console.log('Room.timeline-------------');
       if (mEvent.isRedaction()) this._deletePopupNoti(mEvent.event.redacts);
 
       if (room.isSpaceRoom()) return;
@@ -352,7 +359,8 @@ class Notifications extends EventEmitter {
       const liveEvents = tl.getEvents();
 
       const lastTimelineEvent = liveEvents[liveEvents.length - 1];
-      if (lastTimelineEvent.getId() !== mEvent.getId()) return;
+      // if (lastTimelineEvent.getId() !== mEvent.getId()) return;
+      // 自定义
       if (mEvent.getSender() === this.matrixClient.getUserId()) return;
 
       const total = room.getUnreadNotificationCount('total');

@@ -507,7 +507,6 @@ function RoomViewContent({
   }, [onLimitUpdate]);
 
   useEffect(() => {
-    console.log('new event11111111111');
     const timelineScroll = timelineScrollRef.current;
     if (!roomTimeline.initialized) return;
     if (

@@ -473,7 +473,7 @@ const convertToMatrixContent = (
 
   // if (content.imgs.length == 0) return msgs;
   content.imgs.length > 0 &&
-    content.imgs.forEach((imgUrl) => {
+    content.imgs.forEach((imgUrl, i: number) => {
       let imgObject: TContent = {
         // info: {
         //   mimetype: 'image/png',
@@ -491,7 +491,7 @@ const convertToMatrixContent = (
         type: 'm.room.message' as const,
         origin_server_ts: event.created_at,
         sender: event.pubkey,
-        event_id: event.id!,
+        event_id: 'img' + i + event.id!,
         room_id: parent, // 母帖eventid或者是聊天室id}
       };
       msgs.unshift(msg2);
