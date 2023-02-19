@@ -37,6 +37,15 @@ export const saveMyMembershipsToLocal = (m: Map<string, TMyRoomIdnMemberships>) 
   localForage.setItem('myMemberships', c);
 };
 
+export const saveReadUpEvent = (m: Map<string, NostrEvent>) => {
+  const c = Object.fromEntries(m);
+  localForage.setItem('roomIdnReadUpToEvent', c);
+};
+export const saveLatestEvent = (m: Map<string, NostrEvent>) => {
+  const c = Object.fromEntries(m);
+  localForage.setItem('roomIdnLatestEvent', c);
+};
+
 export const saveChannelMessageEvents = (
   cMsgsByCid: Map<string, SortedLimitedEventSet>,
   eventsById: Map<string, NostrEvent>

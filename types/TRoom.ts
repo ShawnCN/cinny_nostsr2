@@ -62,7 +62,6 @@ class TRoom {
       return;
     }
     const nostrEvent = await initMatrix.matrixClient?.fetchChannelMeta(this.roomId);
-    // console.log('2666666666', nostrEvent?.content);
     initMatrix.matrixClient.handleEvent(nostrEvent);
     if (nostrEvent) {
       const { name, about, picture } = JSON.parse(nostrEvent.content);
@@ -111,6 +110,9 @@ class TRoom {
     return [user];
   }
   getUnreadNotificationCount(arg0: TTotalHighlight) {
+    const readUpToEvent = initMatrix.matrixClient.roomIdnReadUpToEvent.get(this.roomId);
+    const latestEvent = initMatrix.matrixClient.roomIdnLatestEvent.get(this.roomId);
+    if (readUpToEvent!.created_at < latestEvent!.created_at) return 1;
     // total, highlight
     return 0;
   }
@@ -164,6 +166,8 @@ class TRoom {
     return this.type;
   }
   getEventReadUpTo(userId: string) {
+    const readUpToEvent = initMatrix.matrixClient.roomIdnReadUpToEvent.get(this.roomId);
+    return readUpToEvent?.id;
     return '1';
   }
   // 一对一聊天室，选择对方用户。
@@ -180,7 +184,11 @@ class TRoom {
   getJoinRule() {
     return {};
   }
-  getLiveTimeline() {
+  async getLiveTimeline() {
+    // const tl = await initMatrix.matrixClient.paginateEventTimeline(this, null, {
+    //   backwards: true,
+    //   limit: 1000000000,
+    // });
     const a = new TLiveTimeline();
     return a;
   }

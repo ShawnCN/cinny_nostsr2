@@ -19,7 +19,7 @@ import { TNoti } from '../../../types';
 
 function isNotifEvent(mEvent: TEvent) {
   // 自定义
-  return false;
+  // return false;
   const eType = mEvent.getType();
   if (!cons.supportEventTypes.includes(eType)) return false;
   if (eType === 'm.room.member') return false;
@@ -89,7 +89,7 @@ class Notifications extends EventEmitter {
 
   doesRoomHaveUnread(room: TRoom) {
     // 自定义
-    return false;
+    // return false;
 
     if (!room) return false;
     const userId = this.matrixClient.getUserId();
@@ -339,13 +339,17 @@ class Notifications extends EventEmitter {
   }
 
   _listenEvents() {
-    this.matrixClient.on('Room.timeline', (mEvent: TEvent, room: TRoom) => {
+    this.matrixClient.on('Room.timeline', async (mEvent: TEvent, room: TRoom) => {
+      console.log('Room.timeline-------------');
       if (mEvent.isRedaction()) this._deletePopupNoti(mEvent.event.redacts);
 
       if (room.isSpaceRoom()) return;
       if (!isNotifEvent(mEvent)) return;
 
-      const liveEvents = room.getLiveTimeline().getEvents();
+      // const liveEvents = room.getLiveTimeline().getEvents();
+      // 自定义
+      const tl = await room.getLiveTimeline();
+      const liveEvents = tl.getEvents();
 
       const lastTimelineEvent = liveEvents[liveEvents.length - 1];
       if (lastTimelineEvent.getId() !== mEvent.getId()) return;

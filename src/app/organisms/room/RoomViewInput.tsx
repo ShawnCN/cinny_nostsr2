@@ -154,7 +154,6 @@ function RoomViewInput({ roomId, roomTimeline, viewEvent, roomType }: IPropsRoom
   }
 
   function setUpReply(userId: string, eventId: string, body, formattedBody) {
-    console.log('rrrrrrrrrrrrrrrrrrrrrr', body, formattedBody);
     setReplyTo({ userId, eventId, body });
     roomsInput.setReplyTo(roomId, {
       userId,

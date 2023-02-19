@@ -17,11 +17,11 @@ import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 import { getUsersActionJsx } from './common';
 import RoomTimeline from '../../../client/state/RoomTimeline';
 
-function useJumpToEvent(roomTimeline) {
-  const [eventId, setEventId] = useState(null);
+function useJumpToEvent(roomTimeline: RoomTimeline) {
+  const [eventId, setEventId] = useState<string | null>(null);
 
   const jumpToEvent = () => {
-    roomTimeline.loadEventTimeline(eventId);
+    roomTimeline.loadEventTimeline(eventId as string);
   };
 
   const cancelJumpToEvent = () => {
@@ -71,9 +71,9 @@ function useTypingMembers(roomTimeline) {
   return [typingMembers];
 }
 
-function useScrollToBottom(roomTimeline) {
+function useScrollToBottom(roomTimeline: RoomTimeline) {
   const [isAtBottom, setIsAtBottom] = useState(true);
-  const handleAtBottom = (atBottom) => setIsAtBottom(atBottom);
+  const handleAtBottom = (atBottom: boolean) => setIsAtBottom(atBottom);
 
   useEffect(() => {
     setIsAtBottom(true);

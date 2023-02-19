@@ -46,11 +46,14 @@ import {
   saveChannelMessageEvents,
   savechannelProfileEventsToLocal,
   savechannelProfileUpdateEventsToLocal,
+  saveLatestEvent,
   saveMyMembershipsToLocal,
   saveProfileEventsToLocal,
+  saveReadUpEvent,
 } from '../util/localForageUtil';
 import TEventTimelineSet from '../../types/TEventTimelineSet';
 import initMatrix from './InitMatrix';
+import navigation from './state/navigation';
 const debounce = new Debounce();
 class MatrixClientA extends EventEmitter {
   store: { deleteAllData: () => Promise<any> };
@@ -67,6 +70,8 @@ class MatrixClientA extends EventEmitter {
     string,
     { name: string; about: string; picture: string; created_at: number; founderId: string }
   >;
+  roomIdnReadUpToEvent: Map<string, NostrEvent>;
+  roomIdnLatestEvent: Map<string, NostrEvent>;
   cProfileEvents: Map<string, any>;
   cProfileUpdateEvents: Map<string, any>;
   channelProfileEvents: Map<string, any>;
@@ -114,13 +119,15 @@ class MatrixClientA extends EventEmitter {
     this.relayInstance = new Map();
     this.subscribedChannels = new Set<string>();
     this.subscribedChannelProfiles = new Set<string>();
+    this.roomIdnReadUpToEvent = new Map();
+    this.roomIdnLatestEvent = new Map();
     // this.store = {
     //   deleteAllData:()=>Promise<any>
     // }
   }
 
   async initCrypto() {
-    console.log('initCrypto');
+    // console.log('initCrypto');
     // await this.loadLocalStorageEvents();
   }
   async startClient({ lazyLoadMembers: boolean }) {
@@ -537,7 +544,6 @@ class MatrixClientA extends EventEmitter {
     timelineToPaginate: any,
     { backwards, limit }: { backwards: boolean; limit: number }
   ) {
-    console.log('11111111111111111111');
     let tl = [] as TEvent[];
     let eventIds: string[] = [];
     if (room.type == 'single') {
@@ -548,7 +554,11 @@ class MatrixClientA extends EventEmitter {
           tl = tl.concat(mevents);
         }
       }
-      return sortedChats(tl);
+      const events = sortedChats(tl);
+      const evtId = events[events.length - 1].event.event_id;
+      const evt = this.eventsById.get(evtId);
+      this.handleUpdateReadUpToEvent(room.roomId, evt!);
+      return events;
     }
     if (room.type == 'groupChannel') {
       eventIds = this.cMsgsByCid.get(room.roomId)!.eventIds;
@@ -558,7 +568,11 @@ class MatrixClientA extends EventEmitter {
           tl = tl.concat(mevents);
         }
       }
-      return sortedChats(tl);
+      const events = sortedChats(tl);
+      const evtId = events[events.length - 1].event.event_id;
+      const evt = this.eventsById.get(evtId);
+      this.handleUpdateReadUpToEvent(room.roomId, evt!);
+      return events;
     }
   }
   getEventTimeline(timelineSet: Set<TEvent>, eventId: string) {
@@ -763,7 +777,6 @@ class MatrixClientA extends EventEmitter {
   }
   saveLocalStorageEvents = () =>
     debounce._(() => {
-      console.log('保存成功');
       const dms: NostrEvent[] = [];
       for (const set of this.directMessagesByUser.values()) {
         set.eventIds.forEach((eventId: any) => {
@@ -1220,7 +1233,7 @@ class MatrixClientA extends EventEmitter {
         this.handleChannelMetaUpdateEvent(event);
         break;
       case 42:
-        this.handleChannelMessageEvent(event);
+        this.handlecMsgEvent(event);
         break;
       case 16462:
         // TODO return if already have
@@ -1234,7 +1247,7 @@ class MatrixClientA extends EventEmitter {
         break;
     }
   }
-  handleChannelMessageEvent(event: NostrEvent) {
+  handlecMsgEvent(event: NostrEvent) {
     const mevents = formatChannelMsg(event);
     mevents.forEach((mc) => {
       this.emit('Event.decrypted', mc);
@@ -1252,6 +1265,7 @@ class MatrixClientA extends EventEmitter {
     }
     this.cMsgsByCid.get(channelId)?.add(event);
     saveChannelMessageEvents(this.cMsgsByCid, this.eventsById);
+    this.handleUpdateLatestEvent(channelId, event);
   }
   handlePublicNostrEvent(event: NostrEvent) {
     this.eventsById.set(event.id, event);
@@ -1277,6 +1291,7 @@ class MatrixClientA extends EventEmitter {
     const myPub = this.user.userId;
     const dmRoomId = findDMroomId(event, myPub);
     if (!dmRoomId) return;
+
     // let dmRoomId = event.pubkey;
     // if (event.pubkey === myPub) {
     //   const ptagUser = event.tags.find((tag) => tag[0] === 'p')?.[1];
@@ -1294,6 +1309,14 @@ class MatrixClientA extends EventEmitter {
       this.directMessagesByUser.set(dmRoomId, new SortedLimitedEventSet(500));
     }
     this.directMessagesByUser.get(dmRoomId)?.add(event);
+    this.handleUpdateLatestEvent(dmRoomId, event);
+    // if (!this.roomIdnLatestEvent.has(dmRoomId)) {
+    //   this.roomIdnLatestEvent.set(dmRoomId, event);
+    //   saveLatestEvent(this.roomIdnLatestEvent);
+    // } else if (this.roomIdnLatestEvent.get(dmRoomId)!.created_at < event.created_at) {
+    //   this.roomIdnLatestEvent.set(dmRoomId, event);
+    //   saveLatestEvent(this.roomIdnLatestEvent);
+    // }
     const mevents = await formatDmMsgFromOthersOrMe(event, this.user, dmRoomId);
     mevents.forEach((mevent) => {
       const roomId = mevent.event.room_id;
@@ -1337,6 +1360,7 @@ class MatrixClientA extends EventEmitter {
             mevent.sender = asender;
           }
           this.emit('Event.decrypted', mevent);
+          this.emit('Room.timeline', mevent, room);
         }
         // console.log(mc);
       } else {
@@ -1376,6 +1400,7 @@ class MatrixClientA extends EventEmitter {
       }
     }
   };
+
   handleMetaEvent(event: NostrEvent) {
     try {
       const existing = this.profiles.get(event.pubkey);
@@ -1554,6 +1579,27 @@ class MatrixClientA extends EventEmitter {
       }
     }
     return count;
+  };
+  handleUpdateLatestEvent = (roomId: string, event: NostrEvent) => {
+    if (!this.roomIdnLatestEvent.has(roomId)) {
+      this.roomIdnLatestEvent.set(roomId, event);
+      saveLatestEvent(this.roomIdnLatestEvent);
+    } else if (this.roomIdnLatestEvent.get(roomId)!.created_at < event.created_at) {
+      this.roomIdnLatestEvent.set(roomId, event);
+      saveLatestEvent(this.roomIdnLatestEvent);
+    }
+    if (navigation.selectedRoomId && navigation.selectedRoomId == roomId) {
+      this.handleUpdateReadUpToEvent(roomId, event);
+    }
+  };
+  handleUpdateReadUpToEvent = (roomId: string, event: NostrEvent) => {
+    if (!this.roomIdnReadUpToEvent.has(roomId)) {
+      this.roomIdnReadUpToEvent.set(roomId, event);
+      saveReadUpEvent(this.roomIdnReadUpToEvent);
+    } else if (this.roomIdnReadUpToEvent.get(roomId)!.created_at < event.created_at) {
+      this.roomIdnReadUpToEvent.set(roomId, event);
+      saveReadUpEvent(this.roomIdnReadUpToEvent);
+    }
   };
 }
 

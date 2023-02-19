@@ -171,7 +171,6 @@ function RelaySettings() {
     const { keywordInput } = evt.target.elements;
     const value = keywordInput.value.trim();
     if (value === '') return;
-    console.log(value);
     mx.addRelay(value); // add the new relay using the Nostr method
     keywordInput.value = '';
   };

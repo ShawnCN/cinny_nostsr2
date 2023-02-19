@@ -322,7 +322,6 @@ function InviteUser({
 
   useEffect(() => {
     if (isOpen && typeof searchTerm === 'string') searchNostrUser(searchTerm);
-    console.log('2222222222222222');
     return () => {
       updateIsSearching(false);
       updateSearchQuery({});

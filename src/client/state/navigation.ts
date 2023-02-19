@@ -216,7 +216,7 @@ class Navigation extends EventEmitter {
     this.emit(cons.events.navigation.SPACE_SELECTED, this.selectedSpaceId);
   }
 
-  _selectRoomWithSpace(spaceId) {
+  _selectRoomWithSpace(spaceId: string) {
     if (!spaceId) return;
     const { roomList, accountData, matrixClient } = this.initMatrix;
     console.log('accountData', accountData);
@@ -325,7 +325,6 @@ class Navigation extends EventEmitter {
         this._selectSpace(action.roomId, false);
       },
       [cons.actions.navigation.SELECT_ROOM]: () => {
-        console.log(action.roomId);
         if (action.roomId) this._selectTabWithRoom(action.roomId);
         this._selectRoom(action.roomId, action.eventId);
       },

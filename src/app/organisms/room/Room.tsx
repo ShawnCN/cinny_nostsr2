@@ -24,6 +24,7 @@ function Room() {
 
   useEffect(() => {
     const handleRoomSelected = (rId: string, pRoomId: string, eId: string) => {
+      console.log(`Room selected`);
       roomInfo.roomTimeline?.removeInternalListeners();
       if (mx.getRoom(rId)) {
         setRoomInfo({

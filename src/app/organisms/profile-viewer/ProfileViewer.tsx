@@ -199,10 +199,8 @@ function ProfileFooter({ roomId, userId, onRequestClose }: IPropsProfileFooter) 
   }, [userId]);
 
   const openDM = async () => {
-    console.log('8888888888888888888');
     // Check and open if user already have a DM with userId.
     const dmRoomId = hasDMWith(userId);
-    console.log('5555555555', dmRoomId);
     if (dmRoomId) {
       selectRoom(dmRoomId);
       onRequestClose();

@@ -196,7 +196,6 @@ class RoomsInput extends EventEmitter {
   }
 
   getContent(roomId: string, options, message, reply, edit?: TEvent) {
-    console.log('----------getContent-------------', roomId, options, message, reply);
     const msgType = options?.msgType || 'm.text';
     const autoMarkdown = options?.autoMarkdown ?? true;
 
@@ -284,7 +283,6 @@ class RoomsInput extends EventEmitter {
 
     if (this.getMessage(roomId).trim() !== '') {
       const content = this.getContent(roomId, options, input.message, input.replyTo);
-      console.log('55555555555555---------', content);
       await this.matrixClient.sendMessage(roomId, content, roomType);
     }
 

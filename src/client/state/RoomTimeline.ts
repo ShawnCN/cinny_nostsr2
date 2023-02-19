@@ -180,7 +180,6 @@ class RoomTimeline extends EventEmitter {
   }
 
   _populateAllLinkedEvents(timeline) {
-    console.log('_populateAllLinkedEvents');
     const firstTimeline = getFirstLinkedTimeline(timeline);
     iterateLinkedTimelines(firstTimeline, false, (tm: TLiveTimeline) => {
       tm.getEvents().forEach((mEvent) => this.addToTimeline(mEvent));
@@ -246,7 +245,7 @@ class RoomTimeline extends EventEmitter {
         backwards,
         limit,
       });
-      this.activeTimeline = new TLiveTimeline(tl);
+      this.activeTimeline = new TLiveTimeline(tl!);
       if (this.isEncrypted()) await this.decryptAllEventsOfTimeline(this.activeTimeline);
       this._populateTimelines();
 
@@ -389,7 +388,6 @@ class RoomTimeline extends EventEmitter {
     this._listenDecryptEvent = (event: TEvent) => {
       if (event.getRoomId() !== this.roomId) return;
       if (this.isOngoingPagination) return;
-      console.log('0.1_listenDecryptEvent', this.ongoingDecryptionCount);
       // Not a live event.
       // so we don't need to process it here
       // if (this.ongoingDecryptionCount === 0) return;

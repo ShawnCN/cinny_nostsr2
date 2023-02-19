@@ -780,7 +780,6 @@ export const formatChannelEvent = async (
     }
   }
 
-  console.log('11111111111111111111111111', event);
   event = await getSignedEvent(event, user?.privatekey);
 
   return event;

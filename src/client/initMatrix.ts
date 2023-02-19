@@ -17,6 +17,7 @@ import { defaultChatroomList } from './state/cons';
 
 import { saveMDirectsToLocal } from '../util/localForageUtil';
 import { initialChannelroom, initialDMroom } from '../util/matrixUtil';
+import { isObject } from 'formik';
 
 // const matrixClientA = new MatrixClientA();
 
@@ -243,6 +244,8 @@ class InitMatrix extends EventEmitter {
     const dms = await localForage.getItem('dms');
     const cmsgs = await localForage.getItem('cmsgs');
     const keyValueEvents = await localForage.getItem('keyValueEvents');
+    const roomIdnReadUpToEvent = await localForage.getItem('roomIdnReadUpToEvent');
+    const roomIdnLatestEvent = await localForage.getItem('roomIdnLatestEvent');
     if (Array.isArray(rooms)) {
       this.roomList.rooms = new Set(rooms);
     }
@@ -301,6 +304,14 @@ class InitMatrix extends EventEmitter {
       keyValueEvents.forEach((msg) => {
         this.matrixClient.handleEvent(msg);
       });
+    }
+    if (isObject(roomIdnReadUpToEvent)) {
+      const m = new Map(Object.entries(roomIdnReadUpToEvent));
+      this.matrixClient.roomIdnReadUpToEvent = m;
+    }
+    if (isObject(roomIdnLatestEvent)) {
+      const m = new Map(Object.entries(roomIdnLatestEvent));
+      this.matrixClient.roomIdnLatestEvent = m;
     }
 
     this.localStorageLoaded = true;

@@ -294,14 +294,10 @@ function PublicRooms({ isOpen, searchTerm = undefined, onRequestClose }: IPropsP
   }
 
   function joinRoom(roomIdOrAlias: string) {
-    console.log('Joining room');
     joiningRooms.add(roomIdOrAlias);
 
-    console.log(joiningRooms);
     updateJoiningRooms(new Set(Array.from(joiningRooms)));
-    console.log(joiningRooms);
     roomActions.join(roomIdOrAlias, false);
-    console.log('Joining room2');
   }
 
   function renderRoomList(rooms: TRoom[]) {

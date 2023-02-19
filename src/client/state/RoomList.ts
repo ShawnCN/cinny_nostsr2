@@ -134,7 +134,7 @@ class RoomList extends EventEmitter {
   getAllParentSpaces(roomId: string) {
     const allParents = new Set() as Set<string>;
 
-    const addAllParentIds = (rId) => {
+    const addAllParentIds = (rId: string) => {
       if (allParents.has(rId)) return;
       allParents.add(rId);
 
@@ -148,7 +148,7 @@ class RoomList extends EventEmitter {
     return allParents;
   }
 
-  addToSpaces(roomId) {
+  addToSpaces(roomId: string) {
     this.spaces.add(roomId);
 
     const allParentSpaces = this.getAllParentSpaces(roomId);
@@ -159,7 +159,7 @@ class RoomList extends EventEmitter {
     });
   }
 
-  deleteFromSpaces(roomId) {
+  deleteFromSpaces(roomId: string) {
     this.spaces.delete(roomId);
 
     const spaceChildren = this.getSpaceChildren(roomId);
@@ -188,7 +188,6 @@ class RoomList extends EventEmitter {
     };
     const actions = {
       [cons.actions.room.JOIN]: () => {
-        console.log('0000000000000001');
         if (addRoom(action.roomId, action.isDM)) {
           setTimeout(() => {
             this.emit(cons.events.roomList.ROOM_JOINED, action.roomId);
