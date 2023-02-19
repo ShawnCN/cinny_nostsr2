@@ -24,7 +24,7 @@ class TRoom {
   // };
   constructor(roomId: string, type: TRoomType, name?: string, about?: string, avatarUrl?: string) {
     // this.currentState.getStateEvents = getStateEvents();
-    this.currentState = new CurrentState();
+    this.currentState = new CurrentState(roomId);
     this.roomMembers = new Map();
     this.roomId = roomId;
     if (type) {
@@ -204,8 +204,10 @@ class TRoom {
 
 class CurrentState {
   events: Map<string, TEvent>;
-  constructor() {
+  roomId: string;
+  constructor(roomId: string) {
     this.events = new Map();
+    this.roomId = roomId;
   }
   hasSufficientPowerLevelFor = (arg0: string, arg1: number) => {
     return false;
@@ -213,7 +215,9 @@ class CurrentState {
   maySendEvent = (arg0: string, arg1: string) => {
     return false;
   };
-  maySendStateEvent = (arg0: string, userId: string) => {
+  maySendStateEvent = (arg0: 'm.room.avatar' | 'm.room.name' | 'm.room.topic', userId: string) => {
+    const room = initMatrix.matrixClient.getRoom(this.roomId);
+    if (room?.roomId !== userId && room?.founderId !== userId) return false;
     return true;
   };
   maySendMessage = (userId: string) => {

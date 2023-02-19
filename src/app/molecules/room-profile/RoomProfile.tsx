@@ -36,7 +36,7 @@ function RoomProfile({ roomId }) {
 
   const mx = initMatrix.matrixClient;
   const isDM = initMatrix.roomList.directs.has(roomId);
-  const room = mx.getRoom(roomId);
+  const room = mx.getRoom(roomId)!;
   const type = room!.type;
   const { currentState } = room;
   // let avatarSrc = mx.getRoom(roomId).getAvatarUrl(mx.baseUrl, 36, 36, 'crop');
