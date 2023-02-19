@@ -13,11 +13,12 @@ import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 
 import { getUsersActionJsx } from '../../organisms/room/common';
 import RoomTimeline from '../../../client/state/RoomTimeline';
+import TRoomMember from '../../../../types/TRoomMember';
 interface IPropsFollowingMembers {
   roomTimeline: RoomTimeline;
 }
 function FollowingMembers({ roomTimeline }: IPropsFollowingMembers) {
-  const [followingMembers, setFollowingMembers] = useState<any[]>([]);
+  const [followingMembers, setFollowingMembers] = useState<TRoomMember[]>([]);
   const { roomId } = roomTimeline;
   const mx = initMatrix.matrixClient;
   const { roomsInput } = initMatrix;

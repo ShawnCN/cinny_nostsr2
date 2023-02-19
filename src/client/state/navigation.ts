@@ -117,7 +117,6 @@ class Navigation extends EventEmitter {
 
   _selectTabWithRoom(roomId: string) {
     const { roomList, accountData } = this.initMatrix;
-    console.log('accountData', accountData);
     const { categorizedSpaces } = accountData;
 
     if (roomList.isOrphan(roomId)) {
@@ -219,7 +218,6 @@ class Navigation extends EventEmitter {
   _selectRoomWithSpace(spaceId: string) {
     if (!spaceId) return;
     const { roomList, accountData, matrixClient } = this.initMatrix;
-    console.log('accountData', accountData);
     const { categorizedSpaces } = accountData;
 
     const data = this.spaceToRoom.get(spaceId);

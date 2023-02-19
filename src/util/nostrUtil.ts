@@ -8,6 +8,9 @@ export const toNostrBech32Address = (address: string, prefix: string) => {
   if (!prefix) {
     throw new Error('prefix is required');
   }
+  if (!address || typeof address !== 'string') {
+    return null;
+  }
   try {
     const decoded = bech32.decode(address);
     if (prefix !== decoded.prefix) {

@@ -354,7 +354,7 @@ export const formatDmMsgFromOthersOrMe = async (event: NostrEvent, user: TUser, 
   const content = await decryptContent(user, event);
   // content = content.replace(/&/g, '&#38;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const dContent = contectDetect(content);
-  const msgs = convertToMatrixContent(dContent, event, parent);
+  const mevents = convertToMatrixContent(dContent, event, parent);
   const citedEvtId = getEventReplyingTo(event);
   // let eventList: TEvent[] = [];
   // msgs.forEach((m) => {
@@ -362,8 +362,10 @@ export const formatDmMsgFromOthersOrMe = async (event: NostrEvent, user: TUser, 
   //   if (citedEvtId) mc.replyEventId = citedEvtId;
   //   eventList.push(mc);
   // });
+  event.content = content;
+  const decryptedEvent = event;
 
-  return msgs;
+  return { mevents, decryptedEvent };
   //If the current message is already in the message cache, return, otherwise add to the number of unread messages
   // let citedMsg = {} as TCitedMsg | null;
   // if (replyingTo != '') {
@@ -382,6 +384,34 @@ export const formatDmMsgFromOthersOrMe = async (event: NostrEvent, user: TUser, 
   //   room_id: parent, // 母帖eventid或者是聊天室id
   // };
   // return msg;
+};
+
+export const formatDecryptedDmMsgFromOthersOrMe = (
+  event: NostrEvent,
+  user: TUser,
+  parent: string
+) => {
+  let events_replied_to: string[] = [];
+  let pubkeys_replied_to: string[] = [];
+  let replyingTo = '';
+  for (let i = 0; i < event.tags.length; i++) {
+    if (event['tags'][i][0] == 'e') {
+      events_replied_to.push(event['tags'][i][1]);
+    }
+    if (event['tags'][i][0] == 'p') {
+      pubkeys_replied_to.push(event['tags'][i][1]);
+    }
+  }
+  if (events_replied_to[0]) {
+    replyingTo = events_replied_to[0];
+  }
+
+  // const content = await decryptContent(user, event);
+  const content = event.content;
+  const dContent = contectDetect(content);
+  const mevents = convertToMatrixContent(dContent, event, parent);
+
+  return mevents;
 };
 
 export const formatChannelMsg = (event: NostrEvent) => {

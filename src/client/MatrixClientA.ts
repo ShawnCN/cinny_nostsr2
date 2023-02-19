@@ -22,6 +22,7 @@ import {
   formatChannelEvent,
   formatChannelMsg,
   FormatCitedEventsAndCitedPubkeys,
+  formatDecryptedDmMsgFromOthersOrMe,
   formatDMEvent,
   formatDmMsgFromOthersOrMe,
   formatGlobalMsg,
@@ -119,6 +120,8 @@ class MatrixClientA extends EventEmitter {
     this.relayInstance = new Map();
     this.subscribedChannels = new Set<string>();
     this.subscribedChannelProfiles = new Set<string>();
+    this.roomIdnReadUpToEvent = new Map();
+    this.roomIdnLatestEvent = new Map();
     this.roomIdnReadUpToEvent = new Map();
     this.roomIdnLatestEvent = new Map();
     // this.store = {
@@ -539,7 +542,7 @@ class MatrixClientA extends EventEmitter {
   isRoomEncrypted(roomId: string) {
     return false;
   }
-  async paginateEventTimeline(
+  paginateEventTimeline(
     room: TRoom,
     timelineToPaginate: any,
     { backwards, limit }: { backwards: boolean; limit: number }
@@ -550,7 +553,7 @@ class MatrixClientA extends EventEmitter {
       eventIds = this.directMessagesByUser.get(room.roomId)!.eventIds;
       for (let [id, event] of this.eventsById) {
         if (eventIds.includes(id)) {
-          const mevents = await formatDmMsgFromOthersOrMe(event, this.user, room.roomId);
+          const mevents = formatDecryptedDmMsgFromOthersOrMe(event, this.user, room.roomId);
           tl = tl.concat(mevents);
         }
       }
@@ -1304,7 +1307,7 @@ class MatrixClientA extends EventEmitter {
     //     return;
     //   }
     // }
-    this.eventsById.set(event.id, event);
+    // this.eventsById.set(event.id, event);
     if (!this.directMessagesByUser.has(dmRoomId)) {
       this.directMessagesByUser.set(dmRoomId, new SortedLimitedEventSet(500));
     }
@@ -1317,7 +1320,8 @@ class MatrixClientA extends EventEmitter {
     //   this.roomIdnLatestEvent.set(dmRoomId, event);
     //   saveLatestEvent(this.roomIdnLatestEvent);
     // }
-    const mevents = await formatDmMsgFromOthersOrMe(event, this.user, dmRoomId);
+    const { mevents, decryptedEvent } = await formatDmMsgFromOthersOrMe(event, this.user, dmRoomId);
+    this.eventsById.set(event.id, decryptedEvent);
     mevents.forEach((mevent) => {
       const roomId = mevent.event.room_id;
       const senderId = mevent.event.sender;

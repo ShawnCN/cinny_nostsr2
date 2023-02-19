@@ -443,7 +443,7 @@ function pickEmoji(e, roomId: string, eventId: string, roomTimeline: RoomTimelin
 function genReactionMsg(userIds, reaction, shortcode) {
   return (
     <>
-      {userIds.map((userId, index) => (
+      {userIds.map((userId: string, index: number) => (
         <React.Fragment key={userId}>
           {twemojify(getUsername(userId))}
           {index < userIds.length - 1 && (

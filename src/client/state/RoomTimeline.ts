@@ -241,7 +241,7 @@ class RoomTimeline extends EventEmitter {
 
     const oldSize = this.timeline.length;
     try {
-      const tl = await this.matrixClient.paginateEventTimeline(this.room, timelineToPaginate, {
+      const tl = this.matrixClient.paginateEventTimeline(this.room, timelineToPaginate, {
         backwards,
         limit,
       });

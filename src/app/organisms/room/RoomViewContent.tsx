@@ -319,9 +319,8 @@ function useHandleScroll(
     });
     autoPaginate();
   }, [roomTimeline]);
-  console.log('1111111111111111');
+
   const handleScrollToLive = useCallback(() => {
-    console.log('22221111111111111111');
     const timelineScroll = timelineScrollRef.current;
     const limit = eventLimitRef.current;
     if (readUptoEvtStore.getItem()) {
@@ -347,7 +346,6 @@ function useEventArrive(
 ) {
   const myUserId = initMatrix.matrixClient.getUserId();
   const [newEvent, setEvent] = useState<TEvent>(null as unknown as TEvent);
-  console.log('555555555555555555');
   useEffect(() => {
     const timelineScroll = timelineScrollRef.current;
     const limit = eventLimitRef.current;
@@ -378,7 +376,6 @@ function useEventArrive(
     };
 
     const handleEvent = (event: TEvent) => {
-      console.log('handleEvent', event);
       const tLength = roomTimeline.timeline.length;
       const isViewingLive = roomTimeline.isServingLiveTimeline() && limit.length >= tLength - 1;
       const isAttached = timelineScroll.bottom < SCROLL_TRIGGER_POS;
@@ -630,7 +627,7 @@ function RoomViewContent({
         itemCountIndex += 1;
       }
 
-      const focusId = timelineInfo.focusEventId;
+      const focusId = timelineInfo?.focusEventId;
       const isFocus = focusId === mEvent.getId();
       if (isFocus) jumpToItemIndex = itemCountIndex;
 

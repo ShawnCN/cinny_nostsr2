@@ -110,9 +110,13 @@ class TRoom {
     return [user];
   }
   getUnreadNotificationCount(arg0: TTotalHighlight) {
+    let readTime = 0;
+    let latestTime = 0;
     const readUpToEvent = initMatrix.matrixClient.roomIdnReadUpToEvent.get(this.roomId);
+    if (readUpToEvent) readTime = readUpToEvent.created_at;
     const latestEvent = initMatrix.matrixClient.roomIdnLatestEvent.get(this.roomId);
-    if (readUpToEvent!.created_at < latestEvent!.created_at) return 1;
+    if (latestEvent) latestTime = latestEvent.created_at;
+    if (readTime < latestTime) return 1;
     // total, highlight
     return 0;
   }
@@ -184,13 +188,14 @@ class TRoom {
   getJoinRule() {
     return {};
   }
-  async getLiveTimeline() {
-    // const tl = await initMatrix.matrixClient.paginateEventTimeline(this, null, {
-    //   backwards: true,
-    //   limit: 1000000000,
-    // });
-    const a = new TLiveTimeline();
-    return a;
+  getLiveTimeline() {
+    const tl = initMatrix.matrixClient.paginateEventTimeline(this, null, {
+      backwards: true,
+      limit: 1000000000,
+    });
+    if (tl) return new TLiveTimeline(tl);
+
+    return new TLiveTimeline([]);
   }
   getCanonicalAlias() {
     return this.canonical_alias;
