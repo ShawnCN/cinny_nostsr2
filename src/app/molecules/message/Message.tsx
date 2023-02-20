@@ -657,7 +657,7 @@ const MessageOptions = React.memo(({ roomTimeline, mEvent, edit, reply }: IProps
             <MenuItem iconSrc={CmdIC} onClick={() => handleOpenViewSource(mEvent, roomTimeline)}>
               View source
             </MenuItem>
-            {/* {(canIRedact || senderId === mx.getUserId()) && (
+            {(canIRedact || senderId === mx.getUserId()) && (
               <>
                 <MenuBorder />
                 <MenuItem
@@ -677,7 +677,7 @@ const MessageOptions = React.memo(({ roomTimeline, mEvent, edit, reply }: IProps
                   Delete
                 </MenuItem>
               </>
-            )} */}
+            )}
           </>
         )}
         render={(toggleMenu) => (

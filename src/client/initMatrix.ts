@@ -160,6 +160,7 @@ class InitMatrix extends EventEmitter {
           this.matrixClient.subChannelMessage(Array.from(this.roomList.rooms));
           this.matrixClient.subDmFromStranger();
           this.matrixClient.subDmByMe();
+          this.matrixClient.subEverythingNew();
           await this.getContactsList();
 
           break;

@@ -552,12 +552,12 @@ const tabItems = [
     disabled: false,
     render: () => <NotificationsSection />,
   },
-  {
-    text: tabText.EMOJI,
-    iconSrc: EmojiIC,
-    disabled: false,
-    render: () => <EmojiSection />,
-  },
+  // {
+  //   text: tabText.EMOJI,
+  //   iconSrc: EmojiIC,
+  //   disabled: false,
+  //   render: () => <EmojiSection />,
+  // },
   {
     text: tabText.SECURITY,
     iconSrc: LockIC,

@@ -93,7 +93,6 @@ function RoomViewFloating({ roomId, roomTimeline }: IPropsRoomViewFloating) {
   const [isAtBottom, setIsAtBottom] = useScrollToBottom(roomTimeline);
 
   const handleScrollToBottom = () => {
-    console.log('handleScrollToBottom-----------');
     roomTimeline.emit(cons.events.roomTimeline.SCROLL_TO_LIVE);
     setIsAtBottom(true);
   };

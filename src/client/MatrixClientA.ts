@@ -625,6 +625,14 @@ class MatrixClientA extends EventEmitter {
     return Promise.resolve(aroom);
   }
   async redactEvent(roomId: string, eventId: string, undefined, reason: any) {
+    // const nostrEvent = this.eventsById.get(eventId) as NostrEvent;
+    // const room = this.publicRoomList.get(roomId) as TRoom;
+    // const mevents = formatDecryptedDmMsgFromOthersOrMe(nostrEvent, this.user, room.roomId);
+    // mevents.forEach((mevent) => {
+    //   mevent.event.redacts = mevent.getId();
+    //   this.emit('Room.redaction', mevent, room);
+    // });
+
     let event: NostrEvent = {
       pubkey: this.user.userId,
       created_at: Math.floor(Date.now() / 1000),
@@ -634,6 +642,7 @@ class MatrixClientA extends EventEmitter {
     };
     event = await getSignedEvent(event, this.user?.privatekey);
     this.publishEvent(event);
+    this.handleEvent(event);
   }
   async sendEvent(roomId, arg1: string, content) {
     console.log('send event', roomId, arg1, content);
@@ -921,7 +930,7 @@ class MatrixClientA extends EventEmitter {
   subChannelMessage = (channelId: string[]) => {
     // for (let [k, relay] of this.relayInstance) {
     const filter = {
-      kinds: [42],
+      kinds: [5, 41, 42],
       '#e': channelId,
       limit: 200,
     };
@@ -930,7 +939,7 @@ class MatrixClientA extends EventEmitter {
   subDmFromStranger = () => {
     const pubkey = this.user.userId;
     const filter = {
-      kinds: [4],
+      kinds: [4, 5],
       '#p': [pubkey],
       limit: 1000,
     };
@@ -944,6 +953,13 @@ class MatrixClientA extends EventEmitter {
       limit: 1000,
     };
     this.sendSubToRelays([filter], 'subDmByMe');
+  };
+
+  subEverythingNew = () => {
+    const filter = {
+      kinds: [3, 5, 7],
+    };
+    this.sendSubToRelays([filter], 'subEverythingNew');
   };
 
   fetchChannelsMeta = () =>
@@ -1398,12 +1414,42 @@ class MatrixClientA extends EventEmitter {
   };
   handleDelete = (event: NostrEvent) => {
     const id = event.tags.find((tag) => tag[0] === 'e')?.[1];
+    if (!id) return null;
+    const deletedEvent = this.eventsById.get(id);
+    if (!deletedEvent) return null;
+    this.eventsById.set(event.id, event);
     const myPub = this.user.userId;
-    if (id) {
-      const deletedEvent = this.eventsById.get(id);
-      // only we or the author can delete
-      if (deletedEvent && [event.pubkey, myPub].includes(deletedEvent.pubkey)) {
-        this.eventsById.delete(id);
+    // only we or the author can delete
+    if (deletedEvent && [event.pubkey, myPub].includes(deletedEvent.pubkey)) {
+      this.eventsById.delete(id);
+      if (deletedEvent.kind === 4) {
+        const dmRoomId = findDMroomId(deletedEvent, myPub);
+        if (!dmRoomId) return null;
+        const room = this.publicRoomList.get(dmRoomId);
+        if (!room) return null;
+        const mevents = formatDecryptedDmMsgFromOthersOrMe(deletedEvent, this.user, dmRoomId);
+        mevents.forEach((mevent) => {
+          mevent.event.redacts = mevent.getId();
+          this.emit('Room.redaction', mevent, room);
+        });
+
+        this.directMessagesByUser.get(dmRoomId)?.delete(id);
+        saveDMEvents(this.directMessagesByUser, this.eventsById);
+      }
+      if (deletedEvent.kind === 42) {
+        const { events_replied_to } = FormatCitedEventsAndCitedPubkeys(deletedEvent);
+        let channelId = events_replied_to[0];
+        if (!channelId) return null;
+        const room = this.publicRoomList.get(channelId);
+        if (!room) return null;
+        const mevents = formatChannelMsg(deletedEvent);
+        mevents.forEach((mevent) => {
+          mevent.event.redacts = mevent.getId();
+          this.emit('Room.redaction', mevent, room);
+        });
+
+        this.cMsgsByCid.get(channelId)?.delete(id);
+        saveChannelMessageEvents(this.cMsgsByCid, this.eventsById);
       }
     }
   };
