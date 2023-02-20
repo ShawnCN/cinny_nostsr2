@@ -62,3 +62,18 @@ export const saveChannelMessageEvents = (
 
     // TODO save own block and flag events
   }, 500)();
+
+export const saveDMEvents = (
+  directMessagesByUser: Map<string, SortedLimitedEventSet>,
+  eventsById: Map<string, NostrEvent>
+) =>
+  debounce._(() => {
+    const dms: NostrEvent[] = [];
+    for (const set of directMessagesByUser.values()) {
+      set.eventIds.forEach((eventId: any) => {
+        dms.push(eventsById.get(eventId)!);
+      });
+    }
+    localForage.setItem('dms', dms);
+    // TODO save own block and flag events
+  }, 500)();

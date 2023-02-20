@@ -22,7 +22,14 @@ class TRoom {
   // currentState: {
   //   getStateEvents: typeof getStateEvents;
   // };
-  constructor(roomId: string, type: TRoomType, name?: string, about?: string, avatarUrl?: string) {
+  constructor(
+    roomId: string,
+    type: TRoomType,
+    name?: string,
+    about?: string,
+    avatarUrl?: string,
+    founderId?: string
+  ) {
     // this.currentState.getStateEvents = getStateEvents();
     this.currentState = new CurrentState(roomId);
     this.roomMembers = new Map();
@@ -40,6 +47,7 @@ class TRoom {
     if (name) this.name = name;
     if (about) this.canonical_alias = about;
     if (avatarUrl) this.avatarUrl = avatarUrl;
+    if (founderId) this.founderId = founderId;
   }
 
   async init() {
@@ -92,14 +100,15 @@ class TRoom {
   }
   addMember(m: TRoomMember) {
     this.roomMembers.set(m.userId, m);
+    this.setMemberWithMembership(m.userId, 'join');
   }
   getMembers() {
     return Array.from(this.roomMembers.values());
   }
-  getMembersWithMembership(mship) {
+  getMembersWithMembership(mship: TMemberShip) {
     return Array.from(this.roomMembers.values());
   }
-  setMemberWithMembership(memberId: string, membership: string) {
+  setMemberWithMembership(memberId: string, membership: TMemberShip) {
     let a = this.roomMembers.get(memberId);
     if (!a) return null;
     a.membership = membership;
@@ -230,8 +239,8 @@ class CurrentState {
   };
   maySendStateEvent = (arg0: 'm.room.avatar' | 'm.room.name' | 'm.room.topic', userId: string) => {
     const room = initMatrix.matrixClient.getRoom(this.roomId);
-    if (room?.roomId !== userId && room?.founderId !== userId) return false;
-    return true;
+    if (room?.roomId == userId || room?.founderId == userId) return true;
+    return false;
   };
   maySendMessage = (userId: string) => {
     return true;

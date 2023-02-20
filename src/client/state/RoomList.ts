@@ -170,19 +170,18 @@ class RoomList extends EventEmitter {
 
   roomActions(action) {
     const addRoom = (roomId: string, isDM: boolean) => {
-      console.log('addRoom111111111111111', roomId, isDM);
       const myRoom = this.matrixClient.getRoom(roomId);
       if (myRoom === null) return false;
 
       if (isDM) {
         this.directs.add(roomId);
         saveDirectsToLocal(this.directs);
-        console.log('222addRoom111111111111111', roomId, isDM);
       } else if (myRoom.isSpaceRoom()) {
         this.addToSpaces(roomId);
       } else {
         this.rooms.add(roomId);
         saveRoomsToLocal(this.rooms);
+        this.matrixClient.subChannelMessage(Array.from(this.rooms));
       }
       return true;
     };

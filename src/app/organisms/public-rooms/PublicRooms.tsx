@@ -19,6 +19,7 @@ import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import HashSearchIC from '../../../../public/res/ic/outlined/hash-search.svg';
 import { TSearchQuery } from '../../../../types';
 import TRoom from '../../../../types/TRoom';
+import { defaultName, toNostrBech32Address, toNostrHexAddress } from '../../../util/nostrUtil';
 
 const SEARCH_LIMIT = 20;
 
@@ -132,7 +133,6 @@ function PublicRooms({ isOpen, searchTerm = undefined, onRequestClose }: IPropsP
     }
     const hsFromAlias = isInputAlias ? inputRoomName.slice(inputRoomName.indexOf(':') + 1) : null;
     let inputHs = hsFromAlias || hsRef?.current?.value;
-
     if (typeof inputHs !== 'string') inputHs = userId.slice(userId.indexOf(':') + 1);
     if (typeof inputRoomName !== 'string') inputRoomName = '';
 
@@ -198,9 +198,9 @@ function PublicRooms({ isOpen, searchTerm = undefined, onRequestClose }: IPropsP
       isInputAlias = inputRoomName[0] === '#' && inputRoomName.indexOf(':') > 1;
     }
     const hsFromAlias = isInputAlias ? inputRoomName.slice(inputRoomName.indexOf(':') + 1) : null;
-    let inputHs = hsFromAlias || hsRef?.current?.value;
-
-    if (typeof inputHs !== 'string') inputHs = userId.slice(userId.indexOf(':') + 1);
+    // let inputHs = hsFromAlias || hsRef?.current?.value;
+    // if (typeof inputHs !== 'string') inputHs = userId.slice(userId.indexOf(':') + 1);
+    let inputHs = initMatrix.matrixClient.relayInstance.size + ' relays';
     if (typeof inputRoomName !== 'string') inputRoomName = '';
 
     if (isSearching) return;
@@ -217,40 +217,91 @@ function PublicRooms({ isOpen, searchTerm = undefined, onRequestClose }: IPropsP
     });
     if (isViewMore !== viewMore) updateIsViewMore(viewMore);
     updateIsSearching(true);
-
-    try {
-      const result = await initMatrix.matrixClient.publicRooms({
-        server: inputHs,
-        limit: SEARCH_LIMIT,
-        since: viewMore ? nextBatch : undefined,
-        include_all_networks: true,
-        filter: {
-          generic_search_term: inputRoomName,
-        },
-      });
-      if (!result) {
-        updateSearchQuery({
-          error:
-            inputRoomName === ''
-              ? `No public rooms on ${inputHs}`
-              : `No result found for "${inputRoomName}" on ${inputHs}`,
-          alias: isInputAlias ? inputRoomName : null,
-        });
-      }
-      const totalRooms = viewMore ? publicRooms.concat(result!.chunk) : result!.chunk;
-      updatePublicRooms(totalRooms);
-      updateNextBatch(result.next_batch);
+    if (inputRoomName.trim().length == 0) {
+      let rooms = Array.from(initMatrix.matrixClient.publicRoomList.values());
+      rooms = rooms.filter((room) => room.type === 'groupChannel');
+      updatePublicRooms(rooms);
+      updateNextBatch(undefined);
       updateIsSearching(false);
       updateIsViewMore(false);
-      if (totalRooms.length === 0) {
-        updateSearchQuery({
-          error:
-            inputRoomName === ''
-              ? `No public rooms on ${inputHs}`
-              : `No result found for "${inputRoomName}" on ${inputHs}`,
-          alias: isInputAlias ? inputRoomName : null,
-        });
+      return;
+    }
+
+    try {
+      const idHex = toNostrHexAddress(inputRoomName);
+      if (!idHex) throw new Error('Invalid user ID');
+      const room = initMatrix.matrixClient.publicRoomList.get(idHex);
+      if (room) {
+        updatePublicRooms([room]);
+      } else {
+        const channelProfile = initMatrix.matrixClient.channelProfiles.get(idHex);
+        if (channelProfile) {
+          let nroom = new TRoom(
+            toNostrBech32Address(idHex, 'note')!,
+            'groupChannel',
+            channelProfile.name,
+            channelProfile.about,
+            channelProfile.picture,
+            channelProfile?.founderId
+          );
+          updatePublicRooms([nroom]);
+          initMatrix.matrixClient.publicRoomList.set(idHex, nroom);
+        } else {
+          const nroom = new TRoom(idHex, 'groupChannel', defaultName(idHex, 'note')!);
+          updatePublicRooms([nroom]);
+          initMatrix.matrixClient.publicRoomList.set(idHex, nroom);
+          initMatrix.matrixClient.getChannelInfoWithCB(idHex, (channelProfile) => {
+            if (channelProfile && toNostrHexAddress(publicRooms[0].roomId) == idHex) {
+              let nroom = new TRoom(
+                toNostrBech32Address(idHex, 'note')!,
+                'groupChannel',
+                channelProfile.name,
+                channelProfile.about,
+                channelProfile.picture,
+                channelProfile?.founderId
+              );
+              updatePublicRooms([nroom]);
+              initMatrix.matrixClient.publicRoomList.set(idHex, nroom);
+            }
+          });
+        }
       }
+      updateNextBatch(undefined);
+      updateIsSearching(false);
+      updateIsViewMore(false);
+
+      // const result = await initMatrix.matrixClient.publicRooms({
+      //   server: inputHs,
+      //   limit: SEARCH_LIMIT,
+      //   since: viewMore ? nextBatch : undefined,
+      //   include_all_networks: true,
+      //   filter: {
+      //     generic_search_term: inputRoomName,
+      //   },
+      // });
+      // if (!result) {
+      //   updateSearchQuery({
+      //     error:
+      //       inputRoomName === ''
+      //         ? `No public rooms on ${inputHs}`
+      //         : `No result found for "${inputRoomName}" on ${inputHs}`,
+      //     alias: isInputAlias ? inputRoomName : null,
+      //   });
+      // }
+      // const totalRooms = viewMore ? publicRooms.concat(result!.chunk) : result!.chunk;
+      // updatePublicRooms(totalRooms);
+      // updateNextBatch(result.next_batch);
+      // updateIsSearching(false);
+      // updateIsViewMore(false);
+      // if (totalRooms.length === 0) {
+      //   updateSearchQuery({
+      //     error:
+      //       inputRoomName === ''
+      //         ? `No public rooms on ${inputHs}`
+      //         : `No result found for "${inputRoomName}" on ${inputHs}`,
+      //     alias: isInputAlias ? inputRoomName : null,
+      //   });
+      // }
     } catch (e: any) {
       updatePublicRooms([]);
       let err = 'Something went wrong!';
@@ -302,7 +353,8 @@ function PublicRooms({ isOpen, searchTerm = undefined, onRequestClose }: IPropsP
 
   function renderRoomList(rooms: TRoom[]) {
     return rooms.map((room) => {
-      const alias = typeof room.canonical_alias === 'string' ? room.canonical_alias : room.roomId;
+      // const alias = typeof room.canonical_alias === 'string' ? room.canonical_alias : room.roomId;
+      const alias = room.roomId;
       const name = typeof room.name === 'string' ? room.name : alias;
       const isJoined = initMatrix.matrixClient.getRoom(room.roomId)?.getMyMembership() === 'join';
       return (
@@ -357,12 +409,12 @@ function PublicRooms({ isOpen, searchTerm = undefined, onRequestClose }: IPropsP
         >
           <div className="public-rooms__input-wrapper">
             <Input value={searchTerm} forwardRef={roomNameRef} label="Room name or alias" />
-            <Input
+            {/* <Input
               forwardRef={hsRef}
               value={userId.slice(userId.indexOf(':') + 1)}
               label="Homeserver"
               required
-            />
+            /> */}
           </div>
           <Button disabled={isSearching} iconSrc={HashSearchIC} variant="primary" type="submit">
             Search

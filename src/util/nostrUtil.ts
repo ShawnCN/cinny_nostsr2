@@ -27,6 +27,8 @@ export const toNostrBech32Address = (address: string, prefix: string) => {
   return null;
 };
 export const toNostrHexAddress = (str: string): string | null => {
+  if (typeof str !== 'string') return null;
+  if (str.length === 0) return null;
   str = str.trim();
   if (str.match(/^[0-9a-fA-F]{64}$/)) {
     return str;

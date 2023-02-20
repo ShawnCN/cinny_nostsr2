@@ -47,6 +47,7 @@ import {
   saveChannelMessageEvents,
   savechannelProfileEventsToLocal,
   savechannelProfileUpdateEventsToLocal,
+  saveDMEvents,
   saveLatestEvent,
   saveMyMembershipsToLocal,
   saveProfileEventsToLocal,
@@ -592,23 +593,36 @@ class MatrixClientA extends EventEmitter {
   }
   async joinRoom(roomIdOrAlias: string, arg1: { viaServers: string[] }) {
     const roomId = roomIdOrAlias.split(':')[0];
-    const a = this.publicRoomList.get(roomId) as TRoom;
-    let me = a?.getMember(this.user.userId);
-    if (me?.membership != 'join') {
-      a?.setMemberWithMembership(this.user.userId, 'join');
+    const aroom = this.publicRoomList.get(roomId) as TRoom;
+    let me = aroom?.getMember(this.user.userId);
+    if (!me) {
+      const meMember = new TRoomMember(
+        this.user.userId,
+        this.user.displayName,
+        this.user.avatarUrl
+      );
+      aroom.addMember(meMember);
     }
-    this.publicRoomList.set(roomId, a!);
-    const membership = 'join';
-    const prevMembership = 'invite';
-    const myMembership: TMyMemberships = {
-      roomId: roomId,
-      membership,
-      prevMembership,
-      created_at: Math.floor(Date.now() / 1000),
-    };
-    this.updateMyMemberships(roomId, myMembership);
-    this.emit('Room.myMembership', a, membership, prevMembership);
-    return Promise.resolve(a);
+    this.publicRoomList.set(roomId, aroom);
+    let myMembership = this.myMemberships.get(roomId);
+    if (myMembership) {
+      myMembership.prevMembership = 'invite';
+      myMembership.membership = 'join';
+      myMembership.created_at = Math.floor(Date.now() / 1000);
+      this.updateMyMemberships(roomId, myMembership);
+      this.emit('Room.myMembership', aroom, myMembership.membership, myMembership.prevMembership);
+    } else {
+      const myMembership: TMyMemberships = {
+        roomId: roomId,
+        membership: 'join',
+        prevMembership: null,
+        created_at: Math.floor(Date.now() / 1000),
+      };
+      this.updateMyMemberships(roomId, myMembership);
+      this.emit('Room.myMembership', aroom, myMembership.membership, myMembership.prevMembership);
+    }
+
+    return Promise.resolve(aroom);
   }
   async redactEvent(roomId: string, eventId: string, undefined, reason: any) {
     let event: NostrEvent = {
@@ -778,19 +792,19 @@ class MatrixClientA extends EventEmitter {
     this.myMemberships.set(roomId, mShip);
     saveMyMembershipsToLocal(this.myMemberships);
   }
-  saveLocalStorageEvents = () =>
-    debounce._(() => {
-      const dms: NostrEvent[] = [];
-      for (const set of this.directMessagesByUser.values()) {
-        set.eventIds.forEach((eventId: any) => {
-          dms.push(this.eventsById.get(eventId)!);
-        });
-      }
+  // saveLocalStorageEvents = () =>
+  //   debounce._(() => {
+  //     const dms: NostrEvent[] = [];
+  //     for (const set of this.directMessagesByUser.values()) {
+  //       set.eventIds.forEach((eventId: any) => {
+  //         dms.push(this.eventsById.get(eventId)!);
+  //       });
+  //     }
 
-      localForage.setItem('dms', dms);
+  //     localForage.setItem('dms', dms);
 
-      // TODO save own block and flag events
-    }, 500)();
+  //     // TODO save own block and flag events
+  //   }, 500)();
   publishEvent = (event: NostrEvent) => {
     // also publish at most 10 events referred to in tags
     const referredEvents = event.tags
@@ -1379,7 +1393,8 @@ class MatrixClientA extends EventEmitter {
         this.emit('Room.myMembership', room, membership, prevMembership);
       }
     });
-    this.saveLocalStorageEvents();
+    // this.saveLocalStorageEvents();
+    saveDMEvents(this.directMessagesByUser, this.eventsById);
   };
   handleDelete = (event: NostrEvent) => {
     const id = event.tags.find((tag) => tag[0] === 'e')?.[1];

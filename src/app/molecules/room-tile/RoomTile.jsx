@@ -35,7 +35,7 @@ function RoomTile({ avatarSrc, name, id, inviterName, memberCount, desc, options
               }`
             : displayId + (memberCount === null ? '' : ` • ${memberCount} members`)}
         </Text>
-        <Text variant="b3">{toNostrHexAddress(displayId)}</Text>
+        {/* 自定义 <Text variant="b3">{toNostrHexAddress(displayId)}</Text> */}
         {desc !== null && typeof desc === 'string' ? (
           <Text className="room-tile__content__desc" variant="b2">
             {twemojify(desc, undefined, true)}
