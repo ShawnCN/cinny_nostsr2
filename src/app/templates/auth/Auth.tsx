@@ -270,7 +270,7 @@ function Login({ loginFlow, baseUrl }: IPropsLogin) {
         actions.setSubmitting(true);
         window.location.reload();
       } else {
-        let msg = 'cannot find browser extension of Nostr protcol.';
+        let msg = 'No Nostr signer extension found. Please install nos2x';
         actions.setErrors({
           password: msg === 'Invalid password' ? msg : undefined,
           other: msg !== 'Invalid password' ? msg : undefined,
@@ -697,7 +697,6 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
         <Formik initialValues={initialValues} onSubmit={signUpAndLogin} validate={validator}>
           {({ values, errors, handleChange, handleSubmit, isSubmitting }) => (
             <>
-              {console.log(values, initialValues)}
               {process.type === undefined && isSubmitting && (
                 <LoadingScreen message="Registration in progress..." />
               )}
@@ -706,7 +705,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
                   value={toNostrBech32Address(initialValues.username, 'npub')}
                   name="username"
                   onChange={handleChange}
-                  label="Username"
+                  label="Pubkey"
                   type="username"
                   required
                   disabled
@@ -721,7 +720,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
                     value={toNostrBech32Address(initialValues.password, 'nsec')}
                     name="password"
                     onChange={handleChange}
-                    label="Password"
+                    label="Nsec"
                     type={passVisible ? 'text' : 'password'}
                     required
                     disabled
@@ -777,9 +776,14 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
                     {errors.other}
                   </Text>
                 )}
+
+                <Text className="auth-form__error" variant="b3">
+                  please save your npub and nsec before continuing
+                </Text>
+
                 <div className="auth-form__btns">
                   <Button variant="primary" type="submit" disabled={isSubmitting}>
-                    Register
+                    Login
                   </Button>
                 </div>
               </form>
@@ -880,7 +884,10 @@ function Auth() {
                   <Text variant="h2" weight="medium">
                     Noteon |
                   </Text>
-                  <div className="slogan">Yet another nostr client</div>
+                  <div className="slogan"></div>
+                  <Text variant="h2" weight="light">
+                    Yet another nostr client
+                  </Text>
                 </TitleWrapper>
               </Header>
               <div className="auth-card__content">
@@ -898,7 +905,7 @@ function Auth() {
           </Text> */}
           <Text variant="b2">
             <a
-              href="https://github.com/ajbura/cinny/releases"
+              href="https://github.com/ShawnCN/cinny_nostsr2/releases"
               target="_blank"
               rel="noreferrer"
             >{`v${cons.version}`}</a>

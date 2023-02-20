@@ -1301,32 +1301,11 @@ class MatrixClientA extends EventEmitter {
     const myPub = this.user.userId;
     const dmRoomId = findDMroomId(event, myPub);
     if (!dmRoomId) return;
-
-    // let dmRoomId = event.pubkey;
-    // if (event.pubkey === myPub) {
-    //   const ptagUser = event.tags.find((tag) => tag[0] === 'p')?.[1];
-    //   if (!ptagUser) return;
-    //   dmRoomId = ptagUser;
-    //   // user = event.tags.find((tag) => tag[0] === 'p')?.[1] || user;
-    // } else {
-    //   const forMe = event.tags.some((tag) => tag[0] === 'p' && tag[1] === myPub);
-    //   if (!forMe) {
-    //     return;
-    //   }
-    // }
-    // this.eventsById.set(event.id, event);
     if (!this.directMessagesByUser.has(dmRoomId)) {
       this.directMessagesByUser.set(dmRoomId, new SortedLimitedEventSet(500));
     }
     this.directMessagesByUser.get(dmRoomId)?.add(event);
     this.handleUpdateLatestEvent(dmRoomId, event);
-    // if (!this.roomIdnLatestEvent.has(dmRoomId)) {
-    //   this.roomIdnLatestEvent.set(dmRoomId, event);
-    //   saveLatestEvent(this.roomIdnLatestEvent);
-    // } else if (this.roomIdnLatestEvent.get(dmRoomId)!.created_at < event.created_at) {
-    //   this.roomIdnLatestEvent.set(dmRoomId, event);
-    //   saveLatestEvent(this.roomIdnLatestEvent);
-    // }
     const { mevents, decryptedEvent } = await formatDmMsgFromOthersOrMe(event, this.user, dmRoomId);
     this.eventsById.set(event.id, decryptedEvent);
     mevents.forEach((mevent) => {
