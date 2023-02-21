@@ -571,12 +571,12 @@ const tabItems = [
   //   disabled: false,
   //   render: () => <EmojiSection />,
   // },
-  {
-    text: tabText.SECURITY,
-    iconSrc: LockIC,
-    disabled: false,
-    render: () => <SecuritySection />,
-  },
+  // {
+  //   text: tabText.SECURITY,
+  //   iconSrc: LockIC,
+  //   disabled: false,
+  //   render: () => <SecuritySection />,
+  // },
   {
     text: tabText.ABOUT,
     iconSrc: InfoIC,
