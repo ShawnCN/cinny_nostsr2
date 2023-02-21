@@ -577,11 +577,11 @@ export function formatRoomMemberFromNostrEvent(event: NostrEvent) {
 export const fetchContacts = async (relay: Relay, pubkey: string) => {
   const filter = {
     authors: [
-      // pubkey
-      '46060722131ab09a10c410b9522605aee09ce8ff363145f4319f7461ca57f276',
+      pubkey,
+      // '46060722131ab09a10c410b9522605aee09ce8ff363145f4319f7461ca57f276',
     ],
     kinds: [3],
-    limit: 1,
+    limit: 5,
   };
   if (!relay || relay.status !== 1) return null;
   const sub = relay.sub([filter]);

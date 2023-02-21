@@ -26,7 +26,7 @@ import EyeBlindIC from '../../../../public/res/ic/outlined/eye-blind.svg';
 import CinnySvg from '../../../../public/res/svg/noteon.svg';
 import SSOButtons from '../../molecules/sso-buttons/SSOButtons';
 import { generatePrivateKey, getPublicKey, nip19 } from 'nostr-tools';
-import { defaultName, toNostrBech32Address } from '../../../util/nostrUtil';
+import { defaultName, toNostrBech32Address, toNostrHexAddress } from '../../../util/nostrUtil';
 
 const LOCALPART_SIGNUP_REGEX = /^[a-z0-9_\-.=/]+$/;
 const BAD_LOCALPART_ERROR = "Username can only contain characters a-z, 0-9, or '=_-./'";
@@ -463,22 +463,22 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
 
   const validator = (values) => {
     const errors = {};
-    if (values.username.list > 255) errors.username = USER_ID_TOO_LONG_ERROR;
-    if (values.username.length > 0 && !isValidInput(values.username, LOCALPART_SIGNUP_REGEX)) {
-      errors.username = BAD_LOCALPART_ERROR;
-    }
-    if (values.password.length > 0 && !isValidInput(values.password, PASSWORD_STRENGHT_REGEX)) {
-      errors.password = BAD_PASSWORD_ERROR;
-    }
-    if (
-      values.confirmPassword.length > 0 &&
-      !isValidInput(values.confirmPassword, values.password)
-    ) {
-      errors.confirmPassword = CONFIRM_PASSWORD_ERROR;
-    }
-    if (values.email.length > 0 && !isValidInput(values.email, EMAIL_REGEX)) {
-      errors.email = BAD_EMAIL_ERROR;
-    }
+    // if (values.username.list > 255) errors.username = USER_ID_TOO_LONG_ERROR;
+    // if (values.username.length > 0 && !isValidInput(values.username, LOCALPART_SIGNUP_REGEX)) {
+    //   errors.username = BAD_LOCALPART_ERROR;
+    // }
+    // if (values.password.length > 0 && !isValidInput(values.password, PASSWORD_STRENGHT_REGEX)) {
+    //   errors.password = BAD_PASSWORD_ERROR;
+    // }
+    // if (
+    //   values.confirmPassword.length > 0 &&
+    //   !isValidInput(values.confirmPassword, values.password)
+    // ) {
+    //   errors.confirmPassword = CONFIRM_PASSWORD_ERROR;
+    // }
+    // if (values.email.length > 0 && !isValidInput(values.email, EMAIL_REGEX)) {
+    //   errors.email = BAD_EMAIL_ERROR;
+    // }
     return errors;
   };
   const submitter = (values, actions) => {
@@ -518,8 +518,16 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
   };
 
   const signUpAndLogin = async (values, actions) => {
-    console.log('signUpAndLogin', values);
+    // console.log('signUpAndLogin', values);
+
     try {
+      let privkey: string | null = initialValues.password;
+      if (values.password && values.password.length > 0) {
+        privkey = toNostrHexAddress(values.password);
+        if (!privkey) throw new Error('invalid private key');
+      }
+
+      const username = getPublicKey(privkey);
       let data2 = {
         user_id: 'user_id',
         name: 'username',
@@ -531,7 +539,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
       let privatekey = '';
       let pubkey = '';
       let identifier = {} as any;
-      const username = initialValues.username;
+      // const username = initialValues.username;
       if (username) {
         identifier.type = 'm.id.user';
         identifier.user = username;
@@ -539,7 +547,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
         data2.name = defaultName(username, 'npub')!;
       } else throw new Error('Bad Input');
       localStorage.setItem(cons.secretKey.USER_ID, username);
-      localStorage.setItem(cons.secretKey.ACCESS_TOKEN, initialValues.password);
+      localStorage.setItem(cons.secretKey.ACCESS_TOKEN, privkey);
       if (localStorage['my-meta-info']) {
         const myMetaInfo = JSON.parse(localStorage['my-meta-info']);
         data2.profile_img = myMetaInfo?.picture;
@@ -550,15 +558,6 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
       data2 = { ...data2, pubkey, privatekey };
       actions.setSubmitting(true);
       window.location.reload();
-      // } else {
-      //   let msg = 'cannot find browser extension of Nostr protcol.';
-      //   actions.setErrors({
-      //     password: msg === 'Invalid password' ? msg : undefined,
-      //     other: msg !== 'Invalid password' ? msg : undefined,
-      //   });
-      // console.log('cannot find browser extension of Nostr protcol.');
-      // dispatch(setLoginTip('Cannot find browser extension of Nostr protcol.'));
-      // }
     } catch (error: any) {
       let msg = error.message;
       if (msg === 'Unknown message') msg = 'Please check your credentials';

@@ -13,7 +13,7 @@ import navigation from './state/navigation';
 
 import MatrixClientA from './MatrixClientA';
 import { TMyMemberships, TSubscribedChannel } from '../../types';
-import { defaultChatroomList } from './state/cons';
+import { CHATGPT_BOT, defaultChatroomList, SUPPORT_SERVICE } from './state/cons';
 
 import { saveMDirectsToLocal } from '../util/localForageUtil';
 import { initialChannelroom, initialDMroom } from '../util/matrixUtil';
@@ -93,12 +93,19 @@ class InitMatrix extends EventEmitter {
               this.matrixClient.publicRoomList.set(roomId, croom);
             }
           });
+          if (this.roomList.directs.size == 0) {
+            this.roomList.directs.add(CHATGPT_BOT);
+            this.roomList.directs.add(SUPPORT_SERVICE);
+          }
           this.roomList.directs.forEach((direct) => {
             if (!this.matrixClient.publicRoomList.has(direct)) {
               const croom = initialDMroom(direct, this.matrixClient.user);
               this.matrixClient.publicRoomList.set(direct, croom);
             }
           });
+          if (!this.roomList.mDirects.has(CHATGPT_BOT)) this.roomList.mDirects.add(CHATGPT_BOT);
+          if (!this.roomList.mDirects.has(SUPPORT_SERVICE))
+            this.roomList.mDirects.add(SUPPORT_SERVICE);
           this.roomList.mDirects.forEach((direct) => {
             if (!this.matrixClient.publicRoomList.has(direct)) {
               const croom = initialDMroom(direct, this.matrixClient.user);

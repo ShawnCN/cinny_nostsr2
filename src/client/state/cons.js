@@ -192,13 +192,13 @@ export const defaultChatroomList = [
   //   new_message: '',
   //   new_message_created_at: 0,
   // },
-  {
-    user_id: 'c8d3eb756902f5c99e47c370d4a252fcadbb3b7c0026f489b35ffcf93654e3b6',
-    type: 'groupChannel',
-    unread: 0,
-    new_message: '',
-    new_message_created_at: 0,
-  },
+  // {
+  //   user_id: 'c8d3eb756902f5c99e47c370d4a252fcadbb3b7c0026f489b35ffcf93654e3b6',
+  //   type: 'groupChannel',
+  //   unread: 0,
+  //   new_message: '',
+  //   new_message_created_at: 0,
+  // },
   {
     user_id: 'aa82def2a4110b491eb1874138b7eb97514c53be43627babe25e5c15660aff3d',
     type: 'groupChannel',
@@ -206,34 +206,36 @@ export const defaultChatroomList = [
     new_message: '',
     new_message_created_at: 0,
   },
-  {
-    user_id: '25e5c82273a271cb1a840d0060391a0bf4965cafeb029d5ab55350b418953fbb',
-    type: 'groupChannel',
-    unread: 0,
-    new_message: '',
-    new_message_created_at: 0,
-  },
-  {
-    user_id: '94296622149f6390fec39b7802edcff9d00b67e812409c236f6094580a5c3e2d',
-    type: 'groupChannel',
-    unread: 0,
-    new_message: '',
-    new_message_created_at: 0,
-  },
-  {
-    user_id: 'c1c8dd309cdd75033fea7c284822d6b2721ad82ff18dfd5f454ec9c7c1d7a4ec',
-    type: 'groupChannel',
-    unread: 0,
-    new_message: '',
-    new_message_created_at: 0,
-  },
-  {
-    user_id: '8cad0528c52c538d344a1b44955169e008956d8b4e3a4a51d670954f9c026e5c',
-    type: 'groupChannel',
-    unread: 0,
-    new_message: '',
-    new_message_created_at: 0,
-  },
+  // {
+  //   user_id: '25e5c82273a271cb1a840d0060391a0bf4965cafeb029d5ab55350b418953fbb',
+  //   type: 'groupChannel',
+  //   unread: 0,
+  //   new_message: '',
+  //   new_message_created_at: 0,
+  // },
+  // 通天塔
+  // {
+  //   user_id: '94296622149f6390fec39b7802edcff9d00b67e812409c236f6094580a5c3e2d',
+  //   type: 'groupChannel',
+  //   unread: 0,
+  //   new_message: '',
+  //   new_message_created_at: 0,
+  // },
+  // test95
+  // {
+  //   user_id: 'c1c8dd309cdd75033fea7c284822d6b2721ad82ff18dfd5f454ec9c7c1d7a4ec',
+  //   type: 'groupChannel',
+  //   unread: 0,
+  //   new_message: '',
+  //   new_message_created_at: 0,
+  // },
+  // {
+  //   user_id: '8cad0528c52c538d344a1b44955169e008956d8b4e3a4a51d670954f9c026e5c',
+  //   type: 'groupChannel',
+  //   unread: 0,
+  //   new_message: '',
+  //   new_message_created_at: 0,
+  // },
 ];
 
 export const TChannelMapList = {
@@ -375,3 +377,5 @@ export const log = console.log.bind(console);
 export default cons;
 
 export const REJECT_INVITE_DAYS = 180;
+export const CHATGPT_BOT = 'fb2e2d071b5d37972a8ce155170eaab8041f7a5aac674d57ea9b3bb079db14c2';
+export const SUPPORT_SERVICE = '2cdbae5a14281406a0add7239aaf8146f85fb1acea15debd128a7bd9610efc8b';
