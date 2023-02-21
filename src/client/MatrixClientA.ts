@@ -125,9 +125,13 @@ class MatrixClientA extends EventEmitter {
     this.roomIdnLatestEvent = new Map();
     this.roomIdnReadUpToEvent = new Map();
     this.roomIdnLatestEvent = new Map();
-    // this.store = {
-    //   deleteAllData:()=>Promise<any>
-    // }
+    this.store = {
+      deleteAllData: this.deleteAllData,
+    };
+  }
+  async deleteAllData() {
+    await localForage.clear();
+    // localStorage.clear();
   }
 
   async initCrypto() {
@@ -179,8 +183,9 @@ class MatrixClientA extends EventEmitter {
       console.log(`notice from ${relay.url}   ${JSON.stringify(e)} `);
     });
   }
-  stopClient() {
+  async stopClient() {
     console.log('stopClient');
+    await this.clearStores();
   }
   async clearStores() {
     console.log('clearStores');

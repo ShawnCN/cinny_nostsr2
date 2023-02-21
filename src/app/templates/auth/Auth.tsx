@@ -708,7 +708,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
                   label="Pubkey"
                   type="username"
                   required
-                  disabled
+                  // disabled
                 />
                 {errors.username && (
                   <Text className="auth-form__error" variant="b3">
@@ -723,7 +723,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
                     label="Nsec"
                     type={passVisible ? 'text' : 'password'}
                     required
-                    disabled
+                    // disabled
                   />
                   <IconButton
                     onClick={() => setPassVisible(!passVisible)}

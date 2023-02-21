@@ -349,8 +349,8 @@ class InitMatrix extends EventEmitter {
     }
   }
 
-  clearCacheAndReload() {
-    this.matrixClient.stopClient();
+  async clearCacheAndReload() {
+    await this.matrixClient.stopClient();
     this.matrixClient.store.deleteAllData().then(() => {
       window.location.reload();
     });

@@ -407,7 +407,7 @@ function AboutSection() {
       <div className="settings-about__card">
         <MenuHeader>Application</MenuHeader>
         <div className="settings-about__branding">
-          <img width="60" height="60" src="./public/noteon.jpg" alt="Cinny logo" />
+          <img width="60" height="60" src="./public/noteon.jpg" alt="Noteon logo" />
           <div>
             <Text variant="h2" weight="medium">
               Nostr
@@ -424,8 +424,20 @@ function AboutSection() {
               >
                 Source code
               </Button>
-              <Button onClick={() => window.open('https://cinny.in/#sponsor')}>Support</Button>
-              <Button onClick={() => initMatrix.clearCacheAndReload()} variant="danger">
+              <Button onClick={() => window.open('#')}>Feedback</Button>
+              <Button
+                onClick={async () => {
+                  const isConfirmed = await confirmDialog(
+                    'Clear cache & reload',
+                    'Are you sure that you want to clear local cache and reload?',
+                    'Delete',
+                    'danger'
+                  );
+                  if (!isConfirmed) return;
+                  await initMatrix.clearCacheAndReload();
+                }}
+                variant="danger"
+              >
                 Clear cache & reload
               </Button>
             </div>
@@ -452,7 +464,7 @@ function AboutSection() {
               </Text>
             </li>
             <li>
-              {/* eslint-disable-next-line react/jsx-one-expression-per-line */}
+              {/* eslint-disable-next-line react/jsx-one-expression-per-line 
               <Text>
                 The{' '}
                 <a
@@ -475,7 +487,7 @@ function AboutSection() {
                   MIT License
                 </a>
                 .
-              </Text>
+              </Text>*/}
             </li>
             <li>
               {/* eslint-disable-next-line react/jsx-one-expression-per-line */}

@@ -239,7 +239,11 @@ class CurrentState {
   };
   maySendStateEvent = (arg0: 'm.room.avatar' | 'm.room.name' | 'm.room.topic', userId: string) => {
     const room = initMatrix.matrixClient.getRoom(this.roomId);
-    if (room?.roomId == userId || room?.founderId == userId) return true;
+    if (
+      (room?.type == 'single' && room?.roomId == userId) ||
+      (room?.type == 'groupChannel' && room?.founderId == userId)
+    )
+      return true;
     return false;
   };
   maySendMessage = (userId: string) => {
