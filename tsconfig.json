@@ -21,12 +21,14 @@
     "typeRoots": ["src/@types"],
     "incremental": true,
     "plugins": [{ "name": "typescript-plugin-css-modules" }],
-    "strictPropertyInitialization": false
+    "strictPropertyInitialization": false,
+    "types": ["node"]
   },
   "exclude": ["node_modules", "dist"],
   "include": [
     "src",
     "src/**/**/*.ts",
+    "src/**/**/**/*.tsx",
     "src/**/*.ts",
     "types/*.ts",
     "types/index.d.ts",

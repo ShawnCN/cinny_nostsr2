@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { wasm } from '@rollup/plugin-wasm';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
@@ -23,28 +23,24 @@ const copyFiles = {
     {
       src: 'public/res/android',
       dest: 'public/',
-    }
+    },
   ],
-}
+};
 
-export default defineConfig({
-  appType: 'spa',
-  publicDir: false,
-  base: "",
-  server: {
-    port: 8080,
-    host: true,
-  },
-  plugins: [
-    viteStaticCopy(copyFiles),
-    svgLoader(),
-    wasm(),
-    react(),
-  ],
-  optimizeDeps: {
-    esbuildOptions: {
+export default (mode) => {
+  return defineConfig({
+    appType: 'spa',
+    publicDir: false,
+    base: '',
+    server: {
+      port: 8080,
+      host: true,
+    },
+    plugins: [viteStaticCopy(copyFiles), svgLoader(), wasm(), react()],
+    optimizeDeps: {
+      esbuildOptions: {
         define: {
-          global: 'globalThis'
+          global: 'globalThis',
         },
         plugins: [
           // Enable esbuild polyfill plugins
@@ -52,17 +48,19 @@ export default defineConfig({
             process: false,
             buffer: true,
           }),
-        ]
-    }
-  },
-  build: {
-    outDir: 'dist',
-    sourcemap: true,
-    copyPublicDir: false,
-    rollupOptions: {
-      plugins: [
-        inject({ Buffer: ['buffer', 'Buffer'] })
-      ]
-    }
-  },
-});
+        ],
+      },
+    },
+    build: {
+      outDir: 'dist',
+      sourcemap: true,
+      copyPublicDir: false,
+      rollupOptions: {
+        plugins: [inject({ Buffer: ['buffer', 'Buffer'] })],
+      },
+    },
+    define: {
+      'process.env': { ...process.env, ...loadEnv(mode, process.cwd()) },
+    },
+  });
+};

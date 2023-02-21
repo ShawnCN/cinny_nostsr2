@@ -98,7 +98,7 @@ function Client() {
 
         <div className="loading__appname">
           <Text variant="h2" weight="medium">
-            Cinny
+            Noteon
           </Text>
         </div>
       </div>
@@ -169,6 +169,18 @@ function Client() {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
+      <script
+        src={`https://www.googletagmanager.com/gtag/js?id=${process.env.REACT_APP_GOOGLE_ANALYTICS}`}
+        strategy="afterInteractive"
+      />
+      <script id="google-analytics" strategy="afterInteractive">
+        {`
+                            window.dataLayer = window.dataLayer || [];
+                            function gtag(){dataLayer.push(arguments);}
+                            gtag('js', new Date());
+                            gtag('config', '${process.env.REACT_APP_GOOGLE_ANALYTICS}');
+                            `}
+      </script>
       <div className="navigation__wrapper" ref={navWrapperRef}>
         <Navigation />
       </div>

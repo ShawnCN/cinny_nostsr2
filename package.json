@@ -27,6 +27,7 @@
     "blurhash": "2.0.4",
     "browser-encrypt-attachment": "0.3.0",
     "dateformat": "5.0.3",
+    "dotenv": "16.0.3",
     "emojibase-data": "7.0.1",
     "events": "3.2.0",
     "file-saver": "2.0.5",
