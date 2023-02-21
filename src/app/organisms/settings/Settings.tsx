@@ -559,12 +559,12 @@ const tabItems = [
     disabled: false,
     render: () => <AppearanceSection />,
   },
-  {
-    text: tabText.NOTIFICATIONS,
-    iconSrc: BellIC,
-    disabled: false,
-    render: () => <NotificationsSection />,
-  },
+  // {
+  //   text: tabText.NOTIFICATIONS,
+  //   iconSrc: BellIC,
+  //   disabled: false,
+  //   render: () => <NotificationsSection />,
+  // },
   // {
   //   text: tabText.EMOJI,
   //   iconSrc: EmojiIC,

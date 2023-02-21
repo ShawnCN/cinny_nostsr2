@@ -57,8 +57,8 @@ function RoomOptions({ roomId, afterOptionSelect }) {
       <MenuItem iconSrc={LeaveArrowIC} variant="danger" onClick={handleLeaveClick}>
         Leave
       </MenuItem>
-      <MenuHeader>Notification</MenuHeader>
-      <RoomNotification roomId={roomId} />
+      {/* <MenuHeader>Notification</MenuHeader>
+      <RoomNotification roomId={roomId} /> */}
     </div>
   );
 }

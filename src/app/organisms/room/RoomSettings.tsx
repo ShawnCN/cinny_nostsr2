@@ -112,10 +112,10 @@ function GeneralSettings({ roomId }) {
           Leave
         </MenuItem>
       </div>
-      <div className="room-settings__card">
+      {/* <div className="room-settings__card">
         <MenuHeader>Notification (Changing this will only affect you)</MenuHeader>
         <RoomNotification roomId={roomId} />
-      </div>
+      </div> */}
       <div className="room-settings__card">
         <MenuHeader>Room visibility (who can join)</MenuHeader>
         <RoomVisibility roomId={roomId} />

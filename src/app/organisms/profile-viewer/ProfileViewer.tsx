@@ -270,7 +270,7 @@ function ProfileFooter({ roomId, userId, onRequestClose }: IPropsProfileFooter) 
             : `${isInviting ? 'Inviting...' : 'Invite'}`}
         </Button>
       )}
-      <Button
+      {/* <Button
         variant={isUserIgnored ? 'positive' : 'danger'}
         onClick={toggleIgnore}
         disabled={isIgnoring}
@@ -278,7 +278,7 @@ function ProfileFooter({ roomId, userId, onRequestClose }: IPropsProfileFooter) 
         {isUserIgnored
           ? `${isIgnoring ? 'Unignoring...' : 'Unignore'}`
           : `${isIgnoring ? 'Ignoring...' : 'Ignore'}`}
-      </Button>
+      </Button> */}
     </div>
   );
 }
