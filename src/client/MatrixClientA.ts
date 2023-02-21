@@ -957,7 +957,7 @@ class MatrixClientA extends EventEmitter {
 
   subEverythingNew = () => {
     const filter = {
-      kinds: [3, 5, 7],
+      kinds: [5],
     };
     this.sendSubToRelays([filter], 'subEverythingNew');
   };
@@ -1342,7 +1342,7 @@ class MatrixClientA extends EventEmitter {
       const roomId = mevent.event.room_id;
       const senderId = mevent.event.sender;
       const room = this.publicRoomList.get(roomId);
-      const myMembership = this.myMemberships.get(roomId);
+      let myMembership = this.myMemberships.get(roomId);
       if (
         myMembership &&
         myMembership.membership == 'leave' &&
@@ -1351,16 +1351,27 @@ class MatrixClientA extends EventEmitter {
         return false;
       if (room) {
         const me = room.getMember(this.user.userId);
-        let myMembership = this.myMemberships.get(roomId);
+        // let myMembership = this.myMemberships.get(roomId);
         if (!myMembership) {
-          const myRoomIdnMembership = {
-            roomId: senderId,
-            membership: 'invite' as const,
-            prevMembership: null,
-            created_at: Math.floor(Date.now() / 1000),
-          };
+          const directs = initMatrix.roomList.directs;
+          if (directs.has(roomId)) {
+            myMembership = {
+              roomId: senderId,
+              membership: 'join' as const,
+              prevMembership: null,
+              created_at: Math.floor(Date.now() / 1000),
+            };
+            this.updateMyMemberships(roomId, myMembership);
+          } else {
+            myMembership = {
+              roomId: senderId,
+              membership: 'invite' as const,
+              prevMembership: null,
+              created_at: Math.floor(Date.now() / 1000),
+            };
+          }
         }
-        if (myMembership!.membership == 'invite') {
+        if (myMembership.membership == 'invite') {
           const membership = 'invite';
           const prevMembership = 'invite';
           myMembership!.prevMembership = 'invite';
@@ -1369,7 +1380,7 @@ class MatrixClientA extends EventEmitter {
           this.updateMyMemberships(roomId, myMembership!);
 
           this.emit('Room.myMembership', room, membership, prevMembership);
-        } else if (myMembership?.membership == 'join') {
+        } else if (myMembership.membership == 'join') {
           const sender = room.getMember(senderId);
           if (sender) {
             mevent.sender = sender;
@@ -1563,19 +1574,25 @@ class MatrixClientA extends EventEmitter {
       localForage.setItem('contactEvents', contactEvents);
     }, 500)();
   restoreDefaultRelays() {
+    this.saveRelaysToLocal(DEFAULT_RELAY_URLS);
     this.relayInstance.clear();
     for (const url of DEFAULT_RELAY_URLS) {
       this.addRelay(url);
     }
+
     // this.saveRelaysToContacts();
     // do not save these to contact list
     // for (const url of SEARCH_RELAYS) {
     //   if (!this.relayInstance.has(url)) this.addRelay(url);
     // }
   }
-  saveRelaysToLocal = () => {
-    const list = Array.from(this.relayInstance.keys());
-    localForage.setItem('relayList', list);
+  saveRelaysToLocal = (relayList?: string[]) => {
+    if (relayList && relayList.length > 0) {
+      localForage.setItem('relayList', relayList);
+    } else {
+      const list = Array.from(this.relayInstance.keys());
+      localForage.setItem('relayList', list);
+    }
   };
   saveRelaysToContacts = async () => {
     const relaysObj: any = {};
