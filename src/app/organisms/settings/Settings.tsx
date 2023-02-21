@@ -45,8 +45,9 @@ import BellIC from '../../../../public/res/ic/outlined/bell.svg';
 import InfoIC from '../../../../public/res/ic/outlined/info.svg';
 import PowerIC from '../../../../public/res/ic/outlined/power.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
+import NoteonIC from '../../../../public/res/noteon.jpg';
 
-import CinnySVG from '../../../../public/res/svg/noteon.svg';
+// import CinnySVG from '../../../../public/res/svg/noteon.svg';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 import { Relay } from 'nostr-tools';
 import Input from '../../atoms/input/Input';
@@ -407,7 +408,7 @@ function AboutSection() {
       <div className="settings-about__card">
         <MenuHeader>Application</MenuHeader>
         <div className="settings-about__branding">
-          <img width="60" height="60" src="./public/noteon.jpg" alt="Noteon logo" />
+          <img width="60" height="60" src={NoteonIC} alt="Noteon logo" />
           <div>
             <Text variant="h2" weight="medium">
               Nostr

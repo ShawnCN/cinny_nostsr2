@@ -23,7 +23,8 @@ import ContextMenu, { MenuItem, MenuHeader } from '../../atoms/context-menu/Cont
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 import EyeIC from '../../../../public/res/ic/outlined/eye.svg';
 import EyeBlindIC from '../../../../public/res/ic/outlined/eye-blind.svg';
-import CinnySvg from '../../../../public/res/svg/noteon.svg';
+// import CinnySvg from '../../../../public/res/svg/noteon.svg';
+import NoteonIC from '../../../../public/res/noteon.jpg';
 import SSOButtons from '../../molecules/sso-buttons/SSOButtons';
 import { generatePrivateKey, getPublicKey, nip19 } from 'nostr-tools';
 import { defaultName, toNostrBech32Address, toNostrHexAddress } from '../../../util/nostrUtil';
@@ -878,7 +879,7 @@ function Auth() {
           {!loginToken && (
             <div className="auth-card">
               <Header>
-                <Avatar size="extra-small" imageSrc="./public/noteon.jpg" type="single" />
+                <Avatar size="extra-small" imageSrc={NoteonIC} type="single" />
                 <TitleWrapper>
                   <Text variant="h2" weight="medium">
                     Noteon |
