@@ -641,6 +641,7 @@ const MessageOptions = React.memo(({ roomTimeline, mEvent, edit, reply }: IProps
         />
       )}
       <IconButton onClick={() => reply()} src={ReplyArrowIC} size="extra-small" tooltip="Reply" />
+      <IconButton onClick={() => reply()} src={ReplyArrowIC} size="extra-small" tooltip="Reply" />
       {/* {senderId === mx.getUserId() && !isMedia(mEvent) && (
         <IconButton onClick={() => edit(true)} src={PencilIC} size="extra-small" tooltip="Edit" />
       )} */}

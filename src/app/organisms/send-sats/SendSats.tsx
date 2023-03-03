@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
-import './ProfileViewer.scss';
+import './SendSats.scss';
 
 import { twemojify } from '../../../util/twemojify';
 
@@ -41,6 +41,7 @@ import TRoom from '../../../../types/TRoom';
 import { SearchResultUser } from '../../../../types';
 import { defaultName, toNostrBech32Address } from '../../../util/nostrUtil';
 import TDevice from '../../../../types/TDevice';
+import LNURLTip from './SendSats2';
 
 function ModerationTools({ roomId, userId }) {
   const mx = initMatrix.matrixClient;
@@ -290,13 +291,14 @@ function useToggleDialog() {
 
   useEffect(() => {
     const loadProfile = (uId: string, rId: string) => {
+      console.log(`Loading profile`);
       setIsOpen(true);
       setUserId(uId);
       setRoomId(rId);
     };
-    navigation.on(cons.events.navigation.PROFILE_VIEWER_OPENED, loadProfile);
+    navigation.on(cons.events.navigation.SEND_SATS_OPENED, loadProfile);
     return () => {
-      navigation.removeListener(cons.events.navigation.PROFILE_VIEWER_OPENED, loadProfile);
+      navigation.removeListener(cons.events.navigation.SEND_SATS_OPENED, loadProfile);
     };
   }, []);
 
@@ -331,10 +333,10 @@ function useRerenderOnProfileChange(roomId, userId) {
   }, [roomId, userId]);
 }
 
-function ProfileViewer() {
+function SendSats() {
   const [isOpen, roomId, userId, closeDialog, handleAfterClose] = useToggleDialog();
   useRerenderOnProfileChange(roomId, userId);
-
+  const [showLnQr, setShowLnQr] = useState<boolean>(true);
   const mx = initMatrix.matrixClient;
 
   const room = mx.getRoom(roomId as string) as TRoom;
@@ -467,9 +469,20 @@ function ProfileViewer() {
       onRequestClose={closeDialog as () => void}
       contentOptions={<IconButton src={CrossIC} onClick={closeDialog} tooltip="Close" />}
     >
-      {roomId ? renderProfile() : <div />}
+      {roomId ? (
+        <LNURLTip
+          svc={display?.ludService}
+          show={isOpen as boolean}
+          onClose={closeDialog as () => void}
+          author={roomId as string}
+          // target={user?.display_name || user?.name}
+          target={(roomId as string).slice(0, 8)}
+        />
+      ) : (
+        <div />
+      )}
     </Dialog>
   );
 }
 
-export default ProfileViewer;
+export default SendSats;

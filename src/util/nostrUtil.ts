@@ -1,7 +1,8 @@
 import { Buffer } from 'buffer';
-import * as bech32 from 'bech32-buffer'; /* eslint-disable-line @typescript-eslint/no-var-requires */
+import * as bech32a from 'bech32-buffer'; /* eslint-disable-line @typescript-eslint/no-var-requires */
 import { Debounce } from './common';
 import { sha256 } from '@noble/hashes/sha256';
+import { bech32 } from 'bech32';
 import TEvent from '../../types/TEvent';
 import { NostrEvent } from '../../types';
 export const toNostrBech32Address = (address: string, prefix: string) => {
@@ -12,17 +13,17 @@ export const toNostrBech32Address = (address: string, prefix: string) => {
     return null;
   }
   try {
-    const decoded = bech32.decode(address);
+    const decoded = bech32a.decode(address);
     if (prefix !== decoded.prefix) {
       return null;
     }
-    return bech32.encode(prefix, decoded.data);
+    return bech32a.encode(prefix, decoded.data);
   } catch (e) {
     // not a bech32 address
   }
   if (address.match(/^[0-9a-fA-F]{64}$/)) {
     const words = Buffer.from(address, 'hex');
-    return bech32.encode(prefix, words);
+    return bech32a.encode(prefix, words);
   }
   return null;
 };
@@ -34,7 +35,7 @@ export const toNostrHexAddress = (str: string): string | null => {
     return str;
   }
   try {
-    const { data } = bech32.decode(str);
+    const { data } = bech32a.decode(str);
     const addr = arrayToHex(data);
     return addr;
   } catch (e) {
@@ -196,3 +197,49 @@ export const findDMroomId = (event: NostrEvent, myPub: string) => {
   }
   return dmRoomId;
 };
+
+/**
+ * Converts LNURL service to LN Address
+ */
+export function extractLnAddress(lnurl: string) {
+  // some clients incorrectly set this to LNURL service, patch this
+  if (lnurl.toLowerCase().startsWith('lnurl')) {
+    const url = bech32ToText(lnurl);
+    if (url.startsWith('http')) {
+      const parsedUri = new URL(url);
+      // is lightning address
+      if (parsedUri.pathname.startsWith('/.well-known/lnurlp/')) {
+        const pathParts = parsedUri.pathname.split('/');
+        const username = pathParts[pathParts.length - 1];
+        return `${username}@${parsedUri.hostname}`;
+      }
+    }
+  }
+  return lnurl;
+}
+
+export function formatShort(n: number) {
+  if (n < 2e3) {
+    return n;
+  } else if (n < 1e6) {
+    return `${n / 1e3}K`;
+  } else {
+    return `${n / 1e6}M`;
+  }
+}
+// export function bech32ToHex(str: string) {
+//   const nKey = bech32.decode(str, 1_000);
+//   const buff = bech32.fromWords(nKey.words);
+//   return secp.utils.bytesToHex(Uint8Array.from(buff));
+// }
+
+/**
+ * Decode bech32 to string UTF-8
+ * @param str bech32 encoded string
+ * @returns
+ */
+export function bech32ToText(str: string) {
+  const decoded = bech32.decode(str, 1000);
+  const buf = bech32.fromWords(decoded.words);
+  return new TextDecoder().decode(Uint8Array.from(buf));
+}

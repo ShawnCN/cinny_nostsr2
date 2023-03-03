@@ -56,6 +56,7 @@ import {
 import TEventTimelineSet from '../../types/TEventTimelineSet';
 import initMatrix from './InitMatrix';
 import navigation from './state/navigation';
+import EventKind from '../../types/EventKind';
 const debounce = new Debounce();
 class MatrixClientA extends EventEmitter {
   store: { deleteAllData: () => Promise<any> };
@@ -259,6 +260,7 @@ class MatrixClientA extends EventEmitter {
         this.user.displayName = profile.name;
         this.user.about = profile.about;
         this.user.avatarUrl = profile.picture;
+        this.user.ludService = profile?.lud16 || profile?.lud06;
       }
       cb(profile);
       if (initMatrix.roomList.directs.has(userId)) {
@@ -316,9 +318,15 @@ class MatrixClientA extends EventEmitter {
   async getProfileInfoFromRelay(userId: string) {
     const nostrEvent = await this.fetchUserMeta(userId);
     this.handleEvent(nostrEvent);
-    let user = {} as { displayName: string; about: string; avatarUrl: string };
+    let user = {} as {
+      displayName: string;
+      about: string;
+      avatarUrl: string;
+      lud16?: string;
+      lud06?: string;
+    };
     if (!nostrEvent) return null;
-    const { name, about, picture } = JSON.parse(nostrEvent.content);
+    const { name, about, picture, lud16, lud06 } = JSON.parse(nostrEvent.content);
     if (name && name.length > 0) {
       user.displayName = name;
     }
@@ -327,6 +335,12 @@ class MatrixClientA extends EventEmitter {
     }
     if (picture && picture.length > 0) {
       user.avatarUrl = picture;
+    }
+    if (lud16 && lud16.length > 0) {
+      user.lud16 = picture;
+    }
+    if (lud06 && lud06.length > 0) {
+      user.lud06 = picture;
     }
     this.emit('foundProfileInfo', user);
   }
@@ -959,6 +973,13 @@ class MatrixClientA extends EventEmitter {
     };
     this.sendSubToRelays([filter], 'subDmByMe');
   };
+  subZapEvent = () => {
+    const filter = {
+      kinds: [9734, 9735],
+      limit: 1000,
+    };
+    this.sendSubToRelays([filter], 'subZapEvent');
+  };
 
   subEverythingNew = () => {
     const filter = {
@@ -1283,7 +1304,13 @@ class MatrixClientA extends EventEmitter {
       case 30000:
         // this.handleKeyValue(event);
         break;
+      case 9735:
+        this.handleZapEvent(event);
+        break;
     }
+  }
+  handleZapEvent(event: NostrEvent) {
+    // console.log(event);
   }
   handlecMsgEvent(event: NostrEvent) {
     const mevents = formatChannelMsg(event);
@@ -1674,6 +1701,28 @@ class MatrixClientA extends EventEmitter {
     } else if (this.roomIdnReadUpToEvent.get(roomId)!.created_at < event.created_at) {
       this.roomIdnReadUpToEvent.set(roomId, event);
       saveReadUpEvent(this.roomIdnReadUpToEvent);
+    }
+  };
+  zap = async (author: string, note?: string, msg?: string) => {
+    const pubKey = this.user.userId;
+    if (pubKey) {
+      let ev = {
+        pubkey: pubKey,
+        kind: EventKind.ZapRequest,
+        created_at: Math.floor(Date.now() / 1000),
+        content: msg || '',
+        tags: [] as string[][],
+      } as NostrEvent;
+
+      if (note) {
+        ev.tags.push(['e', note]);
+      }
+      ev.tags.push(['p', author]);
+      ev.tags.push(['relays', ...Array.from(this.relayInstance.keys())]);
+      // const relayTag = ['relays', ...Object.keys(relays)];
+      // ev.tags.push(relayTag);
+      // processContent(ev, msg || '');
+      return await getSignedEvent(ev, this.user?.privatekey);
     }
   };
 }

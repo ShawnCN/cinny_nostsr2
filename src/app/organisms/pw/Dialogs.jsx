@@ -2,6 +2,7 @@ import React from 'react';
 
 import ReadReceipts from '../read-receipts/ReadReceipts';
 import ProfileViewer from '../profile-viewer/ProfileViewer';
+import SendSats from '../send-sats/SendSats';
 import ShortcutSpaces from '../shortcut-spaces/ShortcutSpaces';
 import SpaceAddExisting from '../../molecules/space-add-existing/SpaceAddExisting';
 import Search from '../search/Search';
@@ -18,6 +19,7 @@ function Dialogs() {
       <ReadReceipts />
       <ViewSource />
       <ProfileViewer />
+      <SendSats />
       <ShortcutSpaces />
       <CreateRoom />
       <JoinAlias />

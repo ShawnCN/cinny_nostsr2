@@ -21,8 +21,14 @@ import { useStore } from '../../hooks/useStore';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
 import { toNostrBech32Address } from '../../../util/nostrUtil';
+import { openSendSats } from '../../../client/action/navigation';
+import Zap from '../../icons/Zap';
 
-function RoomProfile({ roomId }) {
+interface IPropsRoomProfile {
+  roomId: string;
+}
+
+function RoomProfile({ roomId }: IPropsRoomProfile) {
   const isMountStore = useStore();
   const [isEditing, setIsEditing] = useState(false);
   const [, forceUpdate] = useForceUpdate();
@@ -48,6 +54,7 @@ function RoomProfile({ roomId }) {
   const [roomName, setRoomName] = useState(room!.name);
   const [roomTopic, setRoomTopic] = useState(room?.canonical_alias);
   const [avatarSrc, setAvatarSrc] = useState(room?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop'));
+  const [roomLudService, setRoomLudService] = useState<string | null>(null);
 
   const userId = mx.getUserId();
 
@@ -62,6 +69,7 @@ function RoomProfile({ roomId }) {
         setRoomName(profile.name);
         setRoomTopic(profile.about);
         setAvatarSrc(profile.picture);
+        setRoomLudService(profile?.lud16 || profile?.lud06);
       }
     }
     if (type == 'groupChannel') {
@@ -233,6 +241,20 @@ function RoomProfile({ roomId }) {
         </div>
         <Text variant="b3">{bech32Id}</Text>
         <Text variant="b3">{roomId}</Text>
+        {roomLudService && (
+          <div
+            className="zap_layout"
+            onClick={() => {
+              openSendSats(roomId, roomId);
+            }}
+          >
+            <Zap width={12} height={12} />
+
+            <Text variant="b3" className={'zap_layout'}>
+              {roomLudService}
+            </Text>
+          </div>
+        )}
         {roomTopic && <Text variant="b2">{twemojify(roomTopic, undefined, true)}</Text>}
       </div>
     );
@@ -269,8 +291,8 @@ function RoomProfile({ roomId }) {
   );
 }
 
-RoomProfile.propTypes = {
-  roomId: PropTypes.string.isRequired,
-};
+// RoomProfile.propTypes = {
+//   roomId: PropTypes.string.isRequired,
+// };
 
 export default RoomProfile;

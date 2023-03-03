@@ -63,6 +63,7 @@ export type SearchResultUser = {
   display_name: string;
   avatarUrl: string;
   about?: string;
+  ludService?:string
 };
 
 export type TRoomType = 'single' | 'groupChannel' | 'groupRelay';
@@ -105,3 +106,21 @@ export type TMemberShip = 'invite' | 'join' | 'leave' | 'kick' | 'ban' | 'unban'
 
 export type TTotalHighlight = 'total' | 'highlight';
 export type TNoti = { total: number; highlight: number; from: string };
+
+export default interface IconProps {
+  className?: string;
+  width?: number;
+  height?: number;
+}
+
+export type TNostrUserMetadata = {
+  name?: string;
+  display_name?: string;
+  about?: string;
+  picture?: string;
+  website?: string;
+  banner?: string;
+  nip05?: string;
+  lud06?: string;
+  lud16?: string;
+};

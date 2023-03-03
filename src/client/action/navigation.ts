@@ -102,9 +102,17 @@ export function openInviteUser(roomId?: string, searchTerm?: string) {
   });
 }
 
-export function openProfileViewer(userId, roomId) {
+export function openProfileViewer(userId: string, roomId: string) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_PROFILE_VIEWER,
+    userId,
+    roomId,
+  });
+}
+
+export function openSendSats(userId: string, roomId: string) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_SEND_SATS,
     userId,
     roomId,
   });
